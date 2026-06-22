@@ -422,18 +422,20 @@ export default function App() {
         />
 
         <Route
-          path="/documents/:id/read"
-          element={
-            <DocumentReader
-              documents={documents}
-              currentUser={currentUser}
-              activity={activity}
-              onRead={markAsRead}
-              onComment={addComment}
-              onDeleteComment={deleteComment}
-            />
-          }
-        />
+  path="/documents/:id/read"
+  element={
+    <DocumentReader
+      documents={documents}
+      currentUser={currentUser}
+      activity={activity}
+      onRead={markAsRead}
+      onComment={addComment}
+      onDeleteComment={deleteComment}
+      onToggleFavorite={toggleFavorite}
+      onRate={rateDocument}
+    />
+  }
+/>
 
         <Route
           path="/upload"
