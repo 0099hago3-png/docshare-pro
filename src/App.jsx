@@ -4,7 +4,6 @@ import LeftRail from './components/LeftRail.jsx';
 import ChatBot from './components/ChatBot.jsx';
 import MiniMessenger from './components/MiniMessenger.jsx';
 import Toast from './components/Toast.jsx';
-import GiftEffect from './components/GiftEffect.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import Home from './pages/Home.jsx';
 import Documents from './pages/Documents.jsx';
@@ -52,7 +51,6 @@ export default function App() {
       </main>
       <MiniMessenger />
       <ChatBot />
-      <GiftEffect />
       <Toast />
     </>
   );

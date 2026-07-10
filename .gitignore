@@ -18,43 +18,5 @@ npm-debug.log*
 .vscode/
 .DS_Store
 Thumbs.db
-
-# Dependencies
-node_modules/
-
-# Build
-dist/
-dist-ssr/
-
-# Environment variables
-.env
-.env.*
-!.env.example
-
-# Vercel
-.vercel/
-
-# Logs
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-
-# Editor
-.vscode/*
-!.vscode/extensions.json
-.idea/
-
-# System
-.DS_Store
-Thumbs.db
-
-# Other
-*.local
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+.env.local
+.env.production

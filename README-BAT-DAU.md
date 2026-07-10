@@ -1,89 +1,43 @@
-# DOCSHARE COMPLETE V22 — BẮT ĐẦU
+# DOCSHARE COMPLETE V24
 
-Bản V22 được đóng gói thành một project sạch gồm frontend React/Vite và backend Node.js/Express.
+Bản V24 sử dụng giao diện **thư viện học thuật hiện đại** với nền trắng/kem, xanh Oxford và vàng đồng.
 
-## 1. Thay project cũ an toàn
+## Chạy trên máy
 
-Không dán chồng lên project đã có nhiều CSS/node_modules cũ.
-
-1. Đổi tên thư mục cũ `document-share-react` thành `document-share-react-cu`.
-2. Giải nén file ZIP V22.
-3. Đưa thư mục `document-share-react` mới vào `C:\Users\giang\Downloads\`.
-
-## 2. Cài thư viện
-
-Nhấp đúp:
-
-```txt
-01_CAI_DAT_SACH.bat
-```
-
-Chờ đến khi hiện `CAI DAT XONG`.
-
-Nếu cài thủ công bằng PowerShell:
+Mở PowerShell trong thư mục có `package.json` rồi chạy:
 
 ```powershell
-npm install --registry=https://registry.npmjs.org/
-cd backend
-npm install --registry=https://registry.npmjs.org/
-cd ..
-```
-
-## 3. Chạy website
-
-Nhấp đúp:
-
-```txt
-04_CHAY_TAT_CA.bat
-```
-
-Hoặc chạy frontend:
-
-```powershell
+npm install
 npm run dev
 ```
 
 Mở:
 
-```txt
+```text
 http://localhost:5173
 ```
 
-## 4. Tài khoản demo
+## Build production
 
-Admin:
-
-```txt
-admin@docshare.vn
-123456
+```powershell
+npm run build
 ```
 
-User:
+## Đưa bản mới lên GitHub
 
-```txt
-user@docshare.vn
-123456
+```powershell
+git add .
+git commit -m "Cap nhat DocShare V24"
+git push origin main
 ```
 
-Giảng viên:
+Vercel đã kết nối GitHub sẽ tự tạo deployment mới.
 
-```txt
-teacher@docshare.vn
-123456
+## Biến môi trường Supabase trên Vercel
+
+```text
+VITE_SUPABASE_URL
+VITE_SUPABASE_PUBLISHABLE_KEY
 ```
 
-## 5. Dữ liệu demo
-
-Bản hiện tại lưu dữ liệu bằng localStorage:
-
-```txt
-docshare_complete_v22_advanced
-```
-
-Khi nối Supabase thật, chuyển dữ liệu tài khoản, tài liệu, bình luận, thú cưng, khung, giao dịch và file sang PostgreSQL/Supabase Storage.
-
-Xem đầy đủ thay đổi trong:
-
-```txt
-README-KIEM-TRA-V22.md
-```
+Lưu ý: V24 vẫn giữ kiến trúc dữ liệu demo/localStorage của các bản trước. Biến Supabase mới chỉ là cấu hình kết nối; muốn dữ liệu đồng bộ thật cần chuyển từng chức năng sang Supabase.

@@ -6,10 +6,11 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext.jsx';
 import Avatar from '../components/Avatar.jsx';
+import BookCover from '../components/BookCover.jsx';
 import DonateModal from '../components/DonateModal.jsx';
 import ReportModal from '../components/ReportModal.jsx';
 import ConfirmModal from '../components/ConfirmModal.jsx';
-import { PremiumBadge, TitleBadge, VerifyBadge } from '../components/Badges.jsx';
+import { PremiumBadge, VerifyBadge } from '../components/Badges.jsx';
 import { formatNumber } from '../utils/helpers.js';
 
 const reportReasons = ['Spam / quảng cáo', 'Lừa đảo', 'Ngôn từ xúc phạm', 'Nội dung phản cảm', 'Thông tin sai lệch', 'Lý do khác'];
@@ -105,12 +106,13 @@ export default function DocumentDetail() {
 
         <main>
           <section className="panel-universe document-hero-universe">
-            <div className={`detail-cover-universe ${doc.color} ${doc.coverPreview ? 'has-cover-image' : ''}`} style={doc.coverPreview ? { backgroundImage: `linear-gradient(180deg,rgba(2,7,18,.05),rgba(2,7,18,.9)),url(${doc.coverPreview})` } : undefined}>
-              <span>{doc.type}</span>{!doc.coverPreview && <b>{doc.cover}</b>}<strong>{doc.title}</strong>{doc.price > 0 && <em>{doc.price} credit</em>}
+            <div className="detail-book-wrap-v24">
+              <BookCover doc={doc} size="detail"/>
+              {doc.price > 0 && <span className="detail-book-price-v24">{doc.price} credit</span>}
             </div>
             <div className="detail-main-copy">
               <div className="detail-title-row"><div><h1>{doc.title}</h1><p>{doc.subject} · {doc.school || 'Chưa cập nhật đơn vị'}</p></div><div className="detail-menu-wrap"><button className="icon-btn" onClick={() => setMenuOpen((value) => !value)}><MoreHorizontal/></button>{menuOpen && <div className="detail-more-menu"><button onClick={() => { setReportOpen(true); setMenuOpen(false); }}><Flag size={16}/>Báo cáo tài liệu</button>{currentUser?.role === 'admin' && <button className="danger-text" onClick={() => { setDeleteOpen(true); setMenuOpen(false); }}><Trash2 size={16}/>Xóa tài liệu</button>}</div>}</div></div>
-              <div className="detail-author"><Avatar user={author} size="lg"/><div><b>{author.name}<VerifyBadge show={author.verified}/></b><PremiumBadge show={author.premium}/><TitleBadge user={author}/><small>{formatNumber(author.followers)} người theo dõi · Cấp {author.level}</small></div></div>
+              <Link className="detail-author detail-author-link-v24" to={`/users/${author.id}`} title={`Xem hồ sơ ${author.name}`}><Avatar user={author} size="lg"/><div><b>{author.name}<VerifyBadge show={author.verified}/></b><PremiumBadge show={author.premium}/><small>{formatNumber(author.followers)} người theo dõi · Cấp {author.level} · Bấm để xem hồ sơ</small></div></Link>
               <p className="detail-description">{doc.description || 'Tài liệu học tập được chia sẻ trên cộng đồng DocShare.'}</p>
               <div className="detail-tags">{(doc.tags || []).map((tag) => <span key={tag}>#{tag}</span>)}</div>
               <div className="detail-metrics"><span><Eye/>{formatNumber(doc.views)} lượt xem</span><span><Download/>{formatNumber(doc.downloads)} lượt tải</span><span><Star/>{doc.rating} điểm</span><span><FileArchive/>{fullFiles.length || 1} file đầy đủ</span></div>

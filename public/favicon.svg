@@ -1,1 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#2563eb"/><text x="32" y="41" font-size="34" text-anchor="middle" fill="white" font-family="Arial" font-weight="700">D</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#315847"/>
+  <path d="M13 17c8-3 14-2 19 2v30c-5-4-11-5-19-2V17Zm38 0c-8-3-14-2-19 2v30c5-4 11-5 19-2V17Z" fill="#fffdf7" stroke="#d5b991" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M32 19v30" stroke="#d5b991" stroke-width="2"/>
+  <text x="32" y="39" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="18" fill="#315847">D</text>
+</svg>
