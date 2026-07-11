@@ -20,7 +20,7 @@ import {
 } from '../data/defaultData.js';
 import { hasBadWords, todayKey } from '../utils/helpers.js';
 
-const STORAGE_KEY = 'docshare_pro_v39_gift_portal_document_donate';
+const STORAGE_KEY = 'docshare_pro_v40_login_required';
 const AppContext = createContext(null);
 
 function defaultState() {
@@ -371,17 +371,36 @@ export function AppProvider({ children }) {
 
   function purchaseDocument(docId) {
     const doc = state.documents.find((item) => item.id === docId);
-    if (!doc || !currentUser) return false;
+
+    if (!doc || !currentUser) {
+      showToast('Bạn cần đăng nhập để mua tài liệu.');
+      return false;
+    }
+
     if (canAccessDocument(doc, currentUser)) {
       showToast('Bạn đã có quyền truy cập tài liệu này.');
       return true;
     }
+
     const price = Number(doc.price || 0);
+
     if (price <= 0) return true;
-    if ((currentUser.credit || 0) < price) {
-      showToast('Bạn không đủ credit để mua tài liệu này.');
+
+    const currentCredit = Number(currentUser.credit || 0);
+
+    if (currentCredit < price) {
+      window.alert(
+        `Bạn không đủ credit.\n\nGiá tài liệu: ${price.toLocaleString('vi-VN')} credit\nSố dư hiện tại: ${currentCredit.toLocaleString('vi-VN')} credit`,
+      );
+      showToast('Không đủ credit để mua tài liệu.');
       return false;
     }
+
+    const accepted = window.confirm(
+      `Xác nhận mua tài liệu?\n\n${doc.title}\n\nGiá: ${price.toLocaleString('vi-VN')} credit\nSố dư sau khi mua: ${(currentCredit - price).toLocaleString('vi-VN')} credit`,
+    );
+
+    if (!accepted) return false;
 
     patch((prev) => ({
       ...prev,
@@ -389,33 +408,63 @@ export function AppProvider({ children }) {
         if (user.id === prev.currentUserId) {
           return {
             ...user,
-            credit: Math.max(0, (user.credit || 0) - price),
-            ownedDocuments: Array.from(new Set([...(user.ownedDocuments || []), docId])),
+            credit: Math.max(0, Number(user.credit || 0) - price),
+            ownedDocuments: Array.from(
+              new Set([...(user.ownedDocuments || []), docId]),
+            ),
           };
         }
+
         if (user.id === doc.authorId) {
           return {
             ...user,
-            balance: (user.balance || 0) + price,
+            balance: Number(user.balance || 0) + price,
           };
         }
+
         return user;
       }),
-      transactions: [{
-        id: 't_' + Date.now(),
-        userId: prev.currentUserId,
-        type: 'buy',
-        amount: 0,
-        credit: price,
-        status: 'done',
-        note: `Mua tài liệu: ${doc.title}`,
-        date: todayKey(),
-      }, ...(prev.transactions || [])],
-      history: [{ id: 'h_' + Date.now(), type: 'buy', targetId: docId, title: `Đã mua tài liệu ${doc.title}`, date: new Date().toLocaleString('vi-VN') }, ...(prev.history || [])],
-      notifications: [{ id: 'n_' + Date.now(), userId: doc.authorId, title: 'Tài liệu vừa được mua', text: `${currentUser.name} đã mua tài liệu ${doc.title}.`, to: `/documents/${docId}`, unread: true, important: false, kind: 'credit', date: 'Vừa xong' }, ...(prev.notifications || [])],
+      transactions: [
+        {
+          id: 't_' + Date.now(),
+          userId: prev.currentUserId,
+          type: 'buy',
+          amount: 0,
+          credit: price,
+          status: 'done',
+          note: `Mua tài liệu: ${doc.title}`,
+          date: todayKey(),
+        },
+        ...(prev.transactions || []),
+      ],
+      history: [
+        {
+          id: 'h_' + Date.now(),
+          type: 'buy',
+          targetId: docId,
+          title: `Đã mua tài liệu ${doc.title}`,
+          date: new Date().toLocaleString('vi-VN'),
+        },
+        ...(prev.history || []),
+      ],
+      notifications: [
+        {
+          id: 'n_' + Date.now(),
+          userId: doc.authorId,
+          title: 'Tài liệu vừa được mua',
+          text: `${currentUser.name} đã mua tài liệu ${doc.title}.`,
+          to: `/documents/${docId}`,
+          unread: true,
+          important: false,
+          kind: 'credit',
+          date: 'Vừa xong',
+        },
+        ...(prev.notifications || []),
+      ],
     }));
 
-    showToast('Mua tài liệu thành công. Bạn đã có thể xem trước toàn bộ.');
+    window.alert('Mua tài liệu thành công.\n\nBạn đã có thể xem toàn bộ tài liệu.');
+    showToast('Mua tài liệu thành công.');
     return true;
   }
 

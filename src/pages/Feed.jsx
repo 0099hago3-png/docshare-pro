@@ -76,24 +76,47 @@ function PostCard({ post }) {
   const saved = (state.savedPosts || []).includes(post.id);
 
   return (
-    <article className="social-post-v14">
-      <div className="social-post-head-v14">
-        <Link to={`/users/${author.id}`}><Avatar user={author} size="lg"/></Link>
-        <div><div><Link to={`/users/${author.id}`}><b>{author.name}</b></Link><VerifyBadge show={author.verified}/><PremiumBadge show={author.premium}/><LevelBadge level={author.level}/><TitleBadge user={author} compact/></div><small>@{author.id.replace('u_','')} · {post.createdAt} · Công khai</small></div>
-        <button className="follow-pill-v14" onClick={() => toggleFollow(author.id)}>{following ? '✓ Đang theo dõi' : '+ Theo dõi'}</button>
-        <button className={`post-save-v19 ${saved ? 'saved' : ''}`} onClick={() => toggleSavePost(post.id)} title={saved ? 'Bỏ lưu' : 'Lưu bài viết'}><Bookmark size={18} fill={saved ? 'currentColor' : 'none'}/></button>
-        <button className="post-more-v14"><MoreHorizontal size={18}/></button>
-        <button className="post-flag-v14" onClick={() => setReportOpen(true)}>⚑</button>
+    <article className="social-post-v14 social-post-v40">
+      <div className="social-post-head-v14 feed-author-head-v40">
+        <Link className="feed-author-avatar-v40" to={`/users/${author.id}`}>
+          <Avatar user={author} size="lg"/>
+        </Link>
+
+        <div className="feed-author-info-v40">
+          <div className="feed-author-name-row-v40">
+            <Link className="feed-author-name-v40" to={`/users/${author.id}`}>
+              <b>{author.name}</b>
+            </Link>
+            <VerifyBadge show={author.verified}/>
+            <PremiumBadge show={author.premium}/>
+            <LevelBadge level={author.level}/>
+            <TitleBadge user={author} compact/>
+          </div>
+          <small className="feed-author-sub-v40">
+            @{author.id.replace('u_','')} · {post.createdAt} · Công khai
+          </small>
+        </div>
+
+        <div className="feed-author-actions-v40">
+          <button className="follow-pill-v14" onClick={() => toggleFollow(author.id)}>
+            {following ? '✓ Theo dõi' : '+ Theo dõi'}
+          </button>
+          <button className={`post-save-v19 ${saved ? 'saved' : ''}`} onClick={() => toggleSavePost(post.id)} title={saved ? 'Bỏ lưu' : 'Lưu bài viết'}>
+            <Bookmark size={17} fill={saved ? 'currentColor' : 'none'}/>
+          </button>
+          <button className="post-more-v14" title="Thêm"><MoreHorizontal size={17}/></button>
+          <button className="post-flag-v14" onClick={() => setReportOpen(true)} title="Báo cáo"><Flag size={15}/></button>
+        </div>
       </div>
-      {postTitle ? <h2 className="post-knowledge-title post-knowledge-title-v30">{postTitle}</h2> : null}
-      <p className="post-copy-v14">{post.content}</p>
-      {doc && <Link to={`/documents/${doc.id}`} className="shared-document-v14 shared-document-v25"><BookCover doc={doc} size="mini"/><div><b>{doc.title}</b><p>{doc.type} · Tài liệu học thuật</p></div><em>→</em></Link>}
-      <div className="post-social-v14">
+      {postTitle ? <h2 className="post-knowledge-title post-knowledge-title-v30 post-title-v40">{postTitle}</h2> : null}
+      <p className="post-copy-v14 post-copy-v40">{post.content}</p>
+      {doc && <Link to={`/documents/${doc.id}`} className="shared-document-v14 shared-document-v25 shared-document-v40"><BookCover doc={doc} size="mini"/><div><b>{doc.title}</b><p>{doc.type} · Tài liệu học thuật</p></div><em>→</em></Link>}
+      <div className="post-social-v14 post-social-v40">
         <button className={liked ? 'liked' : ''} onClick={() => toggleLikePost(post.id)}>♥ <b>{post.likes}</b></button>
         <button><MessageCircle size={17}/> <b>{post.comments.length}</b></button>
-        <button className="donate-button-v14 donate-button-v39" onClick={() => setDonateOpen(true)}><Gift size={16}/>Gửi quà tặng</button>
+        <button className="donate-button-v14 donate-button-v39 donate-button-v40" onClick={() => setDonateOpen(true)}><Gift size={15}/>Tặng quà</button>
       </div>
-      <div className="post-comments-v14">
+      <div className="post-comments-v14 post-comments-v40">
         <div className="comments-title-v14"><b><MessageCircle size={16}/> Bình luận ({post.comments.length})</b><select><option>Mới nhất</option><option>Phù hợp nhất</option></select></div>
         {post.comments.map((comment) => <Comment key={comment.id} postId={post.id} comment={comment}/>) }
         <div className="comment-compose-v14"><Avatar user={getUser(state.currentUserId)}/><input value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Viết bình luận..."/><button onClick={() => { if(commentText.trim()) addComment(post.id,commentText.trim()); setCommentText(''); }}><Send size={17}/></button></div>

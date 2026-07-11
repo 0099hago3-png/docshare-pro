@@ -1,10 +1,7 @@
-import {
-  Navigate,
-  Route,
-  Routes,
-  useLocation,
-} from 'react-router-dom';
-import { supabase } from './lib/supabase.js';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+
+import { useApp } from './context/AppContext.jsx';
+
 import Navbar from './components/Navbar.jsx';
 import LeftRail from './components/LeftRail.jsx';
 import ChatBot from './components/ChatBot.jsx';
@@ -29,9 +26,7 @@ import Support from './pages/Support.jsx';
 import History from './pages/History.jsx';
 import GiftVault from './pages/GiftVault.jsx';
 
-import { useApp } from './context/AppContext.jsx';
 
-/* Bắt buộc đăng nhập */
 function RequireLogin({ children }) {
   const { currentUser } = useApp();
 
@@ -42,7 +37,7 @@ function RequireLogin({ children }) {
   return children;
 }
 
-/* Chỉ Admin mới được vào */
+
 function RequireAdmin({ children }) {
   const { currentUser } = useApp();
 
@@ -57,7 +52,7 @@ function RequireAdmin({ children }) {
   return children;
 }
 
-/* Đã đăng nhập thì không quay lại Login/Register */
+
 function GuestOnly({ children }) {
   const { currentUser } = useApp();
 
@@ -68,20 +63,18 @@ function GuestOnly({ children }) {
   return children;
 }
 
-export default function App() {
-  console.log(
-  'Supabase đã kết nối:',
-  supabase
-);
+
+function AppLayout({ children }) {
   const { currentUser } = useApp();
   const location = useLocation();
 
-  const isLoginPage =
-    location.pathname === '/login' ||
-    location.pathname === '/register';
+  const isAuthPage =
+    location.pathname === '/login'
+    || location.pathname === '/register';
 
-  /* Chỉ hiện Navbar và menu sau khi đăng nhập */
-  const showWebsiteLayout = currentUser && !isLoginPage;
+  const showWebsiteLayout =
+    Boolean(currentUser)
+    && !isAuthPage;
 
   return (
     <>
@@ -96,193 +89,9 @@ export default function App() {
             : 'auth-main'
         }
       >
-        <Routes>
-
-          {/* ĐĂNG NHẬP */}
-          <Route
-            path="/login"
-            element={
-              <GuestOnly>
-                <Login />
-              </GuestOnly>
-            }
-          />
-
-          {/* ĐĂNG KÝ */}
-          <Route
-            path="/register"
-            element={
-              <GuestOnly>
-                <Register />
-              </GuestOnly>
-            }
-          />
-
-          {/* TRANG CHỦ */}
-          <Route
-            path="/"
-            element={
-              <RequireLogin>
-                <Home />
-              </RequireLogin>
-            }
-          />
-
-          {/* DANH SÁCH TÀI LIỆU */}
-          <Route
-            path="/documents"
-            element={
-              <RequireLogin>
-                <Documents />
-              </RequireLogin>
-            }
-          />
-
-          {/* CHI TIẾT TÀI LIỆU */}
-          <Route
-            path="/documents/:id"
-            element={
-              <RequireLogin>
-                <DocumentDetail />
-              </RequireLogin>
-            }
-          />
-
-          {/* DANH MỤC */}
-          <Route
-            path="/categories"
-            element={
-              <RequireLogin>
-                <Categories />
-              </RequireLogin>
-            }
-          />
-
-          {/* BẢNG TIN */}
-          <Route
-            path="/feed"
-            element={
-              <RequireLogin>
-                <Feed />
-              </RequireLogin>
-            }
-          />
-
-          {/* XẾP HẠNG */}
-          <Route
-            path="/leaderboard"
-            element={
-              <RequireLogin>
-                <Leaderboard />
-              </RequireLogin>
-            }
-          />
-
-          {/* HỖ TRỢ */}
-          <Route
-            path="/support"
-            element={
-              <RequireLogin>
-                <Support />
-              </RequireLogin>
-            }
-          />
-
-          {/* ĐĂNG TÀI LIỆU */}
-          <Route
-            path="/upload"
-            element={
-              <RequireLogin>
-                <UploadPage />
-              </RequireLogin>
-            }
-          />
-
-          {/* TRANG CÁ NHÂN */}
-          <Route
-            path="/profile"
-            element={
-              <RequireLogin>
-                <Profile />
-              </RequireLogin>
-            }
-          />
-
-          {/* HỒ SƠ NGƯỜI KHÁC */}
-          <Route
-            path="/users/:id"
-            element={
-              <RequireLogin>
-                <Profile />
-              </RequireLogin>
-            }
-          />
-
-          {/* VÍ CREDIT */}
-          <Route
-            path="/wallet"
-            element={
-              <RequireLogin>
-                <Wallet />
-              </RequireLogin>
-            }
-          />
-
-          {/* HỘP THƯ */}
-          <Route
-            path="/messages"
-            element={
-              <RequireLogin>
-                <Messages />
-              </RequireLogin>
-            }
-          />
-
-          {/* LỊCH SỬ */}
-          <Route
-            path="/history"
-            element={
-              <RequireLogin>
-                <History />
-              </RequireLogin>
-            }
-          />
-
-          {/* KHO QUÀ */}
-          <Route
-            path="/gifts"
-            element={
-              <RequireLogin>
-                <GiftVault />
-              </RequireLogin>
-            }
-          />
-
-          {/* ADMIN */}
-          <Route
-            path="/admin"
-            element={
-              <RequireAdmin>
-                <AdminDashboard />
-              </RequireAdmin>
-            }
-          />
-
-          {/* LINK SAI */}
-          <Route
-            path="*"
-            element={
-              <Navigate
-                to={currentUser ? '/' : '/login'}
-                replace
-              />
-            }
-          />
-
-        </Routes>
+        {children}
       </main>
 
-      {/* Chỉ hiện sau khi đăng nhập */}
       {showWebsiteLayout && <MiniMessenger />}
 
       {showWebsiteLayout && <ChatBot />}
@@ -291,5 +100,185 @@ export default function App() {
 
       <Toast />
     </>
+  );
+}
+
+
+export default function App() {
+  const { currentUser } = useApp();
+
+  return (
+    <AppLayout>
+      <Routes>
+
+        <Route
+          path="/login"
+          element={
+            <GuestOnly>
+              <Login />
+            </GuestOnly>
+          }
+        />
+
+        <Route
+          path="/register"
+          element={
+            <GuestOnly>
+              <Register />
+            </GuestOnly>
+          }
+        />
+
+        <Route
+          path="/"
+          element={
+            <RequireLogin>
+              <Home />
+            </RequireLogin>
+          }
+        />
+
+        <Route
+          path="/documents"
+          element={
+            <RequireLogin>
+              <Documents />
+            </RequireLogin>
+          }
+        />
+
+        <Route
+          path="/documents/:id"
+          element={
+            <RequireLogin>
+              <DocumentDetail />
+            </RequireLogin>
+          }
+        />
+
+        <Route
+          path="/categories"
+          element={
+            <RequireLogin>
+              <Categories />
+            </RequireLogin>
+          }
+        />
+
+        <Route
+          path="/feed"
+          element={
+            <RequireLogin>
+              <Feed />
+            </RequireLogin>
+          }
+        />
+
+        <Route
+          path="/leaderboard"
+          element={
+            <RequireLogin>
+              <Leaderboard />
+            </RequireLogin>
+          }
+        />
+
+        <Route
+          path="/support"
+          element={
+            <RequireLogin>
+              <Support />
+            </RequireLogin>
+          }
+        />
+
+        <Route
+          path="/upload"
+          element={
+            <RequireLogin>
+              <UploadPage />
+            </RequireLogin>
+          }
+        />
+
+        <Route
+          path="/profile"
+          element={
+            <RequireLogin>
+              <Profile />
+            </RequireLogin>
+          }
+        />
+
+        <Route
+          path="/users/:id"
+          element={
+            <RequireLogin>
+              <Profile />
+            </RequireLogin>
+          }
+        />
+
+        <Route
+          path="/wallet"
+          element={
+            <RequireLogin>
+              <Wallet />
+            </RequireLogin>
+          }
+        />
+
+        <Route
+          path="/messages"
+          element={
+            <RequireLogin>
+              <Messages />
+            </RequireLogin>
+          }
+        />
+
+        <Route
+          path="/history"
+          element={
+            <RequireLogin>
+              <History />
+            </RequireLogin>
+          }
+        />
+
+        <Route
+          path="/gifts"
+          element={
+            <RequireLogin>
+              <GiftVault />
+            </RequireLogin>
+          }
+        />
+
+        <Route
+          path="/admin"
+          element={
+            <RequireAdmin>
+              <AdminDashboard />
+            </RequireAdmin>
+          }
+        />
+
+        <Route
+          path="*"
+          element={
+            <Navigate
+              to={
+                currentUser
+                  ? '/'
+                  : '/login'
+              }
+              replace
+            />
+          }
+        />
+
+      </Routes>
+    </AppLayout>
   );
 }
