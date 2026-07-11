@@ -4,11 +4,82 @@ import { useApp } from '../context/AppContext.jsx';
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login, state } = useApp();
-  const [form, setForm] = useState({ email: '', password: '' });
+  const { login } = useApp();
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [hint, setHint] = useState('');
-  function submit(e) { e.preventDefault(); const res = login(form.email, form.password); if (!res.ok) setError(res.message); else navigate(res.user.role === 'admin' ? '/admin' : '/'); }
-  function forgot() { const u = state.users.find((x) => x.email.toLowerCase() === form.email.toLowerCase()); setHint(u ? `Gợi ý mật khẩu: ${u.passwordHint || 'Chưa có gợi ý.'}` : 'Không tìm thấy email.'); }
-  return <div className="auth-page"><form className="auth-card panel" onSubmit={submit}><h1>Đăng nhập</h1><p className="muted">Demo: admin@docshare.vn / user@docshare.vn / teacher@docshare.vn - mật khẩu 123456.</p>{error && <div className="error-box">{error}</div>}<label>Email<input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></label><label>Mật khẩu<input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} /></label><button className="btn primary wide">Đăng nhập</button><button type="button" className="link-btn" onClick={forgot}>Quên mật khẩu?</button>{hint && <p className="hint-box">{hint}</p>}<p>Chưa có tài khoản? <Link to="/register">Đăng ký</Link></p></form></div>;
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    setError('');
+    setLoading(true);
+
+    const result = await login(email, password);
+
+    setLoading(false);
+
+    if (!result.ok) {
+      setError(result.message || 'Không thể đăng nhập.');
+      return;
+    }
+
+    navigate('/', { replace: true });
+  }
+
+  return (
+    <div className="live-auth-page">
+      <form className="live-auth-card" onSubmit={handleSubmit} autoComplete="on">
+        <Link className="live-auth-brand" to="/login">
+          <span>📖</span>
+          <div>
+            <strong>DocShare Pro</strong>
+            <small>Green Academic Library</small>
+          </div>
+        </Link>
+
+        <div className="live-auth-heading">
+          <span className="live-eyebrow">TÀI KHOẢN THẬT · SUPABASE</span>
+          <h1>Đăng nhập</h1>
+          <p>Dùng tài khoản đã đăng ký trên hệ thống.</p>
+        </div>
+
+        {error && <div className="live-alert error">{error}</div>}
+
+        <label className="live-field">
+          <span>Email</span>
+          <input
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="tenban@email.com"
+            autoComplete="email"
+            required
+          />
+        </label>
+
+        <label className="live-field">
+          <span>Mật khẩu</span>
+          <input
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="Nhập mật khẩu"
+            autoComplete="current-password"
+            minLength={6}
+            required
+          />
+        </label>
+
+        <button className="live-primary-button" type="submit" disabled={loading}>
+          {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+        </button>
+
+        <p className="live-auth-switch">
+          Chưa có tài khoản? <Link to="/register">Đăng ký ngay</Link>
+        </p>
+      </form>
+    </div>
+  );
 }

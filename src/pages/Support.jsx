@@ -1,9 +1,81 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext.jsx';
+import { EmptyState, PageHeader } from '../components/LiveUI.jsx';
 
 export default function Support() {
-  const { state, currentUser, patch } = useApp();
-  const [ticket, setTicket] = useState({ title: '', content: '' });
-  function send() { if (!ticket.title) return; patch((prev) => ({ ...prev, supportTickets: [{ id: 's_' + Date.now(), userId: prev.currentUserId, title: ticket.title, status: 'open', answer: 'Admin sẽ phản hồi sớm.' }, ...prev.supportTickets] })); setTicket({ title: '', content: '' }); }
-  return <div className="page support-page"><section className="page-hero"><span className="eyebrow">HỖ TRỢ</span><h1>Trung tâm hỗ trợ</h1><p>Hỏi về tài khoản, nạp credit, rút tiền, báo cáo và đăng tài liệu.</p></section><div className="support-grid"><aside className="panel"><h2>Câu hỏi phổ biến</h2>{['Làm sao đăng tài liệu?', 'Credit dùng để làm gì?', 'Rút tiền thế nào?', 'Báo cáo vi phạm ra sao?', 'Premium có quyền gì?'].map((q) => <button key={q}>{q}</button>)}</aside><main className="panel"><h2>Gửi yêu cầu hỗ trợ</h2><input value={ticket.title} onChange={(e) => setTicket({ ...ticket, title: e.target.value })} placeholder="Tiêu đề" /><textarea value={ticket.content} onChange={(e) => setTicket({ ...ticket, content: e.target.value })} placeholder="Nội dung cần hỗ trợ" /><button className="btn primary" onClick={send}>Gửi yêu cầu</button><h3>Yêu cầu của bạn</h3>{state.supportTickets.filter((t) => t.userId === currentUser.id || currentUser.role === 'admin').map((t) => <div className="ticket" key={t.id}><b>{t.title}</b><span>{t.status}</span><p>{t.answer}</p></div>)}</main></div></div>;
+  const { state, currentUser, createSupportTicket } = useApp();
+
+  const [subject, setSubject] = useState('');
+  const [content, setContent] = useState('');
+  const [priority, setPriority] = useState('normal');
+
+  const ownTickets = state.supportTickets.filter((item) => item.userId === currentUser?.id);
+
+  async function submit(event) {
+    event.preventDefault();
+    const ok = await createSupportTicket(subject, content, priority);
+    if (ok) {
+      setSubject('');
+      setContent('');
+      setPriority('normal');
+    }
+  }
+
+  return (
+    <div className="live-page">
+      <PageHeader
+        eyebrow="TRUNG TÂM HỖ TRỢ"
+        title="Gửi yêu cầu hỗ trợ"
+        text="Mọi yêu cầu được lưu vào bảng support_tickets."
+      />
+
+      <div className="live-support-grid">
+        <form className="live-panel" onSubmit={submit}>
+          <h2>Tạo yêu cầu mới</h2>
+
+          <label className="live-field">
+            <span>Chủ đề</span>
+            <input value={subject} onChange={(event) => setSubject(event.target.value)} required />
+          </label>
+
+          <label className="live-field">
+            <span>Nội dung</span>
+            <textarea value={content} onChange={(event) => setContent(event.target.value)} required />
+          </label>
+
+          <label className="live-field">
+            <span>Mức ưu tiên</span>
+            <select value={priority} onChange={(event) => setPriority(event.target.value)}>
+              <option value="low">Thấp</option>
+              <option value="normal">Bình thường</option>
+              <option value="high">Cao</option>
+            </select>
+          </label>
+
+          <button className="live-primary-button" type="submit">Gửi yêu cầu</button>
+        </form>
+
+        <section className="live-panel">
+          <h2>Yêu cầu của bạn</h2>
+
+          {ownTickets.length ? (
+            <div className="live-ticket-list">
+              {ownTickets.map((ticket) => (
+                <article key={ticket.id}>
+                  <div>
+                    <b>{ticket.subject}</b>
+                    <span className={`live-status ${ticket.status}`}>{ticket.status}</span>
+                  </div>
+                  <p>{ticket.content}</p>
+                  <small>{ticket.createdAt}</small>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <EmptyState icon="🎫" title="Chưa có yêu cầu" text="Bạn chưa gửi yêu cầu hỗ trợ nào." />
+          )}
+        </section>
+      </div>
+    </div>
+  );
 }

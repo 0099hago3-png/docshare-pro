@@ -1,28 +1,48 @@
-import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, LibraryBig, Search } from 'lucide-react';
 import { useApp } from '../context/AppContext.jsx';
-import CategoryIcon from '../components/CategoryIcon.jsx';
-import { normalizeText } from '../utils/helpers.js';
+import { EmptyState, PageHeader } from '../components/LiveUI.jsx';
 
 export default function Categories() {
   const { state } = useApp();
-  const [keyword, setKeyword] = useState('');
-  const categories = useMemo(() => state.categories.filter((cat) => cat.id !== 'all' && normalizeText(cat.name).includes(normalizeText(keyword))), [state.categories, keyword]);
 
   return (
-    <div className="page categories-page-v25">
-      <section className="category-hero-v25">
-        <div><span className="eyebrow"><LibraryBig size={15}/> BẢN ĐỒ TRI THỨC</span><h1>Khám phá theo lĩnh vực học thuật</h1><p>Mỗi danh mục được trình bày rõ ràng để bạn nhanh chóng tìm đúng môn học, chuyên ngành và tài liệu cần thiết.</p></div>
-        <label className="category-search-v25"><Search size={18}/><input value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="Tìm danh mục..."/></label>
-      </section>
-      <div className="category-grid-v25">
-        {categories.map((cat) => <Link to={`/documents?cat=${cat.id}`} key={cat.id} className="category-card-v25">
-          <span className="category-icon-v25"><CategoryIcon id={cat.id} size={28}/></span>
-          <div><h3>{cat.name}</h3><p>{cat.count.toLocaleString('vi-VN')} tài liệu</p></div>
-          <ArrowRight size={18}/>
-        </Link>)}
-      </div>
+    <div className="live-page">
+      <PageHeader
+        eyebrow="PHÂN LOẠI HỌC THUẬT"
+        title="Danh mục tài liệu"
+        text="Danh mục được lấy trực tiếp từ bảng categories trong Supabase."
+      />
+
+      {state.categories.length ? (
+        <div className="live-category-grid">
+          {state.categories.map((category) => {
+            const count = state.documents.filter(
+              (document) => document.categoryId === category.id,
+            ).length;
+
+            return (
+              <Link
+                className="live-category-card"
+                key={category.id}
+                to={`/documents?category=${category.id}`}
+              >
+                <span>📚</span>
+                <h3>{category.name}</h3>
+                <p>{category.description || 'Danh mục tài liệu học tập.'}</p>
+                <b>{count} tài liệu</b>
+              </Link>
+            );
+          })}
+        </div>
+      ) : (
+        <EmptyState
+          icon="🗂️"
+          title="Chưa có danh mục"
+          text="Bạn có thể tạo danh mục thật trong Supabase → Table Editor → categories. Tài liệu vẫn có thể đăng mà không chọn danh mục."
+          actionTo="/upload"
+          actionLabel="Đăng tài liệu"
+        />
+      )}
     </div>
   );
 }

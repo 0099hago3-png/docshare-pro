@@ -26,43 +26,48 @@ import Support from './pages/Support.jsx';
 import History from './pages/History.jsx';
 import GiftVault from './pages/GiftVault.jsx';
 
+import './supabase-live.css';
+
+function LoadingScreen() {
+  return (
+    <div className="live-loading-screen">
+      <div className="live-loading-card">
+        <div className="live-loading-logo">📖</div>
+        <h2>DocShare Pro</h2>
+        <p>Đang kết nối dữ liệu thật từ Supabase...</p>
+        <span className="live-spinner" />
+      </div>
+    </div>
+  );
+}
 
 function RequireLogin({ children }) {
-  const { currentUser } = useApp();
+  const { currentUser, authLoading } = useApp();
 
-  if (!currentUser) {
-    return <Navigate to="/login" replace />;
-  }
+  if (authLoading) return <LoadingScreen />;
+  if (!currentUser) return <Navigate to="/login" replace />;
 
   return children;
 }
-
 
 function RequireAdmin({ children }) {
-  const { currentUser } = useApp();
+  const { currentUser, authLoading } = useApp();
 
-  if (!currentUser) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (currentUser.role !== 'admin') {
-    return <Navigate to="/" replace />;
-  }
+  if (authLoading) return <LoadingScreen />;
+  if (!currentUser) return <Navigate to="/login" replace />;
+  if (currentUser.role !== 'admin') return <Navigate to="/" replace />;
 
   return children;
 }
-
 
 function GuestOnly({ children }) {
-  const { currentUser } = useApp();
+  const { currentUser, authLoading } = useApp();
 
-  if (currentUser) {
-    return <Navigate to="/" replace />;
-  }
+  if (authLoading) return <LoadingScreen />;
+  if (currentUser) return <Navigate to="/" replace />;
 
   return children;
 }
-
 
 function AppLayout({ children }) {
   const { currentUser } = useApp();
@@ -72,30 +77,19 @@ function AppLayout({ children }) {
     location.pathname === '/login'
     || location.pathname === '/register';
 
-  const showWebsiteLayout =
-    Boolean(currentUser)
-    && !isAuthPage;
+  const showWebsiteLayout = Boolean(currentUser) && !isAuthPage;
 
   return (
     <>
       {showWebsiteLayout && <Navbar />}
-
       {showWebsiteLayout && <LeftRail />}
 
-      <main
-        className={
-          showWebsiteLayout
-            ? 'app-main'
-            : 'auth-main'
-        }
-      >
+      <main className={showWebsiteLayout ? 'app-main' : 'auth-main'}>
         {children}
       </main>
 
       {showWebsiteLayout && <MiniMessenger />}
-
       {showWebsiteLayout && <ChatBot />}
-
       {showWebsiteLayout && <GiftEffect />}
 
       <Toast />
@@ -103,181 +97,50 @@ function AppLayout({ children }) {
   );
 }
 
-
 export default function App() {
   const { currentUser } = useApp();
 
   return (
     <AppLayout>
       <Routes>
-
         <Route
           path="/login"
-          element={
+          element={(
             <GuestOnly>
               <Login />
             </GuestOnly>
-          }
+          )}
         />
 
         <Route
           path="/register"
-          element={
+          element={(
             <GuestOnly>
               <Register />
             </GuestOnly>
-          }
+          )}
         />
 
-        <Route
-          path="/"
-          element={
-            <RequireLogin>
-              <Home />
-            </RequireLogin>
-          }
-        />
-
-        <Route
-          path="/documents"
-          element={
-            <RequireLogin>
-              <Documents />
-            </RequireLogin>
-          }
-        />
-
-        <Route
-          path="/documents/:id"
-          element={
-            <RequireLogin>
-              <DocumentDetail />
-            </RequireLogin>
-          }
-        />
-
-        <Route
-          path="/categories"
-          element={
-            <RequireLogin>
-              <Categories />
-            </RequireLogin>
-          }
-        />
-
-        <Route
-          path="/feed"
-          element={
-            <RequireLogin>
-              <Feed />
-            </RequireLogin>
-          }
-        />
-
-        <Route
-          path="/leaderboard"
-          element={
-            <RequireLogin>
-              <Leaderboard />
-            </RequireLogin>
-          }
-        />
-
-        <Route
-          path="/support"
-          element={
-            <RequireLogin>
-              <Support />
-            </RequireLogin>
-          }
-        />
-
-        <Route
-          path="/upload"
-          element={
-            <RequireLogin>
-              <UploadPage />
-            </RequireLogin>
-          }
-        />
-
-        <Route
-          path="/profile"
-          element={
-            <RequireLogin>
-              <Profile />
-            </RequireLogin>
-          }
-        />
-
-        <Route
-          path="/users/:id"
-          element={
-            <RequireLogin>
-              <Profile />
-            </RequireLogin>
-          }
-        />
-
-        <Route
-          path="/wallet"
-          element={
-            <RequireLogin>
-              <Wallet />
-            </RequireLogin>
-          }
-        />
-
-        <Route
-          path="/messages"
-          element={
-            <RequireLogin>
-              <Messages />
-            </RequireLogin>
-          }
-        />
-
-        <Route
-          path="/history"
-          element={
-            <RequireLogin>
-              <History />
-            </RequireLogin>
-          }
-        />
-
-        <Route
-          path="/gifts"
-          element={
-            <RequireLogin>
-              <GiftVault />
-            </RequireLogin>
-          }
-        />
-
-        <Route
-          path="/admin"
-          element={
-            <RequireAdmin>
-              <AdminDashboard />
-            </RequireAdmin>
-          }
-        />
+        <Route path="/" element={<RequireLogin><Home /></RequireLogin>} />
+        <Route path="/documents" element={<RequireLogin><Documents /></RequireLogin>} />
+        <Route path="/documents/:id" element={<RequireLogin><DocumentDetail /></RequireLogin>} />
+        <Route path="/categories" element={<RequireLogin><Categories /></RequireLogin>} />
+        <Route path="/feed" element={<RequireLogin><Feed /></RequireLogin>} />
+        <Route path="/leaderboard" element={<RequireLogin><Leaderboard /></RequireLogin>} />
+        <Route path="/support" element={<RequireLogin><Support /></RequireLogin>} />
+        <Route path="/upload" element={<RequireLogin><UploadPage /></RequireLogin>} />
+        <Route path="/profile" element={<RequireLogin><Profile /></RequireLogin>} />
+        <Route path="/users/:id" element={<RequireLogin><Profile /></RequireLogin>} />
+        <Route path="/wallet" element={<RequireLogin><Wallet /></RequireLogin>} />
+        <Route path="/messages" element={<RequireLogin><Messages /></RequireLogin>} />
+        <Route path="/history" element={<RequireLogin><History /></RequireLogin>} />
+        <Route path="/gifts" element={<RequireLogin><GiftVault /></RequireLogin>} />
+        <Route path="/admin" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
 
         <Route
           path="*"
-          element={
-            <Navigate
-              to={
-                currentUser
-                  ? '/'
-                  : '/login'
-              }
-              replace
-            />
-          }
+          element={<Navigate to={currentUser ? '/' : '/login'} replace />}
         />
-
       </Routes>
     </AppLayout>
   );

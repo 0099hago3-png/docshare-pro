@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Gift, Send, X } from 'lucide-react';
-
 import { useApp } from '../context/AppContext.jsx';
-import { formatNumber } from '../utils/helpers.js';
+import { formatNumber } from './LiveUI.jsx';
 
 export default function DonateModal({
   open,
@@ -25,14 +23,16 @@ export default function DonateModal({
   );
 
   const [selectedId, setSelectedId] = useState('');
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
     if (!open) return;
-    setSelectedId((current) => {
-      const exists = gifts.some((gift) => gift.id === current);
-      return exists ? current : (gifts[0]?.id || '');
-    });
-  }, [open, gifts]);
+    setSelectedId((current) => (
+      gifts.some((gift) => gift.id === current)
+        ? current
+        : gifts[0]?.id || ''
+    ));
+  }, [gifts, open]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -40,9 +40,9 @@ export default function DonateModal({
     const oldOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
-    const handleKeyDown = (event) => {
+    function handleKeyDown(event) {
       if (event.key === 'Escape') onClose();
-    };
+    }
 
     window.addEventListener('keydown', handleKeyDown);
 
@@ -50,115 +50,96 @@ export default function DonateModal({
       document.body.style.overflow = oldOverflow;
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [open, onClose]);
+  }, [onClose, open]);
 
   if (!open) return null;
 
-  const selectedGift =
-    gifts.find((gift) => gift.id === selectedId)
-    || gifts[0]
-    || null;
+  const selectedGift = gifts.find((gift) => gift.id === selectedId) || null;
 
   const target = mode === 'document'
     ? state.documents.find((item) => item.id === targetId)
     : state.posts.find((item) => item.id === targetId);
 
-  const receiver = target?.authorId
-    ? getUser(target.authorId)
-    : null;
+  const receiver = target?.authorId ? getUser(target.authorId) : null;
 
   const canAfford = selectedGift
     ? Number(currentUser?.credit || 0) >= Number(selectedGift.credit || 0)
     : false;
 
-  function handleSendGift() {
-    if (!selectedGift) return;
+  async function handleSendGift() {
+    if (!selectedGift || sending) return;
+
+    setSending(true);
 
     const success = mode === 'document'
-      ? donateDocument(targetId, selectedGift)
-      : donatePost(targetId, selectedGift);
+      ? await donateDocument(targetId, selectedGift)
+      : await donatePost(targetId, selectedGift);
+
+    setSending(false);
 
     if (success) onClose();
   }
 
   return createPortal(
-    <div
-      className="simple-gift-backdrop-v40"
-      onMouseDown={onClose}
-    >
+    <div className="live-gift-backdrop" onMouseDown={onClose}>
       <section
-        className="simple-gift-modal-v40"
+        className="live-gift-modal"
         role="dialog"
         aria-modal="true"
-        aria-label="Tặng quà tri ân"
+        aria-label="Tặng quà"
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <header className="simple-gift-header-v40">
+        <header>
           <div>
-            <h2><Gift size={20}/> Tặng quà</h2>
-            <p>Chọn một món quà và gửi lời cảm ơn.</p>
+            <h2>🎁 Tặng quà</h2>
+            <p>Chọn quà thật từ bảng gifts trong Supabase.</p>
           </div>
-
-          <button
-            type="button"
-            className="simple-gift-close-v40"
-            onClick={onClose}
-            aria-label="Đóng"
-          >
-            <X size={18}/>
-          </button>
+          <button type="button" onClick={onClose} aria-label="Đóng">×</button>
         </header>
 
-        <div className="simple-gift-receiver-v40">
+        <div className="live-gift-receiver">
           <span>Gửi cho</span>
           <strong>{receiver?.name || 'Tác giả DocShare'}</strong>
         </div>
 
-        <div className="simple-gift-grid-v40 custom-scroll">
-          {gifts.map((gift) => (
-            <button
-              type="button"
-              key={gift.id}
-              className={
-                selectedGift?.id === gift.id
-                  ? 'simple-gift-item-v40 active'
-                  : 'simple-gift-item-v40'
-              }
-              onClick={() => setSelectedId(gift.id)}
-            >
-             <span className="simple-gift-art-v40 simple-gift-emoji-v40">
-  {gift.icon || gift.emoji || '🎁'}
-</span>
+        {gifts.length ? (
+          <div className="live-gift-select-grid">
+            {gifts.map((gift) => (
+              <button
+                type="button"
+                key={gift.id}
+                className={selectedId === gift.id ? 'active' : ''}
+                onClick={() => setSelectedId(gift.id)}
+              >
+                <span>{gift.icon || '🎁'}</span>
+                <b>{gift.name}</b>
+                <small>{formatNumber(gift.credit)} credit</small>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="live-gift-empty">
+            Chưa có quà trong Supabase. Admin hãy thêm dữ liệu vào bảng gifts.
+          </div>
+        )}
 
-              <strong>{gift.name}</strong>
-
-              <small>
-                {formatNumber(gift.credit || 0)} credit
-              </small>
-            </button>
-          ))}
-
-          {!gifts.length && (
-            <p className="simple-gift-empty-v40">
-              Kho quà chưa có dữ liệu.
-            </p>
-          )}
-        </div>
-
-        <footer className="simple-gift-footer-v40">
+        <footer>
           <div>
             <span>Số dư</span>
-            <strong>{formatNumber(currentUser?.credit || 0)} credit</strong>
+            <strong>{formatNumber(currentUser?.credit)} credit</strong>
           </div>
 
           <button
+            className="live-primary-button"
             type="button"
-            className="simple-gift-send-v40"
             onClick={handleSendGift}
-            disabled={!selectedGift || !canAfford}
+            disabled={!selectedGift || !canAfford || sending}
           >
-            <Send size={16}/>
-            {canAfford ? 'Gửi quà' : 'Không đủ credit'}
+            {sending
+              ? 'Đang gửi...'
+              : canAfford
+                ? 'Gửi quà'
+                : 'Không đủ credit'}
           </button>
         </footer>
       </section>

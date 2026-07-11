@@ -1,123 +1,118 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { ChevronDown, Filter, Flame, Heart, Search, Sparkles, Tag, TrendingUp } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext.jsx';
-import DocumentCard from '../components/DocumentCard.jsx';
-import { normalizeText } from '../utils/helpers.js';
-import { schools } from '../data/defaultData.js';
+import {
+  DocumentCard,
+  EmptyState,
+  PageHeader,
+} from '../components/LiveUI.jsx';
 
 export default function Documents() {
   const { state, getUser } = useApp();
-  const [params, setParams] = useSearchParams();
-  const [keyword, setKeyword] = useState(params.get('q') || '');
-  const [category, setCategory] = useState(params.get('cat') || 'all');
-  const [sort, setSort] = useState('newest');
-  const [focus, setFocus] = useState(false);
-  const [advanced, setAdvanced] = useState(false);
-  const [fileType, setFileType] = useState('all');
-  const [school, setSchool] = useState('all');
-  const [tag, setTag] = useState('');
-  const [author, setAuthor] = useState('');
+  const [searchParams] = useSearchParams();
 
-  useEffect(() => {
-    setKeyword(params.get('q') || '');
-    setCategory(params.get('cat') || 'all');
-  }, [params]);
+  const [query, setQuery] = useState('');
+  const [categoryId, setCategoryId] = useState('');
+  const [sort, setSort] = useState(searchParams.get('sort') || 'newest');
 
-  const tagSuggestions = useMemo(() => [...new Set(state.documents.flatMap((doc) => doc.tags || []))].sort(), [state.documents]);
+  const documents = useMemo(() => {
+    const keyword = query.trim().toLowerCase();
 
-  const suggestions = useMemo(() => {
-    const q = normalizeText(keyword.trim());
-    if (!q) return [];
-    return state.documents.filter((doc) => {
-      const authorName = getUser(doc.authorId)?.name || '';
-      return normalizeText(`${doc.title} ${doc.subject} ${doc.school} ${authorName} ${(doc.tags || []).join(' ')}`).includes(q);
-    }).slice(0, 6);
-  }, [keyword, state.documents, getUser]);
+    const result = state.documents.filter((document) => {
+      const haystack = [
+        document.title,
+        document.description,
+        document.subject,
+        document.category,
+        document.school,
+        document.major,
+        document.isbn,
+        ...(document.tags || []),
+      ].join(' ').toLowerCase();
 
-  const filtered = useMemo(() => {
-    const q = normalizeText(keyword);
-    const normalizedTag = normalizeText(tag);
-    const normalizedAuthor = normalizeText(author);
-    const list = state.documents.filter((doc) => {
-      const authorName = getUser(doc.authorId)?.name || '';
-      const searchable = normalizeText(`${doc.title} ${doc.subject} ${doc.school} ${authorName} ${(doc.tags || []).join(' ')}`);
-      const matchQ = !q || searchable.includes(q);
-      const matchCategory = category === 'all' || doc.category === category;
-      const matchType = fileType === 'all' || doc.type === fileType;
-      const matchSchool = school === 'all' || normalizeText(doc.school || '') === normalizeText(school);
-      const matchTag = !normalizedTag || (doc.tags || []).some((item) => normalizeText(item).includes(normalizedTag));
-      const matchAuthor = !normalizedAuthor || normalizeText(authorName).includes(normalizedAuthor);
-      return matchQ && matchCategory && matchType && matchSchool && matchTag && matchAuthor;
+      const matchesKeyword = !keyword || haystack.includes(keyword);
+      const matchesCategory = !categoryId || document.categoryId === categoryId;
+
+      return matchesKeyword && matchesCategory && document.status === 'published';
     });
-    return [...list].sort((a, b) => (
-      sort === 'popular' ? b.views - a.views :
-      sort === 'liked' ? b.likes - a.likes :
-      sort === 'downloaded' ? b.downloads - a.downloads :
-      new Date(b.createdAt) - new Date(a.createdAt)
-    ));
-  }, [author, category, fileType, getUser, keyword, school, sort, state.documents, tag]);
 
-  const topLiked = useMemo(() => [...state.documents].sort((a, b) => b.likes - a.likes).slice(0, 3), [state.documents]);
-  const suggested = useMemo(() => [...state.documents].sort((a, b) => (b.rating * 100 + b.views / 100) - (a.rating * 100 + a.views / 100)).slice(0, 5), [state.documents]);
+    return result.sort((first, second) => {
+      if (sort === 'top') {
+        return (
+          second.likes * 3 + second.views + second.rating * 10
+        ) - (
+          first.likes * 3 + first.views + first.rating * 10
+        );
+      }
 
-  function submit(event) {
-    event.preventDefault();
-    const next = {};
-    if (keyword.trim()) next.q = keyword.trim();
-    if (category !== 'all') next.cat = category;
-    setParams(next);
-    setFocus(false);
-  }
+      if (sort === 'liked') return second.likes - first.likes;
+      if (sort === 'viewed') return second.views - first.views;
+      if (sort === 'rating') return second.rating - first.rating;
+      if (sort === 'price-low') return first.price - second.price;
 
-  function clearAdvanced() {
-    setFileType('all');
-    setSchool('all');
-    setTag('');
-    setAuthor('');
-  }
-
-  const visibleCategories = state.categories.filter((cat) => cat.id !== 'all').slice(0, 8);
+      return new Date(second.createdAt || 0) - new Date(first.createdAt || 0);
+    });
+  }, [categoryId, query, sort, state.documents]);
 
   return (
-    <div className="page universe-page documents-universe">
-      <section className="documents-head-universe">
-        <div><span className="eyebrow"><Sparkles size={15}/> THƯ VIỆN TRI THỨC</span><h1>Khám phá tài liệu</h1><p>Tìm kiếm theo tên, tác giả, trường, hashtag và lọc chuyên sâu để ra đúng tài liệu bạn cần.</p></div>
+    <div className="live-page">
+      <PageHeader
+        eyebrow="THƯ VIỆN TÀI LIỆU"
+        title="Tài liệu thật từ cộng đồng"
+        text="Không có dữ liệu mẫu. Tài liệu chỉ xuất hiện sau khi người dùng đăng lên Supabase."
+      >
+        <Link className="live-primary-link" to="/upload">+ Đăng tài liệu</Link>
+      </PageHeader>
+
+      <section className="live-filter-bar">
+        <input
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Tìm theo tên, môn học, trường, ISBN hoặc tag..."
+        />
+
+        <select value={categoryId} onChange={(event) => setCategoryId(event.target.value)}>
+          <option value="">Tất cả danh mục</option>
+          {state.categories.map((category) => (
+            <option key={category.id} value={category.id}>{category.name}</option>
+          ))}
+        </select>
+
+        <select value={sort} onChange={(event) => setSort(event.target.value)}>
+          <option value="newest">Mới nhất</option>
+          <option value="top">Xếp hạng tổng hợp</option>
+          <option value="liked">Nhiều tim nhất</option>
+          <option value="viewed">Nhiều lượt xem nhất</option>
+          <option value="rating">Đánh giá cao nhất</option>
+          <option value="price-low">Giá thấp trước</option>
+        </select>
       </section>
 
-      <section className="panel-universe document-controls-universe">
-        <form className="document-search-large" onSubmit={submit}>
-          <Search size={20}/><input value={keyword} onFocus={() => setFocus(true)} onChange={(event) => setKeyword(event.target.value)} placeholder="Tìm tài liệu, tác giả, môn học, trường..."/><button>Tìm kiếm</button>
-          {focus && keyword.trim() && <div className="document-search-suggest custom-scroll">{suggestions.map((doc) => <button type="button" key={doc.id} onMouseDown={() => { setKeyword(doc.title); setParams({ q: doc.title }); setFocus(false); }}><span className={`mini-doc-cover ${doc.color}`}>{doc.cover}</span><span><b>{doc.title}</b><small>{doc.subject} · {doc.school}</small></span></button>)}{!suggestions.length && <p>Không có gợi ý gần đúng.</p>}</div>}
-        </form>
-        <div className="document-filter-row">
-          <div className="filter-group-universe"><span>Danh mục</span>{visibleCategories.map((cat) => <button key={cat.id} className={category === cat.id ? 'active' : ''} onClick={() => setCategory(cat.id)}>{cat.name}</button>)}<button onClick={() => setAdvanced((value) => !value)}>Khác <ChevronDown size={15}/></button></div>
-          <div className="filter-group-universe sort-group"><span>Sắp xếp</span>{[['newest','Mới nhất'],['popular','Phổ biến'],['liked','Yêu thích'],['downloaded','Tải nhiều']].map(([id,label]) => <button key={id} className={sort === id ? 'active' : ''} onClick={() => setSort(id)}>{label}</button>)}</div>
-          <button className="advanced-filter-btn" onClick={() => setAdvanced((value) => !value)}><Filter size={17}/>Bộ lọc nâng cao</button>
+      <div className="live-result-line">
+        Tìm thấy <b>{documents.length}</b> tài liệu
+      </div>
+
+      {documents.length ? (
+        <div className="live-document-grid">
+          {documents.map((document) => (
+            <DocumentCard
+              key={document.id}
+              document={document}
+              author={getUser(document.authorId)}
+            />
+          ))}
         </div>
-        {advanced && <div className="advanced-filter-panel advanced-filter-panel-v23">
-          <label>Loại file<select value={fileType} onChange={(event) => setFileType(event.target.value)}><option value="all">Tất cả</option><option>PDF</option><option>DOCX</option><option>PPTX</option><option>XLSX</option><option>ZIP</option><option>RAR</option></select></label>
-          <label>Trường<select value={school} onChange={(event) => setSchool(event.target.value)}><option value="all">Tất cả trường</option>{schools.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
-          <label>Tác giả<input value={author} onChange={(event) => setAuthor(event.target.value)} placeholder="Tìm theo tên tác giả"/></label>
-          <label className="advanced-tag-field">Hashtag<div className="tag-field-wrap"><Tag size={15}/><input list="doc-tags" value={tag} onChange={(event) => setTag(event.target.value)} placeholder="Ví dụ: react, postgresql..."/></div><datalist id="doc-tags">{tagSuggestions.map((item) => <option key={item} value={item}/>)}</datalist></label>
-          <button onClick={clearAdvanced}>Xóa bộ lọc</button>
-        </div>}
-      </section>
-
-      <section className="panel-universe showcase-universe-section">
-        <div className="panel-title-row"><div><h2><Heart size={21}/> Top được yêu thích nhất hôm nay</h2><p>Ba tài liệu được cộng đồng yêu thích nhiều nhất.</p></div><button className="link-btn" onClick={() => setSort('liked')}>Xem tất cả →</button></div>
-        <div className="top-three-universe">{topLiked.map((doc,index) => <DocumentCard key={doc.id} doc={doc} compact rank={index + 1}/>)}</div>
-      </section>
-
-      <section className="panel-universe showcase-universe-section">
-        <div className="panel-title-row"><div><h2><TrendingUp size={21}/> Gợi ý cho bạn</h2><p>Dựa trên lịch sử xem, lượt thích, tag và ngành học.</p></div></div>
-        <div className="recommendation-row custom-scroll">{suggested.map((doc) => <DocumentCard key={doc.id} doc={doc} compact/>)}</div>
-      </section>
-
-      <section className="documents-result-section">
-        <div className="panel-title-row"><div><h2><Flame size={21}/> Tất cả tài liệu</h2><p>{filtered.length} kết quả phù hợp.</p></div></div>
-        <div className="universe-doc-grid">{filtered.map((doc) => <DocumentCard key={doc.id} doc={doc}/>)}</div>
-      </section>
+      ) : (
+        <EmptyState
+          icon="🔎"
+          title="Chưa có tài liệu phù hợp"
+          text={state.documents.length
+            ? 'Thử đổi từ khóa hoặc bộ lọc.'
+            : 'Thư viện đang bắt đầu từ số 0. Hãy đăng tài liệu đầu tiên.'}
+          actionTo="/upload"
+          actionLabel="Đăng tài liệu"
+        />
+      )}
     </div>
   );
 }

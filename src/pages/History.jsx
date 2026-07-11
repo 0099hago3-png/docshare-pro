@@ -1,65 +1,88 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  Bookmark, Download, Eye, FileText, Heart, MessageCircle, PenLine, Search, Star,
-} from 'lucide-react';
 import { useApp } from '../context/AppContext.jsx';
+import { EmptyState, PageHeader } from '../components/LiveUI.jsx';
 
-const tabs = [
-  ['view', 'Đã xem', Eye],
-  ['like', 'Đã thích', Heart],
-  ['saved', 'Đã lưu', Bookmark],
-  ['comment', 'Đã bình luận', MessageCircle],
-  ['review', 'Đã đánh giá', Star],
-  ['download', 'Đã tải', Download],
-  ['post', 'Đã đăng', PenLine],
-];
+const typeLabels = {
+  view: 'Đã xem',
+  like: 'Đã thích',
+  comment: 'Đã bình luận',
+  purchase: 'Đã mua',
+  upload: 'Đã đăng',
+  gift: 'Đã tặng quà',
+};
 
 export default function History() {
   const { state } = useApp();
-  const [activeTab, setActiveTab] = useState('view');
-  const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState('all');
 
-  const itemsByType = useMemo(() => {
-    const map = Object.fromEntries(tabs.map(([key]) => [key, []]));
-    (state.history || []).forEach((item) => {
-      const key = item.type === 'saved' ? 'saved' : item.type === 'rating' ? 'review' : item.type;
-      if (map[key]) map[key].push(item);
-    });
-    state.savedDocuments?.forEach((id) => {
-      if (!map.saved.some((item) => item.targetId === id)) {
-        const doc = state.documents.find((item) => item.id === id);
-        if (doc) map.saved.push({ id: `saved-${id}`, type: 'saved', targetId: id, title: `Đã lưu ${doc.title}`, date: 'Trong danh sách yêu thích' });
-      }
-    });
-    state.posts?.filter((post) => post.authorId === state.currentUserId).forEach((post) => map.post.push({ id: `post-${post.id}`, type: 'post', targetId: post.id, title: post.title || post.content, date: post.createdAt }));
-    return map;
-  }, [state]);
-
-  const visible = (itemsByType[activeTab] || []).filter((item) => String(item.title || '').toLowerCase().includes(query.toLowerCase()));
-  const activeMeta = tabs.find(([key]) => key === activeTab);
-  const ActiveIcon = activeMeta?.[2] || Eye;
-
-  function targetLink(item) {
-    if (item.type === 'post') return '/feed';
-    return item.targetId ? `/documents/${item.targetId}` : '/documents';
-  }
+  const history = useMemo(() => (
+    filter === 'all'
+      ? state.history
+      : state.history.filter((item) => item.type === filter)
+  ), [filter, state.history]);
 
   return (
-    <div className="page universe-page history-v22-page">
-      <section className="history-v22-hero">
-        <div><span className="eyebrow">NHẬT KÝ CÁ NHÂN</span><h1>Lịch sử hoạt động</h1><p>Mỗi loại hoạt động được tách riêng để dễ tìm và không bị dồn rối trong một danh sách.</p></div>
-        <div className="history-summary-v22">{tabs.slice(0, 6).map(([key, label, Icon]) => <button key={key} className={activeTab === key ? 'active' : ''} onClick={() => setActiveTab(key)}><Icon/><span><b>{itemsByType[key]?.length || 0}</b><small>{label}</small></span></button>)}</div>
-      </section>
+    <div className="live-page">
+      <PageHeader
+        eyebrow="HOẠT ĐỘNG ĐƯỢC LƯU"
+        title="Lịch sử của bạn"
+        text="Lượt xem, tim, bình luận, mua tài liệu và các hoạt động thật được lấy từ bảng activity_history."
+      />
 
-      <section className="panel-universe history-shell-v22">
-        <div className="history-tabs-v22 custom-scroll">{tabs.map(([key, label, Icon]) => <button key={key} className={activeTab === key ? 'active' : ''} onClick={() => setActiveTab(key)}><Icon size={17}/>{label}<em>{itemsByType[key]?.length || 0}</em></button>)}</div>
-        <div className="history-toolbar-v22"><div><ActiveIcon/><span><h2>{activeMeta?.[1]}</h2><p>{visible.length} hoạt động</p></span></div><label><Search size={16}/><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm trong mục này..."/></label></div>
+      <div className="live-filter-tabs">
+        {[
+          ['all', 'Tất cả'],
+          ['view', 'Đã xem'],
+          ['like', 'Đã thích'],
+          ['comment', 'Bình luận'],
+          ['purchase', 'Đã mua'],
+          ['upload', 'Đã đăng'],
+        ].map(([value, label]) => (
+          <button
+            key={value}
+            className={filter === value ? 'active' : ''}
+            onClick={() => setFilter(value)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
-        <div className="history-panel-v22">
-          {visible.length ? visible.map((item) => <Link to={targetLink(item)} key={item.id} className="history-row-v22"><span className={`history-icon-v22 type-${activeTab}`}><ActiveIcon/></span><div><b>{item.title}</b><small>{item.date}</small></div><em>Xem chi tiết →</em></Link>) : <div className="history-empty-v22"><ActiveIcon/><h3>Chưa có hoạt động trong mục “{activeMeta?.[1]}”</h3><p>Khi bạn sử dụng DocShare, lịch sử tương ứng sẽ xuất hiện tại đây.</p><Link to="/documents">Khám phá tài liệu</Link></div>}
+      {history.length ? (
+        <div className="live-history-list">
+          {history.map((item) => {
+            const targetUrl = item.targetType === 'document' && item.targetId
+              ? `/documents/${item.targetId}`
+              : item.targetType === 'post'
+                ? '/feed'
+                : null;
+
+            const content = (
+              <>
+                <div className="live-history-icon">{item.type === 'view' ? '👁' : item.type === 'like' ? '♥' : item.type === 'comment' ? '💬' : item.type === 'purchase' ? '🛒' : item.type === 'upload' ? '📤' : '•'}</div>
+                <div>
+                  <span>{typeLabels[item.type] || item.type}</span>
+                  <h3>{item.title}</h3>
+                  <small>{item.date}</small>
+                </div>
+              </>
+            );
+
+            return targetUrl ? (
+              <Link className="live-history-item" key={item.id} to={targetUrl}>{content}</Link>
+            ) : (
+              <article className="live-history-item" key={item.id}>{content}</article>
+            );
+          })}
         </div>
-      </section>
+      ) : (
+        <EmptyState
+          icon="🕘"
+          title="Chưa có lịch sử"
+          text="Dữ liệu sẽ xuất hiện sau khi bạn xem, thích, bình luận hoặc đăng tài liệu."
+        />
+      )}
     </div>
   );
 }
