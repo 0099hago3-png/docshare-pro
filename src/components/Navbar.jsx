@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Bell, BookOpenText, ChevronDown, FileText, Heart, Search, ShieldAlert, Sparkles, UserRound, WalletCards } from 'lucide-react';
+import { Bell, ChevronDown, FileText, Heart, Search, ShieldAlert, Sparkles, UserRound, WalletCards } from 'lucide-react';
 import { useApp } from '../context/AppContext.jsx';
 import { normalizeText } from '../utils/helpers.js';
 import Avatar from './Avatar.jsx';
@@ -70,7 +70,7 @@ export default function Navbar() {
 
   return (
     <header className="topbar universe-topbar" ref={headerRef}>
-      <Link to="/" className="brand"><span className="brand-mark"><BookOpenText size={19}/><i>D</i></span><span className="brand-copy"><b>DocShare</b><small>ACADEMIC LIBRARY</small></span></Link>
+      <Link to="/" className="brand brand-v29"><img className="brand-emblem-v29" src="/brand/docshare-emblem-v29.svg" alt="DocShare Pro"/><span className="brand-copy"><b>DocShare Pro</b><small>GREEN ACADEMIC LIBRARY</small></span></Link>
 
       <form className="global-search fb-search" onSubmit={submitSearch}>
         <Search size={18} />

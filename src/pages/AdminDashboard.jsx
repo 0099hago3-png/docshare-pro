@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx';
 import {
   Activity, BadgeCheck, BanknoteArrowDown, BellRing, BookOpen, CircleDollarSign, FileClock, FileText,
   Frame, Gift, History, LayoutDashboard, LockKeyhole, MessageSquareText, Search, Settings, ShieldAlert,
-  Sparkles, Upload, UserRoundCog, UsersRound, WalletCards, XCircle,
+  Sparkles, Upload, UserRoundCog, UsersRound, WalletCards, XCircle, Mail, Send,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext.jsx';
 import Avatar from '../components/Avatar.jsx';
@@ -21,7 +21,7 @@ const ranges = {
 
 const sideItems = [
   ['overview', LayoutDashboard, 'Tổng quan'], ['users', UsersRound, 'Người dùng'], ['documents', FileText, 'Tài liệu'],
-  ['posts', MessageSquareText, 'Bài đăng'], ['transactions', WalletCards, 'Giao dịch & Credit'], ['topup', Upload, 'Nạp tiền'],
+  ['posts', MessageSquareText, 'Bài đăng'], ['mailbox', Mail, 'Hộp thư'], ['transactions', WalletCards, 'Giao dịch & Credit'], ['topup', Upload, 'Nạp tiền'],
   ['withdraw', BanknoteArrowDown, 'Rút tiền'], ['reports', ShieldAlert, 'Báo cáo'], ['premium', BadgeCheck, 'Premium'],
   ['frames', Frame, 'Khung avatar'], ['logs', History, 'Nhật ký hoạt động'], ['settings', Settings, 'Cài đặt'],
 ];
@@ -31,7 +31,7 @@ export default function AdminDashboard() {
     state, getUser, adminApproveTransaction, adminRejectTransaction, adminLockUser, adminUnlockUser,
     adminDeleteDocument, adminDeletePost, adminChangeRole, adminToggleVerified,
     adminRevokeCredit, adminAddCredit, adminGrantFrame, adminUnlockAllFrames,
-    adminSendNotification, adminResolveReport, adminAddBannedWord, adminRemoveBannedWord, resetDemo,
+    adminSendNotification, adminResolveReport, adminAddBannedWord, adminRemoveBannedWord, sendMailboxMessage, markMailboxThreadRead, resetDemo,
   } = useApp();
   const [tab, setTab] = useState('overview');
   const [range, setRange] = useState('week');
@@ -48,6 +48,8 @@ export default function AdminDashboard() {
   const [premiumUser, setPremiumUser] = useState(null);
   const [reportNote, setReportNote] = useState('Đã kiểm tra và xử lý theo quy định.');
   const [statusFilter, setStatusFilter] = useState('pending');
+  const [mailboxThreadId, setMailboxThreadId] = useState('');
+  const [mailReply, setMailReply] = useState('');
 
   const pendingReports = state.reports.filter((item) => item.status === 'pending');
   const pendingTopup = state.transactions.filter((item) => item.status === 'pending' && item.type === 'topup');
@@ -61,6 +63,9 @@ export default function AdminDashboard() {
   const foundUsers = state.users.filter((user) => `${user.name} ${user.email} ${user.id}`.toLowerCase().includes(query.toLowerCase()));
   const foundDocs = state.documents.filter((doc) => `${doc.title} ${doc.subject} ${doc.id}`.toLowerCase().includes(query.toLowerCase()));
   const foundPosts = state.posts.filter((post) => `${post.content} ${post.id}`.toLowerCase().includes(query.toLowerCase()));
+  const adminMailboxThreads = (state.mailboxThreads || []).filter((thread) => (thread.participants || []).includes('u_admin')).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  const activeMailboxThread = adminMailboxThreads.find((thread) => thread.id === mailboxThreadId) || adminMailboxThreads[0] || null;
+
 
   const stats = useMemo(() => ({
     users: 128764 + state.users.length,
@@ -103,7 +108,7 @@ export default function AdminDashboard() {
   return (
     <div className="admin-universe page">
       <aside className="admin-nav-universe">
-        <div className="admin-brand"><b>DocShare</b><span>ADMIN CENTER</span></div>
+        <div className="admin-brand"><b>DocShare Pro</b><span>ADMIN CENTER</span></div>
         <div className="admin-nav-scroll custom-scroll">
           {sideItems.map(([id, Icon, label]) => <button key={id} className={tab === id ? 'active' : ''} onClick={() => setTab(id)}><Icon size={18}/><span>{label}</span>{id === 'reports' && pendingReports.length > 0 && <em>{pendingReports.length}</em>}</button>)}
         </div>
@@ -127,10 +132,10 @@ export default function AdminDashboard() {
             <section className="panel-universe admin-chart-panel">
               <div className="analytics-head-universe"><div><h2>Thống kê hoạt động</h2><p>Các nút thời gian hoạt động và cập nhật biểu đồ.</p></div><div className="period-tabs universe-periods">{[['today','Hôm nay'],['week','7 ngày'],['month','30 ngày'],['year','12 tháng']].map(([key,label]) => <button key={key} className={range === key ? 'active' : ''} onClick={() => setRange(key)}>{label}</button>)}</div></div>
               <MarketChart labels={chart.labels} series={[
-                { key:'users', label:'Người dùng mới', values:chart.users, color:'#8b5cf6' },
-                { key:'docs', label:'Tài liệu mới', values:chart.docs, color:'#3b82f6' },
-                { key:'posts', label:'Bài đăng mới', values:chart.posts, color:'#f59e0b' },
-                { key:'revenue', label:'Doanh thu', values:chart.revenue, color:'#22c55e' },
+                { key:'users', label:'Người dùng mới', values:chart.users, color:'#244f3f' },
+                { key:'docs', label:'Tài liệu mới', values:chart.docs, color:'#94713c' },
+                { key:'posts', label:'Bài đăng mới', values:chart.posts, color:'#6f8f74' },
+                { key:'revenue', label:'Doanh thu', values:chart.revenue, color:'#b9843a' },
               ]} height={320} title="" subtitle=""/>
               <div className="admin-detail-table"><table><thead><tr><th>Chỉ số</th><th>Hôm nay</th><th>7 ngày</th><th>30 ngày</th><th>Tổng</th></tr></thead><tbody>{detailRows.map((row) => <tr key={row[0]}><td>{row[0]}</td>{row.slice(1).map((value,index) => <td key={index}>{formatNumber(value)}</td>)}</tr>)}</tbody></table></div>
             </section>
@@ -152,6 +157,7 @@ export default function AdminDashboard() {
         {tab === 'documents' && <section className="panel-universe admin-list-panel"><PanelHead title="Quản lý tài liệu" text={`${foundDocs.length} tài liệu`}/>{foundDocs.map((doc) => <div className="admin-content-row" key={doc.id}><span className={`mini-doc-cover ${doc.color}`}>{doc.cover}</span><div><b>{doc.title}</b><small>{getUser(doc.authorId).name} · {formatNumber(doc.views)} xem · {formatNumber(doc.downloads)} tải</small></div><div className="row-actions"><Link to={`/documents/${doc.id}`}>Mở tài liệu</Link><button className="danger" onClick={() => setDeleteDoc(doc)}>Xóa</button></div></div>)}</section>}
 
         {tab === 'posts' && <section className="panel-universe admin-list-panel"><PanelHead title="Quản lý bài đăng" text={`${foundPosts.length} bài đăng`}/>{foundPosts.map((post) => <div className="admin-content-row" key={post.id}><MessageSquareText/><div><b>{post.content}</b><small>{getUser(post.authorId).name} · {formatNumber(post.likes)} thích · {post.comments?.length || 0} bình luận</small></div><div className="row-actions"><Link to="/feed">Mở bảng tin</Link><button className="danger" onClick={() => setDeletePost(post)}>Xóa bài</button></div></div>)}</section>}
+        {tab === 'mailbox' && <section className="panel-universe admin-list-panel"><PanelHead title="Hộp thư quản trị" text="Nơi admin phản hồi thư từ người dùng và tác giả"/><div className="admin-mailbox-v37"><aside className="admin-mailbox-list-v37 custom-scroll">{adminMailboxThreads.map((thread) => { const otherId = thread.participants.find((id) => id !== 'u_admin'); const other = getUser(otherId); const unread = (thread.unreadBy || []).includes('u_admin'); return <button key={thread.id} className={activeMailboxThread?.id === thread.id ? 'active' : ''} onClick={() => { setMailboxThreadId(thread.id); markMailboxThreadRead(thread.id, 'u_admin'); }}><Avatar user={other}/><span><b>{thread.subject}</b><small>{other.name} · {(thread.messages || []).at(-1)?.text || 'Chưa có tin nhắn'}</small></span><em>{unread ? 'Mới' : ''}</em></button>; })}</aside><div className="admin-mailbox-room-v37">{activeMailboxThread ? <><div className="admin-mailbox-head-v37">{(() => { const other = getUser(activeMailboxThread.participants.find((id) => id !== 'u_admin')); return <><Avatar user={other} size="lg"/><div><b>{activeMailboxThread.subject}</b><small>{other.name} · {activeMailboxThread.category}</small></div></>; })()}</div><div className="admin-mailbox-bubbles-v37 custom-scroll">{(activeMailboxThread.messages || []).map((message) => { const mine = message.senderId === 'u_admin'; const sender = getUser(message.senderId); return <div key={message.id} className={`admin-mail-bubble-v37 ${mine ? 'mine' : ''}`}><b>{mine ? 'Admin' : sender.name}</b><p>{message.text}</p><small>{message.time}</small></div>; })}</div><div className="admin-mailbox-send-v37"><textarea rows="3" value={mailReply} onChange={(event) => setMailReply(event.target.value)} placeholder="Nhập phản hồi cho người dùng..."/><button onClick={() => { if (activeMailboxThread && sendMailboxMessage(activeMailboxThread.id, mailReply)) setMailReply(''); }}><Send size={16}/> Gửi phản hồi</button></div></> : <div className="admin-empty-filter"><Mail/><h3>Chưa có thư nào</h3><p>Hộp thư admin sẽ hiện tại đây.</p></div>}</div></div></section>}
 
         {['transactions','topup'].includes(tab) && <section className="panel-universe admin-list-panel"><PanelHead title={tab === 'topup' ? 'Duyệt nạp credit' : 'Tất cả giao dịch'} text="Lọc nhanh theo trạng thái để xử lý không bị nhầm."/><AdminStatusFilter value={statusFilter} onChange={setStatusFilter} items={state.transactions.filter((item) => tab === 'topup' ? item.type === 'topup' : true)}/><TransactionList embedded title="" items={filterByStatus(state.transactions.filter((item) => tab === 'topup' ? item.type === 'topup' : true))} getUser={getUser} approve={adminApproveTransaction} reject={adminRejectTransaction}/></section>} 
         {tab === 'withdraw' && <section className="panel-universe admin-list-panel"><PanelHead title="Duyệt rút tiền" text="Theo dõi yêu cầu chờ, đã duyệt và đã từ chối."/><AdminStatusFilter value={statusFilter} onChange={setStatusFilter} items={state.transactions.filter((item) => item.type === 'withdraw')}/><TransactionList embedded title="" items={filterByStatus(state.transactions.filter((item) => item.type === 'withdraw'))} getUser={getUser} approve={adminApproveTransaction} reject={adminRejectTransaction}/></section>} 

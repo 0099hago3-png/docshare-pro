@@ -17,7 +17,7 @@ const tabs = [
 
 const rewardFrameByTab = {
   members: 'Nexus Champion',
-  authors: 'Quasar Creator',
+  authors: 'Tác giả Học thuật',
   donate: 'Nebula Patron',
   liked: 'Stellar Heart',
   views: 'Oracle Lens',
@@ -52,7 +52,7 @@ export default function Leaderboard() {
   return (
     <div className="page universe-page leaderboard-universe">
       <section className="rank-universe-hero">
-        <div><span className="eyebrow"><Sparkles size={15}/> MÙA THIÊN HÀ 2026</span><h1>Bảng xếp hạng DocShare</h1><p>Điểm được tính từ hoạt động, sáng tạo, lượt xem, tải xuống và đóng góp cho cộng đồng. Không quy đổi thành tiền.</p></div>
+        <div><span className="eyebrow"><Sparkles size={15}/> MÙA THƯ KHỐ 2026</span><h1>Bảng xếp hạng DocShare Pro</h1><p>Điểm được tính từ hoạt động, sáng tạo, lượt xem, tải xuống và đóng góp cho cộng đồng. Không quy đổi thành tiền.</p></div>
         <div className="season-counter"><small>Kết thúc mùa giải sau</small><b>12 : 05 : 32 : 18</b><span>Ngày · Giờ · Phút · Giây</span></div>
       </section>
 

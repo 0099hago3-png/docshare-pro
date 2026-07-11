@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bookmark, Edit3, Flag, Flame, Home, Link2, MessageCircle, MoreHorizontal, Save, Send, Sparkles, Trash2, UsersRound, X } from 'lucide-react';
+import { Award, Bell, Bookmark, Edit3, Flag, Flame, Gift, Home, Link2, MessageCircle, MoreHorizontal, Save, Send, ShieldAlert, Sparkles, Trash2, UsersRound, WalletCards, X } from 'lucide-react';
 import { useApp } from '../context/AppContext.jsx';
 import Avatar from '../components/Avatar.jsx';
 import { LevelBadge, PremiumBadge, TitleBadge, VerifyBadge } from '../components/Badges.jsx';
 import ReportModal from '../components/ReportModal.jsx';
 import DonateModal from '../components/DonateModal.jsx';
+import BookCover from '../components/BookCover.jsx';
 
 const hotTopics = [
   { label:'Python', keywords:['python'] },
@@ -70,6 +71,7 @@ function PostCard({ post }) {
   const author = getUser(post.authorId);
   const doc = state.documents.find((item) => item.id === post.documentId);
   const liked = state.likes.posts.includes(post.id);
+  const postTitle = (post.title || '').trim();
   const following = state.follows.includes(author.id);
   const saved = (state.savedPosts || []).includes(post.id);
 
@@ -83,16 +85,16 @@ function PostCard({ post }) {
         <button className="post-more-v14"><MoreHorizontal size={18}/></button>
         <button className="post-flag-v14" onClick={() => setReportOpen(true)}>⚑</button>
       </div>
-      <h2 className="post-knowledge-title">{post.title || (post.content.includes('?') ? post.content.split('?')[0] + '?' : 'Góc chia sẻ tri thức')}</h2>
+      {postTitle ? <h2 className="post-knowledge-title post-knowledge-title-v30">{postTitle}</h2> : null}
       <p className="post-copy-v14">{post.content}</p>
-      {doc && <Link to={`/documents/${doc.id}`} className="shared-document-v14"><span className={`shared-cover ${doc.color}`}>{doc.cover}</span><div><b>{doc.title}</b><p>{doc.type} · {doc.price > 0 ? `${doc.price} credit` : 'Miễn phí'}</p></div><em>→</em></Link>}
+      {doc && <Link to={`/documents/${doc.id}`} className="shared-document-v14 shared-document-v25"><BookCover doc={doc} size="mini"/><div><b>{doc.title}</b><p>{doc.type} · Tài liệu học thuật</p></div><em>→</em></Link>}
       <div className="post-social-v14">
         <button className={liked ? 'liked' : ''} onClick={() => toggleLikePost(post.id)}>♥ <b>{post.likes}</b></button>
         <button><MessageCircle size={17}/> <b>{post.comments.length}</b></button>
-        <button className="donate-button-v14" onClick={() => setDonateOpen(true)}>🎁 Ủng hộ</button>
+        <button className="donate-button-v14 donate-button-v39" onClick={() => setDonateOpen(true)}><Gift size={16}/>Gửi quà tặng</button>
       </div>
       <div className="post-comments-v14">
-        <div className="comments-title-v14"><b>💬 Bình luận ({post.comments.length})</b><select><option>Mới nhất</option><option>Phù hợp nhất</option></select></div>
+        <div className="comments-title-v14"><b><MessageCircle size={16}/> Bình luận ({post.comments.length})</b><select><option>Mới nhất</option><option>Phù hợp nhất</option></select></div>
         {post.comments.map((comment) => <Comment key={comment.id} postId={post.id} comment={comment}/>) }
         <div className="comment-compose-v14"><Avatar user={getUser(state.currentUserId)}/><input value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Viết bình luận..."/><button onClick={() => { if(commentText.trim()) addComment(post.id,commentText.trim()); setCommentText(''); }}><Send size={17}/></button></div>
       </div>
@@ -161,10 +163,10 @@ export default function Feed() {
         <section className="composer-v14">
           <Avatar user={currentUser} size="lg"/>
           <div className="composer-box-v14">
-            <div className="composer-tabs-v14"><button className={mode === 'question' ? 'active' : ''} onClick={() => setMode('question')}>◉ Đặt câu hỏi</button><button className={mode === 'link' ? 'active' : ''} onClick={() => setMode('link')}><Link2 size={16}/>Chia sẻ liên kết</button></div>
+            <div className="composer-tabs-v14"><button className={mode === 'question' ? 'active' : ''} onClick={() => setMode('question')}><MessageCircle size={16}/>Đặt câu hỏi</button><button className={mode === 'link' ? 'active' : ''} onClick={() => setMode('link')}><Link2 size={16}/>Chia sẻ liên kết</button></div>
             <input className="composer-title-v21" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={mode === 'question' ? 'Tiêu đề câu hỏi rõ ràng, giàu kiến thức...' : 'Tiêu đề bài chia sẻ nổi bật...'}/>
             <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder={mode === 'question' ? 'Trình bày bối cảnh, điều bạn đã thử và nội dung cần cộng đồng hỗ trợ...' : 'Chia sẻ kiến thức, kinh nghiệm hoặc liên kết hữu ích...'}/>
-            <div className="composer-tools-v14"><div><button>☺</button><button>▧</button></div><select value={documentId} onChange={(e) => setDocumentId(e.target.value)}><option value="">Không đính kèm tài liệu</option>{state.documents.map((doc) => <option key={doc.id} value={doc.id}>{doc.title}</option>)}</select><button className="publish-v14" onClick={submit}>Đăng bài</button></div>
+            <div className="composer-tools-v14"><div><button title="Thêm biểu tượng"><Sparkles size={16}/></button><button title="Đính kèm"><Bookmark size={16}/></button></div><select value={documentId} onChange={(e) => setDocumentId(e.target.value)}><option value="">Không đính kèm tài liệu</option>{state.documents.map((doc) => <option key={doc.id} value={doc.id}>{doc.title}</option>)}</select><button className="publish-v14" onClick={submit}>Đăng bài</button></div>
           </div>
         </section>
         {hotTopic && <section className="active-topic-v19"><span>Đang xem chủ đề <b>#{hotTopic}</b></span><button onClick={() => setHotTopic('')}>× Bỏ lọc</button></section>}
@@ -173,7 +175,7 @@ export default function Feed() {
       </main>
 
       <aside className="feed-right-v14">
-        <section className="notification-card-v14"><div className="notification-title-v14"><h2>Thông báo</h2><button onClick={markAllNotifications}>Đánh dấu đã đọc</button></div><div className="notification-tabs-v14"><button className={noticeTab === 'all' ? 'active' : ''} onClick={() => setNoticeTab('all')}>Tất cả <em>{state.notifications.length}</em></button><button className={noticeTab === 'unread' ? 'active' : ''} onClick={() => setNoticeTab('unread')}>Chưa đọc <em>{state.notifications.filter((n) => n.unread).length}</em></button><button className={noticeTab === 'important' ? 'active' : ''} onClick={() => setNoticeTab('important')}>Quan trọng</button></div><div className="notification-scroll-v14 custom-scroll">{visibleNotices.map((notice,index) => <button key={notice.id} className={notice.unread ? 'unread' : ''} onClick={() => openNotice(notice)}><span>{notice.kind === 'credit' ? '✦' : notice.kind === 'frame' ? '🏆' : index % 3 === 0 ? '♥' : index % 3 === 1 ? '💬' : '⇩'}</span><div><b>{notice.title}</b><p>{notice.text}</p><small>{notice.date || `${index + 2} phút trước`}</small></div></button>)}{!visibleNotices.length && <p className="empty-search">Không có thông báo trong mục này.</p>}</div></section>
+        <section className="notification-card-v14"><div className="notification-title-v14"><h2>Thông báo</h2><button onClick={markAllNotifications}>Đánh dấu đã đọc</button></div><div className="notification-tabs-v14"><button className={noticeTab === 'all' ? 'active' : ''} onClick={() => setNoticeTab('all')}>Tất cả <em>{state.notifications.length}</em></button><button className={noticeTab === 'unread' ? 'active' : ''} onClick={() => setNoticeTab('unread')}>Chưa đọc <em>{state.notifications.filter((n) => n.unread).length}</em></button><button className={noticeTab === 'important' ? 'active' : ''} onClick={() => setNoticeTab('important')}>Quan trọng</button></div><div className="notification-scroll-v14 custom-scroll">{visibleNotices.map((notice,index) => <button key={notice.id} className={notice.unread ? 'unread' : ''} onClick={() => openNotice(notice)}><span>{notice.kind === 'wallet' ? <WalletCards size={19}/> : notice.kind === 'report' ? <ShieldAlert size={19}/> : notice.kind === 'frame' ? <Award size={19}/> : notice.kind === 'like' ? <Sparkles size={19}/> : <Bell size={19}/>}</span><div><b>{notice.title}</b><p>{notice.text}</p><small>{notice.date || `${index + 2} phút trước`}</small></div></button>)}{!visibleNotices.length && <p className="empty-search">Không có thông báo trong mục này.</p>}</div></section>
       </aside>
     </div>
   );

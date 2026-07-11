@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="bg"><stop stop-color="#263c7f"/><stop offset=".55" stop-color="#281746"/><stop offset="1" stop-color="#0d0b25"/></radialGradient>
+    <linearGradient id="d1" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#dcffff"/><stop offset=".45" stop-color="#89c8ff"/><stop offset="1" stop-color="#8b69e7"/></linearGradient>
+    <linearGradient id="d2" x1="1" y1="0" x2="0" y2="1"><stop stop-color="#fff2ff"/><stop offset="1" stop-color="#5cd0ef"/></linearGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="512" height="512" rx="64" fill="url(#bg)"/>
+  <path d="M77 245c69-82 157-121 254-105 55 9 95 34 132 71-85-19-155 4-220 67-61 60-109 72-166 54z" fill="#d177ff" opacity=".24" filter="url(#glow)"/>
+  <path d="M134 189l122-78 122 78-122 217z" fill="url(#d1)" stroke="#e7fbff" stroke-width="7"/>
+  <path d="M134 189h244L256 406z" fill="url(#d2)" opacity=".9"/>
+  <path d="M134 189l72 70 50-148 49 148 73-70M206 259h99" fill="none" stroke="#f6ffff" stroke-opacity=".82" stroke-width="5"/>
+  <g fill="#fff"><circle cx="92" cy="104" r="5"/><circle cx="425" cy="96" r="7"/><circle cx="411" cy="363" r="5"/><circle cx="73" cy="365" r="6"/></g>
+</svg>

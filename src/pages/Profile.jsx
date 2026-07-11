@@ -20,16 +20,7 @@ const chartSets = {
   all: { labels: ['2022','2023','2024','2025','2026'], views: [8200,24100,58700,93600,128600], downloads: [1900,5800,13100,19800,24300], likes: [410,1220,3150,4820,6482], revenue: [300,1100,3400,5600,8820] },
 };
 
-const frameNameByTier = {
-  1: 'Viền Tối giản',
-  2: 'Bạc Học giả',
-  3: 'Lam Thư viện',
-  4: 'Xanh Oxford',
-  5: 'Ngọc Lục bảo',
-  6: 'Bạch kim Danh dự',
-  7: 'Vàng Đồng Cổ điển',
-  8: 'Hoàng gia Học thuật',
-};
+
 
 export default function Profile() {
   const { id } = useParams();
@@ -144,22 +135,21 @@ export default function Profile() {
         </main>
 
         <aside className="panel-universe avatar-vault-v24">
-          <div className="avatar-vault-head"><span className="section-kicker">BỘ SƯU TẬP CÁ NHÂN</span><h2>Túi khung avatar</h2><p>Khung được thiết kế tối giản, tĩnh và phù hợp với giao diện thư viện hiện đại.</p></div>
+          <div className="avatar-vault-head"><span className="section-kicker">BỘ SƯU TẬP CÁ NHÂN</span><h2>Túi khung avatar</h2><p>Bộ sưu tập tinh gọn gồm các khung học giả, Premium và phần thưởng theo mùa.</p></div>
           <div className="frame-view-tabs-v24"><button className={frameView === 'owned' ? 'active' : ''} onClick={() => setFrameView('owned')}>Đã sở hữu</button><button className={frameView === 'all' ? 'active' : ''} onClick={() => setFrameView('all')}>Tất cả</button></div>
           <div className="avatar-frame-grid-v24 custom-scroll">
             {frameList.map((frame, index) => {
               const owned = (user.ownedFrames || []).includes(frame.id);
               const active = user.activeFrame === frame.id;
               const previewUser = { ...user, activeFrame: frame.id };
-              const elegantName = frameNameByTier[Math.min(8, frame.tier || 1)] || 'Khung Học thuật';
-              return <button key={frame.id} className={`avatar-frame-card-v24 ${owned ? 'owned' : 'locked'} ${active ? 'active' : ''}`} disabled={!owned || !isOwner} onClick={() => owned && isOwner && setAvatarFrame(frame.id)}>
+                            return <button key={frame.id} className={`avatar-frame-card-v24 ${owned ? 'owned' : 'locked'} ${active ? 'active' : ''}`} disabled={!owned || !isOwner} onClick={() => owned && isOwner && setAvatarFrame(frame.id)}>
                 <Avatar user={previewUser} size="lg"/>
-                <span><strong>{elegantName}{index > 7 ? ` ${String(index + 1).padStart(2, '0')}` : ''}</strong><small>{frame.requirement}</small></span>
+                <span><strong>{frame.name}</strong><small>{frame.season || frame.requirement}</small></span>
                 <em>{active ? 'Đang dùng' : owned ? 'Chọn' : 'Chưa mở'}</em>
               </button>;
             })}
           </div>
-          <div className="avatar-vault-note-v24"><BookOpen size={18}/><p><b>Thiết kế mới:</b> viền mảnh, màu học thuật, không phát sáng mạnh và không có chuyển động.</p></div>
+          <div className="avatar-vault-note-v24"><BookOpen size={18}/><p><b>Phần thưởng theo mùa:</b> khung được trao dựa trên cấp độ, đóng góp và thứ hạng mùa.</p></div>
         </aside>
       </div>
 

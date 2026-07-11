@@ -20,7 +20,7 @@ import {
 } from '../data/defaultData.js';
 import { hasBadWords, todayKey } from '../utils/helpers.js';
 
-const STORAGE_KEY = 'docshare_complete_v22_advanced';
+const STORAGE_KEY = 'docshare_pro_v39_gift_portal_document_donate';
 const AppContext = createContext(null);
 
 function defaultState() {
@@ -43,15 +43,53 @@ function defaultState() {
   titleBadges,
   panelSkins,
     banks,
-    theme: 'dark',
+    theme: 'light',
     adminLogs: [
       { id: 'log1', action: 'Cộng 500 credit', detail: 'Admin đã cộng 500 credit cho u_user', date: '2026-07-08 10:20' },
       { id: 'log2', action: 'Duyệt Premium', detail: 'Admin đã duyệt gia hạn Premium cho u_linh', date: '2026-07-08 09:45' },
       { id: 'log3', action: 'Mở khóa tài khoản', detail: 'Admin đã mở khóa u_minh', date: '2026-07-07 21:10' },
     ],
     giftHistory: [
-      { id: 'gh1', userId: 'u_admin', targetType: 'document', targetId: 'd4', giftId: 'g7', giftName: 'Sư tử tinh vân', credit: 1000, date: '2026-07-08 11:30' },
-      { id: 'gh2', userId: 'u_teacher', targetType: 'document', targetId: 'd6', giftId: 'g11', giftName: 'Hành tinh pha lê', credit: 800, date: '2026-07-08 10:15' },
+      { id: 'gh1', userId: 'u_admin', targetType: 'document', targetId: 'd4', giftId: 'g7', giftName: 'Huy chương Giám tuyển', credit: 1000, date: '2026-07-08 11:30' },
+      { id: 'gh2', userId: 'u_teacher', targetType: 'document', targetId: 'd6', giftId: 'g11', giftName: 'Vương miện Danh dự', credit: 800, date: '2026-07-08 10:15' },
+    ],
+    mailboxThreads: [
+      {
+        id: 'mb1',
+        subject: 'Hỗ trợ xem toàn bộ tài liệu',
+        category: 'support',
+        participants: ['u_user', 'u_admin'],
+        updatedAt: '2026-07-08 11:20',
+        unreadBy: ['u_admin'],
+        messages: [
+          { id: 'mb1m1', senderId: 'u_user', text: 'Em muốn hỏi vì sao tài liệu trả phí chỉ xem được demo ạ?', time: '2026-07-08 11:00' },
+          { id: 'mb1m2', senderId: 'u_admin', text: 'Bạn cần dùng credit để mở toàn bộ. Nếu cần mình có thể kiểm tra lại trạng thái mua.', time: '2026-07-08 11:12' },
+        ],
+      },
+      {
+        id: 'mb2',
+        subject: 'Tài liệu Supabase cần bổ sung ví dụ',
+        category: 'user',
+        participants: ['u_teacher', 'u_admin'],
+        updatedAt: '2026-07-07 19:30',
+        unreadBy: [],
+        messages: [
+          { id: 'mb2m1', senderId: 'u_teacher', text: 'Admin ơi, mình định cập nhật thêm ví dụ RLS cho tài liệu Supabase.', time: '2026-07-07 19:10' },
+          { id: 'mb2m2', senderId: 'u_admin', text: 'Rất tốt, bạn cứ cập nhật nhé. Mình sẽ ghim tài liệu này ở mục nổi bật.', time: '2026-07-07 19:30' },
+        ],
+      },
+      {
+        id: 'mb3',
+        subject: 'Xin cấp tích xanh tài khoản tác giả',
+        category: 'verification',
+        participants: ['u_teacher', 'u_admin'],
+        updatedAt: '2026-07-06 15:42',
+        unreadBy: ['u_teacher'],
+        messages: [
+          { id: 'mb3m1', senderId: 'u_teacher', text: 'Mình đã gửi đủ thông tin xác minh, nhờ admin kiểm tra giúp.', time: '2026-07-06 15:18' },
+          { id: 'mb3m2', senderId: 'u_admin', text: 'Mình đã nhận được hồ sơ. Trong hôm nay sẽ phản hồi kết quả cho bạn.', time: '2026-07-06 15:42' },
+        ],
+      },
     ],
     likes: { documents: ['d1', 'd6'], posts: ['p1'] },
     follows: ['u_teacher'],
@@ -62,11 +100,9 @@ function defaultState() {
       { id: 'h2', type: 'like', targetId: 'd6', title: 'Đã thích Giải tích 1', date: '2026-07-08 09:15' },
       { id: 'h3', type: 'comment', targetId: 'p1', title: 'Đã bình luận bài React + Vite', date: '2026-07-07 21:10' },
       { id: 'h4', type: 'download', targetId: 'd2', title: 'Đã tải tài liệu SQL', date: '2026-07-07 19:03' },
-      { id: 'h5', type: 'purchase', targetId: 'd4', title: 'Đã mua tài liệu Viết tin', date: '2026-07-07 08:14' },
     ],
     pendingPaymentUntil: 0,
     lastGiftEffect: null,
-    purchasedDocuments: ['d2'],
     documentComments: {
       d1: [
         { id: 'dc1', userId: 'u_user', text: 'Tài liệu giải thích rất dễ hiểu, phần ví dụ Python rất hữu ích.', rating: 5, reactions: 12, createdAt: '2026-07-08 10:10', authorReply: { userId: 'u_teacher', text: 'Cảm ơn bạn. Mình sẽ bổ sung thêm bài tập thực hành trong bản cập nhật tiếp theo.', createdAt: '2026-07-08 11:00' } },
@@ -81,108 +117,76 @@ function defaultState() {
 
 function normalizeUser(user) {
   const level = Number(user.level || 1);
-  const automaticFrames = ['orbit-basic'];
-  if (level >= 10) automaticFrames.push('level-lunar');
-  if (level >= 30) automaticFrames.push('level-nebula');
-  if (level >= 60) automaticFrames.push('level-supernova');
-  if ((user.followers || 0) >= 100) automaticFrames.push('mission-100-followers');
-  if ((user.followers || 0) >= 1000) automaticFrames.push('follower-galaxy');
-  if ((user.likes || 0) >= 1000) automaticFrames.push('mission-1000-likes');
-  if ((user.supportPoints || 0) >= 10000) automaticFrames.push('mission-10000-support');
-  if (user.premium) automaticFrames.push('premium-quasar');
-  if (user.role === 'admin') automaticFrames.push(...avatarFrames.map((frame) => frame.id));
-  const ownedFrames = Array.from(new Set([...(user.ownedFrames || []), ...automaticFrames]));
-  const automaticTitles = ['title-member'];
-  if (level >= 10) automaticTitles.push('title-scholar');
-  if (level >= 30) automaticTitles.push('title-expert');
-  if (level >= 60) automaticTitles.push('title-legend');
-  if ((user.followers || 0) >= 100) automaticTitles.push('title-100-followers');
-  if ((user.followers || 0) >= 1000) automaticTitles.push('title-1000-followers');
-  if ((user.supportPoints || 0) >= 10000) automaticTitles.push('title-benefactor');
-  if (user.premium) automaticTitles.push('title-premium');
-  const automaticPanels = ['panel-default'];
-  if (level >= 10) automaticPanels.push('panel-cyan');
-  if (user.premium) automaticPanels.push('panel-aurora');
-  if (ownedFrames.includes('thunder-lord')) automaticPanels.push('panel-thunder');
-  if (ownedFrames.includes('inferno-lord') || ownedFrames.includes('phoenix-flare')) automaticPanels.push('panel-inferno');
-  if (ownedFrames.includes('aqua-emperor') || ownedFrames.includes('ocean-nebula')) automaticPanels.push('panel-tide');
-  if (ownedFrames.includes('diamond-emperor') || ownedFrames.includes('rank-nebula-donor-1')) automaticPanels.push('panel-crystal');
-  if (ownedFrames.includes('cosmic-dragon') || ownedFrames.includes('storm-dragon')) automaticPanels.push('panel-dragon');
-  if (ownedFrames.includes('cyber-grid')) automaticPanels.push('panel-cyber');
-  if (ownedFrames.includes('sakura-garden')) automaticPanels.push('panel-sakura');
-  if (ownedFrames.some((id) => id.startsWith('rank-nexus-'))) automaticPanels.push('panel-royal');
-  if (user.role === 'admin') {
-    automaticTitles.push(...titleBadges.map((item) => item.id));
-    automaticPanels.push(...panelSkins.map((item) => item.id));
-  }
-  const ownedTitles = Array.from(new Set([...(user.ownedTitles || []), ...automaticTitles]));
-  const ownedPanels = Array.from(new Set([...(user.ownedPanels || []), ...automaticPanels]));
-  const activePanels = {
-    message: ownedPanels.includes(user.activePanels?.message) ? user.activePanels.message : (user.premium ? 'panel-aurora' : 'panel-default'),
-    comment: ownedPanels.includes(user.activePanels?.comment) ? user.activePanels.comment : (user.premium ? 'panel-aurora' : 'panel-default'),
-    review: ownedPanels.includes(user.activePanels?.review) ? user.activePanels.review : (user.premium ? 'panel-aurora' : 'panel-default'),
+  const frameIds = avatarFrames.map((frame) => frame.id);
+  const automaticFrames = ['frame-classic', 'frame-ink', 'frame-paper'];
+  if (level >= 10) automaticFrames.push('frame-oxford');
+  if (level >= 15) automaticFrames.push('frame-laurel');
+  if (level >= 20) automaticFrames.push('frame-bronze');
+  if (user.premium) automaticFrames.push('frame-emerald', 'frame-sapphire', 'frame-platinum');
+  if ((user.activityPoints || 0) >= 6000) automaticFrames.push('frame-spring-laurel');
+  if ((user.activityPoints || 0) >= 9000) automaticFrames.push('frame-summer-olive');
+  if ((user.creatorPoints || 0) >= 7000 || (user.supportPoints || 0) >= 7000) automaticFrames.push('frame-autumn-gold');
+  if ((user.followerPoints || 0) >= 8000) automaticFrames.push('frame-scholar');
+  if ((user.creatorPoints || 0) >= 10000) automaticFrames.push('frame-author');
+  if ((user.supportPoints || 0) >= 12000) automaticFrames.push('frame-patron');
+  if ((user.activityPoints || 0) >= 14000) automaticFrames.push('frame-citation');
+  if (user.role === 'teacher') automaticFrames.push('frame-manuscript');
+  if (user.role === 'admin') automaticFrames.push(...frameIds);
+
+  const legacyMap = {
+    'orbit-basic': 'frame-classic', 'level-lunar': 'frame-oxford', 'level-nebula': 'frame-emerald', 'premium-quasar': 'frame-emerald',
+    'admin-singularity': 'frame-curator', 'rank-nexus-1': 'frame-patron', 'rank-nebula-donor-1': 'frame-patron',
+    'follower-galaxy': 'frame-scholar', 'element-lightning': 'frame-sapphire', 'element-fire': 'frame-autumn-gold',
+    'element-water': 'frame-emerald', 'element-wind': 'frame-summer-olive', 'seraph-wings': 'frame-spring-laurel', 'celestial-dragon': 'frame-author'
   };
-  const starterPets = user.role === 'admin' ? petCatalog.map((pet) => pet.id) : ['pet-duck'];
-  const starterAccessories = user.role === 'admin' ? petAccessories.map((item) => item.id) : [];
-  const ownedPets = Array.from(new Set([...(user.ownedPets || []), ...starterPets]));
-  const activePets = (user.activePets || []).filter((petId) => ownedPets.includes(petId)).slice(0, 2);
-  const ownedPetAccessories = Array.from(new Set([...(user.ownedPetAccessories || []), ...starterAccessories]));
+
+  const manualFrames = (user.ownedFrames || [])
+    .map((id) => legacyMap[id] || id)
+    .filter((id) => frameIds.includes(id));
+
+  const ownedFrames = Array.from(new Set([...automaticFrames, ...manualFrames].filter((id) => frameIds.includes(id))));
+  const preferredFrame = user.role === 'admin'
+    ? 'frame-curator'
+    : legacyMap[user.activeFrame] && ownedFrames.includes(legacyMap[user.activeFrame])
+      ? legacyMap[user.activeFrame]
+      : ownedFrames.includes(user.activeFrame)
+        ? user.activeFrame
+        : ownedFrames.at(-1) || 'frame-classic';
+
   return {
     ...user,
     avatarImage: user.avatarImage || null,
     joinedAt: user.joinedAt || '2025-01-01',
     ownedFrames,
-    activeFrame: ownedFrames.includes(user.activeFrame) ? user.activeFrame : ownedFrames.at(-1) || 'orbit-basic',
-    ownedTitles,
-    activeTitle: ownedTitles.includes(user.activeTitle) ? user.activeTitle : (user.role === 'admin' ? 'title-admin' : user.premium ? 'title-premium' : ownedTitles.at(-1)),
-    ownedPanels,
-    activePanels,
-    ownedPets,
-    activePets: activePets.length ? activePets : ownedPets.slice(0, 1),
-    petsVisible: user.petsVisible !== false,
-    ownedPetAccessories,
+    activeFrame: preferredFrame,
+    ownedTitles: Array.isArray(user.ownedTitles) ? user.ownedTitles : [],
+    activeTitle: user.activeTitle || null,
+    ownedPanels: Array.isArray(user.ownedPanels) && user.ownedPanels.length ? user.ownedPanels : ['panel-default'],
+    activePanels: user.activePanels || { message: 'panel-default', comment: 'panel-default', review: 'panel-default' },
+    ownedPets: Array.isArray(user.ownedPets) ? user.ownedPets : [],
+    activePets: Array.isArray(user.activePets) ? user.activePets : [],
+    petsVisible: typeof user.petsVisible === 'boolean' ? user.petsVisible : false,
+    ownedPetAccessories: Array.isArray(user.ownedPetAccessories) ? user.ownedPetAccessories : [],
     petEquipment: user.petEquipment || {},
     petPlacement: user.petPlacement || {},
     petStats: user.petStats || {},
+    ownedDocuments: Array.isArray(user.ownedDocuments) ? user.ownedDocuments : [],
   };
 }
 
 function applyRankingFrames(baseState) {
-  const rewardMap = new Map();
-  const titleRewardMap = new Map();
-  const addTitle = (userId, titleId) => titleRewardMap.set(userId, [...(titleRewardMap.get(userId) || []), titleId]);
-  const add = (userId, frameId) => rewardMap.set(userId, [...(rewardMap.get(userId) || []), frameId]);
-  const assignBoard = (items, board, scoreFn) => {
-    [...items].sort((a, b) => scoreFn(b) - scoreFn(a)).slice(0, 10).forEach((item, index) => {
-      const userId = item.authorId || item.id;
-      if (index === 0) {
-        const topFrame = {
-          members: 'rank-nexus-1', authors: 'rank-quasar-creator-1', donate: 'rank-nebula-donor-1',
-          liked: 'rank-stellar-heart-1', views: 'rank-oracle-view-1', downloads: 'rank-comet-download-1', posts: 'rank-nova-post-1',
-        }[board];
-        if (topFrame) add(userId, topFrame);
-        const topTitle = { members:'title-top-member', authors:'title-top-author', donate:'title-top-donor', liked:'title-top-liked', views:'title-top-view', downloads:'title-top-download', posts:'title-top-post' }[board];
-        if (topTitle) addTitle(userId, topTitle);
-      } else if (board === 'members' && index === 1) add(userId, 'rank-nexus-2');
-      else if (board === 'members' && index === 2) add(userId, 'rank-nexus-3');
-      else if (board === 'members' && index < 10) add(userId, 'rank-nexus-10');
-    });
-  };
-  assignBoard(baseState.users, 'members', (u) => (u.activityPoints || 0) + (u.level || 0) * 100);
-  assignBoard(baseState.users, 'authors', (u) => u.creatorPoints || 0);
-  assignBoard(baseState.users, 'donate', (u) => u.supportPoints || 0);
-  assignBoard(baseState.documents, 'liked', (d) => d.likes || 0);
-  assignBoard(baseState.documents, 'views', (d) => d.views || 0);
-  assignBoard(baseState.documents, 'downloads', (d) => d.downloads || 0);
-  assignBoard(baseState.posts, 'posts', (p) => (p.likes || 0) + (p.comments?.length || 0) * 20);
+  const rankedUsers = [...baseState.users]
+    .sort((a, b) => ((b.activityPoints || 0) + (b.creatorPoints || 0)) - ((a.activityPoints || 0) + (a.creatorPoints || 0)))
+    .map((user, index) => ({
+      ...user,
+      ownedFrames: index < 10
+        ? Array.from(new Set([...(user.ownedFrames || []), 'frame-autumn-gold']))
+        : user.ownedFrames,
+    }));
   return {
     ...baseState,
-    theme: 'dark',
-    users: baseState.users.map((user) => normalizeUser({
-      ...user,
-      ownedFrames: Array.from(new Set([...(user.ownedFrames || []), ...(rewardMap.get(user.id) || [])])),
-      ownedTitles: Array.from(new Set([...(user.ownedTitles || []), ...(titleRewardMap.get(user.id) || [])])),
-    })),
+    theme: 'light',
+    users: rankedUsers.map(normalizeUser),
   };
 }
 
@@ -203,7 +207,7 @@ export function AppProvider({ children }) {
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    document.documentElement.dataset.theme = 'dark';
+    document.documentElement.dataset.theme = 'light';
   }, [state]);
 
   const currentUser = useMemo(() => state.users.find((user) => user.id === state.currentUserId) || null, [state.users, state.currentUserId]);
@@ -284,7 +288,7 @@ export function AppProvider({ children }) {
   }
 
   function toggleTheme() {
-    patch((prev) => ({ ...prev, theme: 'dark' }));
+    patch((prev) => ({ ...prev, theme: 'light' }));
   }
 
   function markNotification(id) {
@@ -348,6 +352,71 @@ export function AppProvider({ children }) {
       };
     });
     showToast(wasSaved ? 'Đã bỏ tài liệu khỏi yêu thích.' : 'Đã thêm tài liệu vào yêu thích.');
+  }
+
+  function canAccessDocument(doc, user = currentUser) {
+    if (!doc) return false;
+    if (!user) return Number(doc.price || 0) <= 0;
+    if (user.role === 'admin' || user.id === doc.authorId) return true;
+    if (Number(doc.price || 0) <= 0) return true;
+    return (user.ownedDocuments || []).includes(doc.id);
+  }
+
+  function getDocumentPreviewPageCount(doc, user = currentUser) {
+    if (!doc) return 0;
+    const fullCount = Math.max(Number(doc.pages || 0), Number(doc.demoPages || 0), 1);
+    const demoCount = Math.max(Number(doc.demoPages || 0), 1);
+    return canAccessDocument(doc, user) ? fullCount : demoCount;
+  }
+
+  function purchaseDocument(docId) {
+    const doc = state.documents.find((item) => item.id === docId);
+    if (!doc || !currentUser) return false;
+    if (canAccessDocument(doc, currentUser)) {
+      showToast('Bạn đã có quyền truy cập tài liệu này.');
+      return true;
+    }
+    const price = Number(doc.price || 0);
+    if (price <= 0) return true;
+    if ((currentUser.credit || 0) < price) {
+      showToast('Bạn không đủ credit để mua tài liệu này.');
+      return false;
+    }
+
+    patch((prev) => ({
+      ...prev,
+      users: prev.users.map((user) => {
+        if (user.id === prev.currentUserId) {
+          return {
+            ...user,
+            credit: Math.max(0, (user.credit || 0) - price),
+            ownedDocuments: Array.from(new Set([...(user.ownedDocuments || []), docId])),
+          };
+        }
+        if (user.id === doc.authorId) {
+          return {
+            ...user,
+            balance: (user.balance || 0) + price,
+          };
+        }
+        return user;
+      }),
+      transactions: [{
+        id: 't_' + Date.now(),
+        userId: prev.currentUserId,
+        type: 'buy',
+        amount: 0,
+        credit: price,
+        status: 'done',
+        note: `Mua tài liệu: ${doc.title}`,
+        date: todayKey(),
+      }, ...(prev.transactions || [])],
+      history: [{ id: 'h_' + Date.now(), type: 'buy', targetId: docId, title: `Đã mua tài liệu ${doc.title}`, date: new Date().toLocaleString('vi-VN') }, ...(prev.history || [])],
+      notifications: [{ id: 'n_' + Date.now(), userId: doc.authorId, title: 'Tài liệu vừa được mua', text: `${currentUser.name} đã mua tài liệu ${doc.title}.`, to: `/documents/${docId}`, unread: true, important: false, kind: 'credit', date: 'Vừa xong' }, ...(prev.notifications || [])],
+    }));
+
+    showToast('Mua tài liệu thành công. Bạn đã có thể xem trước toàn bộ.');
+    return true;
   }
 
   function toggleFollow(userId) {
@@ -632,12 +701,12 @@ export function AppProvider({ children }) {
       posts: prev.posts.map((item) => item.id === postId ? { ...item, gifts: [...(item.gifts || []), { userId: prev.currentUserId, giftId: gift.id, gift: gift.icon + ' ' + gift.name, credit: gift.credit, creatorShare, date: new Date().toLocaleString('vi-VN') }] } : item),
       transactions: [
         { id: 't_' + Date.now(), userId: prev.currentUserId, type: 'gift', amount: 0, credit: gift.credit, status: 'done', note: `Tặng ${gift.name}`, date: todayKey() },
-        { id: 't_share_' + Date.now(), userId: post.authorId, type: 'gift_income', amount: 0, credit: creatorShare, status: 'done', note: `Nhận 30% credit từ ${gift.name}`, date: todayKey() },
+        { id: 't_share_' + Date.now(), userId: post.authorId, type: 'gift_income', amount: 0, credit: creatorShare, status: 'done', note: `Quà tri ân từ ${gift.name}`, date: todayKey() },
         ...prev.transactions,
       ],
-      notifications: [{ id: 'n_' + Date.now(), userId: post.authorId, title: 'Bạn nhận được quà tặng', text: `${currentUser.name} đã tặng ${gift.icon} ${gift.name}. Bạn nhận ${creatorShare} credit (30%).`, to: '/feed', unread: true, important: gift.effect === 'mega' || gift.effect === 'legendary', kind: 'credit', date: 'Vừa xong' }, ...prev.notifications],
+      notifications: [{ id: 'n_' + Date.now(), userId: post.authorId, title: 'Bạn nhận được quà tặng', text: `${currentUser.name} đã gửi tặng ${gift.name} như một lời tri ân.`, to: '/feed', unread: true, important: gift.effect === 'mega' || gift.effect === 'legendary', kind: 'credit', date: 'Vừa xong' }, ...prev.notifications],
     }));
-    showToast(`Đã gửi ${gift.icon} ${gift.name}. Tác giả nhận ${creatorShare} credit.`);
+    showToast(`Đã gửi ${gift.icon} ${gift.name} như một lời tri ân.`);
     setTimeout(() => patch((prev) => ({ ...prev, lastGiftEffect: null })), gift.effect === 'legendary' ? 9000 : gift.effect === 'mega' ? 7200 : gift.effect === 'big' ? 5200 : 3600);
     return true;
   }
@@ -661,37 +730,16 @@ export function AppProvider({ children }) {
       documents: prev.documents.map((item) => item.id === docId ? { ...item, gifts: [...(item.gifts || []), { userId: prev.currentUserId, giftId: gift.id, gift: gift.icon + ' ' + gift.name, credit: gift.credit, creatorShare, date: new Date().toLocaleString('vi-VN') }] } : item),
       transactions: [
         { id: 't_' + Date.now(), userId: prev.currentUserId, type: 'gift', amount: 0, credit: gift.credit, status: 'done', note: `Tặng quà cho tài liệu: ${gift.name}`, date: todayKey() },
-        { id: 't_share_' + Date.now(), userId: doc.authorId, type: 'gift_income', amount: 0, credit: creatorShare, status: 'done', note: `Nhận 30% credit từ ${gift.name}`, date: todayKey() },
+        { id: 't_share_' + Date.now(), userId: doc.authorId, type: 'gift_income', amount: 0, credit: creatorShare, status: 'done', note: `Quà tri ân từ ${gift.name}`, date: todayKey() },
         ...prev.transactions,
       ],
-      notifications: [{ id: 'n_' + Date.now(), userId: doc.authorId, title: 'Tài liệu nhận được quà', text: `${currentUser.name} đã tặng ${gift.icon} ${gift.name}. Bạn nhận ${creatorShare} credit (30%).`, to: `/documents/${docId}`, unread: true, important: gift.effect === 'mega' || gift.effect === 'legendary', kind: 'credit', date: 'Vừa xong' }, ...prev.notifications],
+      notifications: [{ id: 'n_' + Date.now(), userId: doc.authorId, title: 'Tài liệu nhận được quà', text: `${currentUser.name} đã gửi tặng ${gift.name} như một lời tri ân.`, to: `/documents/${docId}`, unread: true, important: gift.effect === 'mega' || gift.effect === 'legendary', kind: 'credit', date: 'Vừa xong' }, ...prev.notifications],
     }));
-    showToast(`Đã gửi ${gift.icon} ${gift.name}. Tác giả nhận ${creatorShare} credit.`);
+    showToast(`Đã gửi ${gift.icon} ${gift.name} như một lời tri ân.`);
     setTimeout(() => patch((prev) => ({ ...prev, lastGiftEffect: null })), gift.effect === 'legendary' ? 9000 : gift.effect === 'mega' ? 7200 : gift.effect === 'big' ? 5200 : 3600);
     return true;
   }
 
-
-  function buyDocument(docId) {
-    const doc = state.documents.find((item) => item.id === docId);
-    if (!doc || !currentUser) return { ok: false, message: 'Không tìm thấy tài liệu hoặc bạn chưa đăng nhập.' };
-    if ((state.purchasedDocuments || []).includes(docId) || doc.price <= 0) return { ok: true, already: true };
-    if (currentUser.credit < doc.price) return { ok: false, message: 'Bạn không đủ credit để mua tài liệu.' };
-    patch((prev) => ({
-      ...prev,
-      purchasedDocuments: Array.from(new Set([...(prev.purchasedDocuments || []), docId])),
-      users: prev.users.map((user) => user.id === prev.currentUserId
-        ? { ...user, credit: Math.max(0, user.credit - doc.price) }
-        : user.id === doc.authorId
-          ? { ...user, balance: (user.balance || 0) + doc.price * 700 }
-          : user),
-      transactions: [{ id: 't_' + Date.now(), userId: prev.currentUserId, type: 'buy', amount: 0, credit: doc.price, status: 'done', note: `Mua ${doc.title}`, date: todayKey() }, ...prev.transactions],
-      history: [{ id: 'h_' + Date.now(), type: 'purchase', targetId: docId, title: `Đã mua ${doc.title}`, date: new Date().toLocaleString('vi-VN') }, ...prev.history],
-      notifications: [{ id: 'n_' + Date.now(), title: 'Mua tài liệu thành công', text: `Bạn đã mở khóa ${doc.title}.`, to: `/documents/${docId}`, unread: true }, ...prev.notifications],
-    }));
-    showToast('Mua tài liệu thành công. Nút tải đã được mở.');
-    return { ok: true };
-  }
 
   function addDocumentComment(docId, text, rating = 5) {
     if (!text.trim()) return false;
@@ -1032,6 +1080,107 @@ export function AppProvider({ children }) {
     showToast('Đã xóa từ khóa vi phạm.');
   }
 
+
+  function markMailboxThreadRead(threadId, userId = state.currentUserId) {
+    patch((prev) => ({
+      ...prev,
+      mailboxThreads: (prev.mailboxThreads || []).map((thread) => thread.id === threadId ? { ...thread, unreadBy: (thread.unreadBy || []).filter((id) => id !== userId) } : thread),
+    }));
+  }
+
+  function toggleMailboxStar(threadId, userId = state.currentUserId) {
+    patch((prev) => ({
+      ...prev,
+      mailboxThreads: (prev.mailboxThreads || []).map((thread) => {
+        if (thread.id !== threadId) return thread;
+        const starred = thread.starredBy || [];
+        return {
+          ...thread,
+          starredBy: starred.includes(userId) ? starred.filter((id) => id !== userId) : [...starred, userId],
+        };
+      }),
+    }));
+  }
+
+  function archiveMailboxThread(threadId, userId = state.currentUserId) {
+    patch((prev) => ({
+      ...prev,
+      mailboxThreads: (prev.mailboxThreads || []).map((thread) => {
+        if (thread.id !== threadId) return thread;
+        return { ...thread, archivedBy: Array.from(new Set([...(thread.archivedBy || []), userId])) };
+      }),
+    }));
+    showToast('Đã lưu trữ thư.');
+  }
+
+  function restoreMailboxThread(threadId, userId = state.currentUserId) {
+    patch((prev) => ({
+      ...prev,
+      mailboxThreads: (prev.mailboxThreads || []).map((thread) => thread.id === threadId ? {
+        ...thread,
+        archivedBy: (thread.archivedBy || []).filter((id) => id !== userId),
+        deletedBy: (thread.deletedBy || []).filter((id) => id !== userId),
+      } : thread),
+    }));
+    showToast('Đã khôi phục thư.');
+  }
+
+  function deleteMailboxThread(threadId, userId = state.currentUserId) {
+    patch((prev) => ({
+      ...prev,
+      mailboxThreads: (prev.mailboxThreads || []).map((thread) => {
+        if (thread.id !== threadId) return thread;
+        return { ...thread, deletedBy: Array.from(new Set([...(thread.deletedBy || []), userId])) };
+      }),
+    }));
+    showToast('Đã chuyển thư vào thùng rác.');
+  }
+
+  function sendMailboxMessage(threadId, text) {
+    if (!text.trim()) return false;
+    const thread = (state.mailboxThreads || []).find((item) => item.id === threadId);
+    if (!thread) return false;
+    const message = {
+      id: 'mbm_' + Date.now(),
+      senderId: state.currentUserId,
+      text: text.trim(),
+      time: new Date().toLocaleString('vi-VN'),
+    };
+    patch((prev) => ({
+      ...prev,
+      mailboxThreads: (prev.mailboxThreads || []).map((item) => item.id === threadId ? {
+        ...item,
+        updatedAt: message.time,
+        messages: [...(item.messages || []), message],
+        unreadBy: Array.from(new Set([...(item.participants || []).filter((id) => id !== prev.currentUserId)])),
+      } : item),
+    }));
+    showToast('Đã gửi thư.');
+    return true;
+  }
+
+  function createMailboxThread(recipientId, subject, text = '', category = 'support') {
+    const cleanSubject = subject.trim() || 'Trao đổi mới';
+    const firstMessage = text.trim();
+    const now = new Date().toLocaleString('vi-VN');
+    const threadId = 'mb_' + Date.now();
+    const thread = {
+      id: threadId,
+      subject: cleanSubject,
+      category,
+      participants: [state.currentUserId, recipientId],
+      updatedAt: now,
+      unreadBy: recipientId ? [recipientId] : [],
+      messages: firstMessage ? [{ id: 'mbm_' + Date.now(), senderId: state.currentUserId, text: firstMessage, time: now }] : [],
+    };
+    patch((prev) => ({
+      ...prev,
+      mailboxThreads: [thread, ...(prev.mailboxThreads || [])],
+    }));
+    showToast('Đã tạo thư mới.');
+    return threadId;
+  }
+
   function resetDemo() {
     localStorage.removeItem(STORAGE_KEY);
     setState({ ...applyRankingFrames(defaultState()), avatarFrames, petCatalog, petAccessories, titleBadges, panelSkins });
@@ -1055,6 +1204,9 @@ export function AppProvider({ children }) {
     toggleLikePost,
     toggleSavePost,
     toggleSaveDocument,
+    canAccessDocument,
+    getDocumentPreviewPageCount,
+    purchaseDocument,
     addHistory,
     toggleFollow,
     updateProfile,
@@ -1083,7 +1235,6 @@ export function AppProvider({ children }) {
     reportPostComment,
     donatePost,
     donateDocument,
-    buyDocument,
     addDocumentComment,
     reactDocumentComment,
     replyDocumentComment,
@@ -1110,6 +1261,13 @@ export function AppProvider({ children }) {
     adminUnlockAllFrames,
     adminSendNotification,
     adminResolveReport,
+    markMailboxThreadRead,
+    toggleMailboxStar,
+    archiveMailboxThread,
+    restoreMailboxThread,
+    deleteMailboxThread,
+    sendMailboxMessage,
+    createMailboxThread,
     resetDemo,
   };
 

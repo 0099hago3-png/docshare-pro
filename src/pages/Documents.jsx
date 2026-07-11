@@ -15,7 +15,6 @@ export default function Documents() {
   const [focus, setFocus] = useState(false);
   const [advanced, setAdvanced] = useState(false);
   const [fileType, setFileType] = useState('all');
-  const [price, setPrice] = useState('all');
   const [school, setSchool] = useState('all');
   const [tag, setTag] = useState('');
   const [author, setAuthor] = useState('');
@@ -46,11 +45,10 @@ export default function Documents() {
       const matchQ = !q || searchable.includes(q);
       const matchCategory = category === 'all' || doc.category === category;
       const matchType = fileType === 'all' || doc.type === fileType;
-      const matchPrice = price === 'all' || (price === 'free' ? doc.price === 0 : doc.price > 0);
       const matchSchool = school === 'all' || normalizeText(doc.school || '') === normalizeText(school);
       const matchTag = !normalizedTag || (doc.tags || []).some((item) => normalizeText(item).includes(normalizedTag));
       const matchAuthor = !normalizedAuthor || normalizeText(authorName).includes(normalizedAuthor);
-      return matchQ && matchCategory && matchType && matchPrice && matchSchool && matchTag && matchAuthor;
+      return matchQ && matchCategory && matchType && matchSchool && matchTag && matchAuthor;
     });
     return [...list].sort((a, b) => (
       sort === 'popular' ? b.views - a.views :
@@ -58,7 +56,7 @@ export default function Documents() {
       sort === 'downloaded' ? b.downloads - a.downloads :
       new Date(b.createdAt) - new Date(a.createdAt)
     ));
-  }, [author, category, fileType, getUser, keyword, price, school, sort, state.documents, tag]);
+  }, [author, category, fileType, getUser, keyword, school, sort, state.documents, tag]);
 
   const topLiked = useMemo(() => [...state.documents].sort((a, b) => b.likes - a.likes).slice(0, 3), [state.documents]);
   const suggested = useMemo(() => [...state.documents].sort((a, b) => (b.rating * 100 + b.views / 100) - (a.rating * 100 + a.views / 100)).slice(0, 5), [state.documents]);
@@ -74,7 +72,6 @@ export default function Documents() {
 
   function clearAdvanced() {
     setFileType('all');
-    setPrice('all');
     setSchool('all');
     setTag('');
     setAuthor('');
@@ -100,7 +97,6 @@ export default function Documents() {
         </div>
         {advanced && <div className="advanced-filter-panel advanced-filter-panel-v23">
           <label>Loại file<select value={fileType} onChange={(event) => setFileType(event.target.value)}><option value="all">Tất cả</option><option>PDF</option><option>DOCX</option><option>PPTX</option><option>XLSX</option><option>ZIP</option><option>RAR</option></select></label>
-          <label>Giá tài liệu<select value={price} onChange={(event) => setPrice(event.target.value)}><option value="all">Tất cả</option><option value="free">Miễn phí</option><option value="paid">Có phí</option></select></label>
           <label>Trường<select value={school} onChange={(event) => setSchool(event.target.value)}><option value="all">Tất cả trường</option>{schools.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
           <label>Tác giả<input value={author} onChange={(event) => setAuthor(event.target.value)} placeholder="Tìm theo tên tác giả"/></label>
           <label className="advanced-tag-field">Hashtag<div className="tag-field-wrap"><Tag size={15}/><input list="doc-tags" value={tag} onChange={(event) => setTag(event.target.value)} placeholder="Ví dụ: react, postgresql..."/></div><datalist id="doc-tags">{tagSuggestions.map((item) => <option key={item} value={item}/>)}</datalist></label>

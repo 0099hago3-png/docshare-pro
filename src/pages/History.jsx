@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Bookmark, Download, Eye, FileText, Heart, MessageCircle, PackageCheck, PenLine, Search, Star,
+  Bookmark, Download, Eye, FileText, Heart, MessageCircle, PenLine, Search, Star,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext.jsx';
 
@@ -12,7 +12,6 @@ const tabs = [
   ['comment', 'Đã bình luận', MessageCircle],
   ['review', 'Đã đánh giá', Star],
   ['download', 'Đã tải', Download],
-  ['purchase', 'Đã mua', PackageCheck],
   ['post', 'Đã đăng', PenLine],
 ];
 
@@ -31,12 +30,6 @@ export default function History() {
       if (!map.saved.some((item) => item.targetId === id)) {
         const doc = state.documents.find((item) => item.id === id);
         if (doc) map.saved.push({ id: `saved-${id}`, type: 'saved', targetId: id, title: `Đã lưu ${doc.title}`, date: 'Trong danh sách yêu thích' });
-      }
-    });
-    state.purchasedDocuments?.forEach((id) => {
-      if (!map.purchase.some((item) => item.targetId === id)) {
-        const doc = state.documents.find((item) => item.id === id);
-        if (doc) map.purchase.push({ id: `purchase-${id}`, type: 'purchase', targetId: id, title: `Đã mua ${doc.title}`, date: 'Tài liệu đã mở khóa' });
       }
     });
     state.posts?.filter((post) => post.authorId === state.currentUserId).forEach((post) => map.post.push({ id: `post-${post.id}`, type: 'post', targetId: post.id, title: post.title || post.content, date: post.createdAt }));

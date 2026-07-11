@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  BadgeDollarSign, Check, FileArchive, FileImage, FileText, ImagePlus,
-  Search, Sparkles, Tag, UploadCloud,
+  Check, FileArchive, FileImage, FileText, ImagePlus, LibraryBig, Search, Tag, UploadCloud,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext.jsx';
 
@@ -44,7 +43,7 @@ export default function UploadPage() {
   const { state, currentUser, uploadDocument, showToast } = useApp();
   const [form, setForm] = useState({
     title: '', description: '', subject: '', category: 'it', school: '', type: 'PDF',
-    price: 0, coverEmoji: '📘', color: 'blue', tags: [], visibility: 'public',
+    price: 0, coverEmoji: '', color: 'green', tags: [], visibility: 'public',
     coverFileName: '', coverPreview: '', demoFileName: '', fullFileNames: [],
   });
   const [tagText, setTagText] = useState('');
@@ -55,29 +54,19 @@ export default function UploadPage() {
 
   const steps = useMemo(() => [
     { label: 'Thông tin', done: Boolean(form.title && form.subject) },
-    { label: 'Tệp đầy đủ', done: Boolean(form.fullFileNames.length) },
-    { label: 'Ảnh bìa', done: Boolean(form.coverFileName || form.coverEmoji) },
-    { label: 'Tags & giá', done: Boolean(form.tags.length || form.price >= 0) },
+    { label: 'Tệp tài liệu', done: Boolean(form.fullFileNames.length) },
+    { label: 'Ảnh bìa 9:16', done: Boolean(form.coverFileName) },
+    { label: 'Hashtag & phát hành', done: Boolean(form.tags.length && form.visibility) },
   ], [form]);
 
   const schoolSuggestions = useMemo(() => {
     const query = schoolText || form.school;
-    return state.schools
-      .map((school) => ({ school, score: fuzzyScore(query, school) }))
-      .filter((item) => item.score > 0)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 8)
-      .map((item) => item.school);
+    return state.schools.map((school) => ({ school, score: fuzzyScore(query, school) })).filter((item) => item.score > 0).sort((a, b) => b.score - a.score).slice(0, 8).map((item) => item.school);
   }, [schoolText, form.school, state.schools]);
 
   const tagSuggestions = useMemo(() => {
     const pool = Array.from(new Set([...suggestedTags, ...state.documents.flatMap((doc) => doc.tags || [])]));
-    return pool
-      .map((tag) => ({ tag, score: fuzzyScore(tagText, tag) }))
-      .filter((item) => item.score > 0 && !form.tags.includes(item.tag))
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 10)
-      .map((item) => item.tag);
+    return pool.map((tag) => ({ tag, score: fuzzyScore(tagText, tag) })).filter((item) => item.score > 0 && !form.tags.includes(item.tag)).sort((a, b) => b.score - a.score).slice(0, 10).map((item) => item.tag);
   }, [tagText, form.tags, state.documents]);
 
   function update(key, value) {
@@ -112,69 +101,61 @@ export default function UploadPage() {
 
   function submit(event) {
     event.preventDefault();
-    if (!form.fullFileNames.length) {
-      showToast('Bạn cần chọn ít nhất một file tài liệu đầy đủ.');
-      return;
-    }
-    if (uploadDocument({ ...form, school: form.school.trim() })) navigate('/documents');
+    if (!form.fullFileNames.length) return showToast('Bạn cần chọn ít nhất một file tài liệu.');
+    if (!form.coverFileName) return showToast('Bạn cần tải ảnh bìa tỷ lệ 9:16.');
+    if (uploadDocument({ ...form, price: 0, school: form.school.trim() })) navigate('/documents');
   }
 
   return (
-    <div className="page universe-page upload-v22-page">
-      <section className="upload-v22-hero">
-        <div><span className="eyebrow"><Sparkles size={15}/> STUDIO ĐĂNG TẢI DOCSHARE</span><h1>Đăng tài liệu mới</h1><p>Đăng nhanh, hỗ trợ nhiều định dạng, gợi ý trường gần đúng và hashtag thông minh.</p></div>
-        <div className="upload-limit-card"><UploadCloud/><span><small>Hạn mức hôm nay</small><b>{todayLimit} tài liệu</b><em>{currentUser.premium ? 'Premium · file dung lượng lớn hơn' : 'Tài khoản thường'}</em></span></div>
+    <div className="page upload-page-v25">
+      <section className="upload-hero-v25">
+        <div><span className="eyebrow"><LibraryBig size={15}/> STUDIO XUẤT BẢN DOCSHARE PRO</span><h1>Chia sẻ tri thức, trình bày chuyên nghiệp</h1><p>Tải lên tài liệu với ảnh bìa 9:16, thông tin rõ ràng và hệ thống gợi ý hashtag thông minh.</p></div>
+        <div className="upload-limit-v25"><UploadCloud size={24}/><span><small>Hạn mức hôm nay</small><b>{todayLimit} tài liệu</b><em>{currentUser.premium ? 'Premium · dung lượng mở rộng' : 'Tài khoản thường'}</em></span></div>
       </section>
 
-      <div className="upload-stepper-v22">{steps.map((step, index) => <div key={step.label} className={step.done ? 'done' : ''}><span>{step.done ? <Check size={15}/> : index + 1}</span><b>{step.label}</b></div>)}</div>
+      <div className="upload-stepper-v25">{steps.map((step, index) => <div key={step.label} className={step.done ? 'done' : ''}><span>{step.done ? <Check size={15}/> : index + 1}</span><b>{step.label}</b></div>)}</div>
 
-      <form className="upload-workspace-v22" onSubmit={submit}>
-        <main className="upload-form-v22">
-          <section className="upload-block-v22">
-            <header><span><FileText/></span><div><h2>1. Thông tin tài liệu</h2><p>Tiêu đề rõ ràng, mô tả đủ ý và môn học chính xác giúp tài liệu dễ được tìm thấy.</p></div></header>
-            <div className="upload-grid-v22 two">
-              <label className="span-2">Tên tài liệu<input value={form.title} onChange={(event) => update('title', event.target.value)} placeholder="VD: Kiến trúc React hiện đại từ nền tảng đến triển khai" required/></label>
-              <label className="span-2">Mô tả<textarea value={form.description} onChange={(event) => update('description', event.target.value)} placeholder="Tài liệu gồm nội dung gì, phù hợp với ai, có điểm nổi bật nào..." maxLength={800}/><small>{form.description.length}/800</small></label>
-              <label>Môn học<input value={form.subject} onChange={(event) => update('subject', event.target.value)} placeholder="VD: Cơ sở dữ liệu" required/></label>
+      <form className="upload-layout-v25" onSubmit={submit}>
+        <main className="upload-form-v25">
+          <section className="upload-section-v25">
+            <header><span><FileText/></span><div><h2>Thông tin tài liệu</h2><p>Tiêu đề, mô tả và chuyên ngành chính xác giúp tài liệu dễ được tìm thấy.</p></div></header>
+            <div className="upload-grid-v25 two">
+              <label className="span-2">Tên tài liệu<input value={form.title} onChange={(event) => update('title', event.target.value)} placeholder="Ví dụ: Kiến trúc React hiện đại từ nền tảng đến triển khai" required/></label>
+              <label className="span-2">Mô tả<textarea value={form.description} onChange={(event) => update('description', event.target.value)} placeholder="Tài liệu gồm nội dung gì, phù hợp với ai, có điểm nổi bật nào..." maxLength={1000}/><small>{form.description.length}/1000</small></label>
+              <label>Môn học<input value={form.subject} onChange={(event) => update('subject', event.target.value)} placeholder="Ví dụ: Cơ sở dữ liệu" required/></label>
               <label>Danh mục<select value={form.category} onChange={(event) => update('category', event.target.value)}>{state.categories.filter((item) => item.id !== 'all').map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
-              <label className="span-2 school-autocomplete-v22">Trường / đơn vị <em>không bắt buộc</em><div className="smart-input-v22"><Search size={16}/><input value={form.school} onFocus={() => setSchoolFocused(true)} onChange={(event) => { update('school', event.target.value); setSchoolText(event.target.value); setSchoolFocused(true); }} placeholder="Gõ gần đúng tên trường hoặc để trống..."/></div>{schoolFocused && schoolSuggestions.length > 0 && <div className="suggestion-popover-v22 custom-scroll">{schoolSuggestions.map((school) => <button type="button" key={school} onMouseDown={(event) => event.preventDefault()} onClick={() => { update('school', school); setSchoolText(school); setSchoolFocused(false); }}>{school}</button>)}</div>}</label>
+              <label className="span-2 school-autocomplete-v22">Trường / đơn vị <em>không bắt buộc</em><div className="smart-input-v25"><Search size={16}/><input value={form.school} onFocus={() => setSchoolFocused(true)} onChange={(event) => { update('school', event.target.value); setSchoolText(event.target.value); setSchoolFocused(true); }} placeholder="Gõ gần đúng tên trường hoặc để trống..."/></div>{schoolFocused && schoolSuggestions.length > 0 && <div className="suggestion-popover-v22 custom-scroll">{schoolSuggestions.map((school) => <button type="button" key={school} onMouseDown={(event) => event.preventDefault()} onClick={() => { update('school', school); setSchoolText(school); setSchoolFocused(false); }}>{school}</button>)}</div>}</label>
             </div>
           </section>
 
-          <section className="upload-block-v22">
-            <header><span><FileArchive/></span><div><h2>2. Tải file</h2><p>File demo là tùy chọn. File đầy đủ có thể chọn nhiều tệp và chỉ mở cho người đã mua.</p></div></header>
-            <div className="upload-file-grid-v22">
-              <label className="dropzone-v22 demo"><FileText/><b>File xem trước <em>không bắt buộc</em></b><small>{form.demoFileName || 'PDF, DOCX, PPTX, ảnh, TXT...'}</small><input type="file" accept={fileAccept} onChange={(event) => setFile('demoFileName', event.target.files)}/><span>{form.demoFileName ? 'Đổi file demo' : 'Chọn file demo'}</span></label>
-              <label className="dropzone-v22 primary"><UploadCloud/><b>File tài liệu đầy đủ <em>bắt buộc</em></b><small>{form.fullFileNames.length ? `${form.fullFileNames.length} file: ${form.fullFileNames.join(', ')}` : 'Có thể chọn nhiều file cùng lúc'}</small><input type="file" accept={fileAccept} multiple required onChange={(event) => setFile('fullFileNames', event.target.files)}/><span>{form.fullFileNames.length ? 'Đổi danh sách file' : 'Chọn file đầy đủ'}</span></label>
+          <section className="upload-section-v25">
+            <header><span><FileArchive/></span><div><h2>Tệp tài liệu</h2><p>Hỗ trợ PDF, Word, PowerPoint, Excel, tệp nén, ảnh và nhiều định dạng khác.</p></div></header>
+            <div className="upload-file-grid-v25">
+              <label className="dropzone-v25"><FileText/><b>File xem trước <em>không bắt buộc</em></b><small>{form.demoFileName || 'Chọn bản demo hoặc phần trích dẫn'}</small><input type="file" accept={fileAccept} onChange={(event) => setFile('demoFileName', event.target.files)}/><span>{form.demoFileName ? 'Đổi file xem trước' : 'Chọn file xem trước'}</span></label>
+              <label className="dropzone-v25 primary"><UploadCloud/><b>File tài liệu <em>bắt buộc</em></b><small>{form.fullFileNames.length ? `${form.fullFileNames.length} file đã chọn` : 'Có thể chọn nhiều file cùng lúc'}</small><input type="file" accept={fileAccept} multiple required onChange={(event) => setFile('fullFileNames', event.target.files)}/><span>{form.fullFileNames.length ? 'Đổi danh sách file' : 'Chọn file tài liệu'}</span></label>
             </div>
-            <label className="file-type-row-v22">Loại tài liệu<select value={form.type} onChange={(event) => update('type', event.target.value)}>{fileTypes.map((type) => <option key={type}>{type}</option>)}</select></label>
+            <label className="file-type-row-v25">Loại tài liệu<select value={form.type} onChange={(event) => update('type', event.target.value)}>{fileTypes.map((type) => <option key={type}>{type}</option>)}</select></label>
           </section>
 
-          <section className="upload-block-v22">
-            <header><span><ImagePlus/></span><div><h2>3. Ảnh bìa</h2><p>Tải ảnh bìa dọc rõ chữ để tăng khả năng được xem và mua.</p></div></header>
-            <div className="cover-upload-row-v22">
-              <label className="cover-drop-v22"><FileImage/><b>Tải ảnh bìa</b><small>{form.coverFileName || 'Khuyên dùng tỉ lệ 3:4, JPG/PNG/WEBP'}</small><input type="file" accept="image/*" onChange={(event) => setFile('coverFileName', event.target.files)}/><span>Chọn ảnh</span></label>
-              <div className="upload-grid-v22 two compact"><label>Biểu tượng dự phòng<input value={form.coverEmoji} onChange={(event) => update('coverEmoji', event.target.value)} maxLength={4}/></label><label>Màu nhận diện<select value={form.color} onChange={(event) => update('color', event.target.value)}><option value="blue">Xanh công nghệ</option><option value="purple">Tím sáng tạo</option><option value="orange">Cam năng lượng</option><option value="green">Lục tri thức</option><option value="red">Đỏ nổi bật</option><option value="cyan">Lam hiện đại</option></select></label></div>
-            </div>
+          <section className="upload-section-v25">
+            <header><span><ImagePlus/></span><div><h2>Ảnh bìa 9:16</h2><p>Ảnh bìa chỉ hiển thị hình ảnh, không chèn lại tiêu đề để giao diện gọn và chuyên nghiệp.</p></div></header>
+            <label className="cover-drop-v25"><FileImage/><b>Tải ảnh bìa dọc</b><small>{form.coverFileName || 'Khuyến nghị 1080 × 1920 px · JPG, PNG hoặc WEBP'}</small><input type="file" accept="image/*" required onChange={(event) => setFile('coverFileName', event.target.files)}/><span>Chọn ảnh bìa</span></label>
           </section>
 
-          <section className="upload-block-v22">
-            <header><span><Tag/></span><div><h2>4. Hashtag thông minh</h2><p>Gõ để nhận gợi ý từ khóa gần đúng. Hashtag giúp tìm kiếm và thuật toán đề xuất chính xác hơn.</p></div></header>
+          <section className="upload-section-v25">
+            <header><span><Tag/></span><div><h2>Hashtag & phát hành</h2><p>Thêm từ khóa để tìm kiếm chính xác hơn, sau đó chọn phạm vi hiển thị.</p></div></header>
             <div className="selected-tags-v22">{form.tags.map((tag) => <button type="button" key={tag} onClick={() => removeTag(tag)}>#{tag}<span>×</span></button>)}{!form.tags.length && <small>Chưa có hashtag nào.</small>}</div>
-            <div className="tag-autocomplete-v22"><div className="smart-input-v22"><Tag size={16}/><input value={tagText} onFocus={() => setTagFocused(true)} onChange={(event) => { setTagText(event.target.value); setTagFocused(true); }} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); addTag(tagText); } }} placeholder="Gõ React, cơ sở dữ liệu, AI..."/><button type="button" onClick={() => addTag(tagText)}>+ Thêm</button></div>{tagFocused && tagSuggestions.length > 0 && <div className="suggestion-popover-v22 tags custom-scroll">{tagSuggestions.map((tag) => <button type="button" key={tag} onMouseDown={(event) => event.preventDefault()} onClick={() => addTag(tag)}>#{tag}</button>)}</div>}</div>
+            <div className="tag-autocomplete-v22"><div className="smart-input-v25"><Tag size={16}/><input value={tagText} onFocus={() => setTagFocused(true)} onChange={(event) => { setTagText(event.target.value); setTagFocused(true); }} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); addTag(tagText); } }} placeholder="Gõ React, cơ sở dữ liệu, AI..."/><button type="button" onClick={() => addTag(tagText)}>Thêm</button></div>{tagFocused && tagSuggestions.length > 0 && <div className="suggestion-popover-v22 tags custom-scroll">{tagSuggestions.map((tag) => <button type="button" key={tag} onMouseDown={(event) => event.preventDefault()} onClick={() => addTag(tag)}>#{tag}</button>)}</div>}</div>
+            <label className="publish-visibility-v25">Quyền hiển thị<select value={form.visibility} onChange={(event) => update('visibility', event.target.value)}><option value="public">Công khai</option><option value="unlisted">Chỉ người có liên kết</option><option value="private">Riêng tư</option></select></label>
           </section>
 
-          <section className="upload-block-v22">
-            <header><span><BadgeDollarSign/></span><div><h2>5. Giá & xuất bản</h2><p>Tài liệu có giá chỉ mở file đầy đủ sau khi người dùng xác nhận mua bằng credit.</p></div></header>
-            <div className="upload-grid-v22 two compact"><label>Giá tài liệu (credit)<input type="number" min="0" value={form.price} onChange={(event) => update('price', Number(event.target.value))}/><small>Đặt 0 nếu muốn chia sẻ miễn phí.</small></label><label>Quyền hiển thị<select value={form.visibility} onChange={(event) => update('visibility', event.target.value)}><option value="public">Công khai</option><option value="unlisted">Chỉ người có liên kết</option><option value="private">Riêng tư</option></select></label></div>
-          </section>
-
-          <div className="upload-submit-bar-v22"><button type="button" className="space-btn secondary" onClick={() => navigate('/documents')}>Hủy bỏ</button><button className="space-btn primary"><UploadCloud size={18}/>Đăng tài liệu</button></div>
+          <div className="upload-submit-v25"><button type="button" className="space-btn secondary" onClick={() => navigate('/documents')}>Hủy bỏ</button><button className="space-btn primary"><UploadCloud size={18}/>Đăng tài liệu</button></div>
         </main>
 
-        <aside className="upload-preview-v22">
-          <section className="preview-card-v22"><div className={`preview-cover-v22 ${form.color}`} style={form.coverPreview ? { backgroundImage: `linear-gradient(180deg,rgba(2,7,18,.04),rgba(2,7,18,.9)),url(${form.coverPreview})` } : undefined}><span>{form.type}</span>{!form.coverPreview && <div>{form.coverEmoji}</div>}<h3>{form.title || 'Tên tài liệu của bạn'}</h3><p>{form.subject || 'Môn học'}</p></div><div className="preview-info-v22"><h3>{form.title || 'Bản xem trước tài liệu'}</h3><p>{form.description || 'Mô tả ngắn sẽ hiển thị tại đây.'}</p><div><span>{form.fullFileNames.length || 0} file đầy đủ</span><span>{form.price > 0 ? `${form.price} credit` : 'Miễn phí'}</span></div></div></section>
-          <section className="upload-checklist-v22"><h3>Kiểm tra trước khi đăng</h3>{steps.map((step) => <p key={step.label} className={step.done ? 'done' : ''}><span>{step.done ? '✓' : '○'}</span>{step.label}</p>)}<small>Tài liệu được đăng ngay. Nội dung vi phạm từ khóa cộng đồng sẽ bị chặn.</small></section>
+        <aside className="upload-preview-v25">
+          <section className="cover-preview-card-v25"><div className="cover-preview-head"><h3>Ảnh bìa</h3><span>9:16</span></div><div className="cover-preview-stage-v25">{form.coverPreview ? <img src={form.coverPreview} alt="Ảnh bìa xem trước"/> : <div><FileImage size={38}/><span>Ảnh bìa 9:16</span></div>}</div></section>
+          <section className="document-preview-card-v25"><h3>Bản xem trước tài liệu</h3><b>{form.title || 'Tên tài liệu sẽ hiển thị tại đây'}</b><p>{form.description || 'Mô tả ngắn sẽ hiển thị tại đây.'}</p><div><span>{form.fullFileNames.length || 0} file</span><span>{form.visibility === 'public' ? 'Công khai' : form.visibility === 'private' ? 'Riêng tư' : 'Có liên kết'}</span></div></section>
+          <section className="upload-checklist-v25"><h3>Kiểm tra trước khi đăng</h3>{steps.map((step) => <p key={step.label} className={step.done ? 'done' : ''}><span>{step.done ? '✓' : '○'}</span>{step.label}</p>)}</section>
         </aside>
       </form>
     </div>

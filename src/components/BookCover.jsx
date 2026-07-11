@@ -1,4 +1,5 @@
-import { BookOpen, GraduationCap } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { BookOpen } from 'lucide-react';
 
 const themeMap = {
   blue: 'oxford',
@@ -12,25 +13,35 @@ const themeMap = {
 
 export default function BookCover({ doc, size = 'card', className = '' }) {
   const theme = themeMap[doc?.color] || 'oxford';
-  const hasImage = Boolean(doc?.coverPreview);
-  const style = hasImage ? { backgroundImage: `linear-gradient(180deg,rgba(16,24,32,.05),rgba(16,24,32,.42)),url(${doc.coverPreview})` } : undefined;
+  const image = useMemo(() => doc?.coverPreview || doc?.coverImage || '', [doc]);
+  const [imageFailed, setImageFailed] = useState(false);
+  const showImage = Boolean(image) && !imageFailed;
 
   return (
-    <div className={`book-cover book-cover-${size} book-theme-${theme} ${hasImage ? 'has-cover-image' : ''} ${className}`} style={style}>
+    <div
+      className={`book-cover book-cover-${size} book-theme-${theme} ${showImage ? 'has-cover-image' : 'is-placeholder'} ${className}`}
+      aria-label={`Ảnh bìa ${doc?.title || 'tài liệu'}`}
+    >
       <span className="book-spine" />
       <span className="book-page-edge" />
-      <div className="book-cover-content">
-        <span className="book-imprint"><BookOpen size={13}/> DOCSHARE ACADEMIC</span>
-        {!hasImage && <span className="book-emblem" aria-hidden="true">{doc?.cover || <GraduationCap size={28}/>}</span>}
-        <div className="book-title-block">
-          <strong>{doc?.title || 'Tài liệu học thuật'}</strong>
-          <small>{doc?.subject || 'Chuyên đề học tập'}</small>
+      {showImage ? (
+        <img
+          className="book-cover-image"
+          src={image}
+          alt={`Ảnh bìa ${doc?.title || 'tài liệu'}`}
+          loading="lazy"
+          onError={() => setImageFailed(true)}
+        />
+      ) : (
+        <div className="book-cover-placeholder" aria-hidden="true">
+          <span><BookOpen size={34} /></span>
+          <strong>{doc?.subject || 'Tài liệu học tập'}</strong>
+          <p>{doc?.title || 'DocShare Pro'}</p>
+          <i />
+          <i />
+          <i />
         </div>
-        <div className="book-cover-footer">
-          <span>{doc?.type || 'PDF'}</span>
-          <span>{doc?.school || 'DocShare Library'}</span>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

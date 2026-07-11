@@ -70,7 +70,7 @@ export const users = [
   {
     id: 'u_user', name: 'Nguyễn Văn A', email: 'user@docshare.vn', password: '123456', role: 'user', avatar: 'N', verified: true, premium: true,
     premiumInfo: { ...premiumMeta, plan: 'Premium 12 tháng', purchasedAt: '2026-02-10 10:15', expiresAt: '2027-02-10' },
-    level: 51, xp: 34870, followers: 1260, following: ['u_teacher', 'u_minh'], likes: 4260, credit: 780, balance: 175000,
+    level: 51, xp: 34870, followers: 1260, following: ['u_teacher', 'u_minh'], likes: 4260, credit: 780, balance: 175000, ownedDocuments: ['d7'],
     supportPoints: 7820, creatorPoints: 6120, activityPoints: 8900, followerPoints: 6300,
     bio: 'Sinh viên thích lập trình web, chia sẻ tài liệu học tập và ghi chú ôn thi.', school: 'Cao đẳng Đông An', major: 'Công nghệ thông tin', cover: '', passwordHint: 'tên trường + năm sinh', lockedUntil: null, warnings: 0,
     joinedAt: '2025-01-15', bankAccounts: [{ id: 'ba2', bank: 'Vietcombank', number: '001123456789', holder: 'Nguyễn Văn A', default: true }],
@@ -80,7 +80,7 @@ export const users = [
   {
     id: 'u_teacher', name: 'Lê Thị Hương', email: 'teacher@docshare.vn', password: '123456', role: 'teacher', avatar: 'H', verified: true, premium: true,
     premiumInfo: { ...premiumMeta, plan: 'Premium 6 tháng', purchasedAt: '2026-04-20 08:30', expiresAt: '2026-10-20' },
-    level: 39, xp: 26420, followers: 2341, following: ['u_user'], likes: 6482, credit: 850, balance: 980000,
+    level: 39, xp: 26420, followers: 2341, following: ['u_user'], likes: 6482, credit: 850, balance: 980000, ownedDocuments: ['d5'],
     supportPoints: 12450, creatorPoints: 13800, activityPoints: 13220, followerPoints: 11705,
     bio: 'Giảng viên chia sẻ giáo trình, bài giảng và đề cương ôn tập.', school: 'Đại học Bách Khoa', major: 'Cơ sở dữ liệu', cover: '', passwordHint: 'tên môn giảng dạy', lockedUntil: null, warnings: 0,
     joinedAt: '2024-08-12', bankAccounts: [{ id: 'ba3', bank: 'BIDV', number: '260123456789', holder: 'Lê Thị Hương', default: true }],
@@ -135,13 +135,13 @@ export const users = [
 ];
 
 export const documents = [
-  { id: 'd1', title: 'Lập trình Python cơ bản cho người mới bắt đầu', subject: 'Lập trình cơ bản', category: 'it', school: 'Cao đẳng Đông An', authorId: 'u_teacher', type: 'PDF', price: 0, premiumOnly: false, cover: '🐍', color: 'blue', pages: 50, demoPages: 6, tags: ['python', 'lập trình', 'cơ bản'], views: 15420, downloads: 3210, likes: 1200, rating: 4.8, createdAt: '2026-07-08', files: ['python-demo.pdf', 'python-full.pdf'], gifts: [] },
-  { id: 'd2', title: 'Cơ sở dữ liệu quan hệ SQL và PostgreSQL', subject: 'Cơ sở dữ liệu', category: 'database', school: 'Cao đẳng Đông An', authorId: 'u_user', type: 'PDF', price: 35, premiumOnly: false, cover: '🗄️', color: 'purple', pages: 80, demoPages: 5, tags: ['sql', 'postgresql', 'supabase'], views: 12100, downloads: 1420, likes: 982, rating: 4.9, createdAt: '2026-07-07', files: ['sql-demo.pdf', 'sql-full.pdf'], gifts: [{ userId: 'u_teacher', giftId: 'g3', gift: 'Tinh tú', credit: 50, date: '2026-07-08' }] },
-  { id: 'd3', title: 'React + Vite xây dựng website chia sẻ tài liệu', subject: 'Web Frontend', category: 'it', school: 'Cao đẳng Đông An', authorId: 'u_user', type: 'DOCX', price: 0, premiumOnly: false, cover: '⚛️', color: 'cyan', pages: 36, demoPages: 4, tags: ['react', 'vite', 'frontend'], views: 8300, downloads: 890, likes: 724, rating: 4.6, createdAt: '2026-07-06', files: ['react-vite.docx'], gifts: [] },
-  { id: 'd4', title: 'Kỹ năng viết tin và bản tin: từ lý thuyết đến thực hành', subject: 'Kỹ năng viết tin', category: 'media', school: 'Học viện Báo chí và Tuyên truyền', authorId: 'u_teacher', type: 'PDF', price: 50, premiumOnly: false, cover: '📰', color: 'orange', pages: 92, demoPages: 5, tags: ['báo chí', 'truyền thông', 'kỹ năng viết'], views: 18900, downloads: 2300, likes: 976, rating: 4.7, createdAt: '2026-07-05', files: ['viet-tin-demo.pdf', 'viet-tin-full.pdf'], gifts: [{ userId: 'u_admin', giftId: 'g7', gift: 'Sư tử tinh vân', credit: 1000, date: '2026-07-08' }] },
-  { id: 'd5', title: 'Marketing căn bản và hành vi người tiêu dùng', subject: 'Marketing căn bản', category: 'economy', school: 'Đại học Kinh tế Quốc dân', authorId: 'u_teacher', type: 'PPTX', price: 0, premiumOnly: false, cover: '📈', color: 'green', pages: 44, demoPages: 3, tags: ['marketing', 'kinh tế'], views: 7200, downloads: 1100, likes: 650, rating: 4.5, createdAt: '2026-07-04', files: ['marketing.pptx'], gifts: [] },
-  { id: 'd6', title: 'Đề cương Giải tích 1 có lời giải chi tiết', subject: 'Giải tích 1', category: 'math', school: 'Đại học Bách Khoa', authorId: 'u_user', type: 'PDF', price: 25, premiumOnly: false, cover: '∫', color: 'red', pages: 70, demoPages: 7, tags: ['giải tích', 'toán', 'bài tập'], views: 22300, downloads: 3900, likes: 1320, rating: 4.9, createdAt: '2026-07-08', files: ['giai-tich-demo.pdf', 'giai-tich-full.pdf'], gifts: [{ userId: 'u_teacher', giftId: 'g11', gift: 'Hành tinh pha lê', credit: 800, date: '2026-07-08' }] },
-  { id: 'd7', title: 'Phân tích dữ liệu với Excel: từ cơ bản đến nâng cao', subject: 'Excel', category: 'economy', school: 'Đại học Kinh tế Quốc dân', authorId: 'u_minh', type: 'PPTX', price: 15, premiumOnly: false, cover: '📊', color: 'teal', pages: 65, demoPages: 4, tags: ['excel', 'phân tích dữ liệu'], views: 10450, downloads: 7210, likes: 724, rating: 4.6, createdAt: '2026-07-03', files: ['excel-demo.pptx', 'excel-full.pptx'], gifts: [] },
+  { id: 'd1', title: 'Lập trình Python cơ bản cho người mới bắt đầu', subject: 'Lập trình cơ bản', category: 'it', school: 'Cao đẳng Đông An', authorId: 'u_teacher', type: 'PDF', price: 0, premiumOnly: false, cover: '🐍', color: 'blue', coverPreview: '/covers/python.svg', pages: 50, demoPages: 6, tags: ['python', 'lập trình', 'cơ bản'], views: 15420, downloads: 3210, likes: 1200, rating: 4.8, createdAt: '2026-07-08', files: ['python-demo.pdf', 'python-full.pdf'], gifts: [] },
+  { id: 'd2', title: 'Cơ sở dữ liệu quan hệ SQL và PostgreSQL', subject: 'Cơ sở dữ liệu', category: 'database', school: 'Cao đẳng Đông An', authorId: 'u_user', type: 'PDF', price: 0, premiumOnly: false, cover: '🗄️', color: 'purple', coverPreview: '/covers/database.svg', pages: 80, demoPages: 5, tags: ['sql', 'postgresql', 'supabase'], views: 12100, downloads: 1420, likes: 982, rating: 4.9, createdAt: '2026-07-07', files: ['sql-demo.pdf', 'sql-full.pdf'], gifts: [{ userId: 'u_teacher', giftId: 'g3', gift: 'Tinh tú', credit: 50, date: '2026-07-08' }] },
+  { id: 'd3', title: 'React + Vite xây dựng website chia sẻ tài liệu', subject: 'Web Frontend', category: 'it', school: 'Cao đẳng Đông An', authorId: 'u_user', type: 'DOCX', price: 0, premiumOnly: false, cover: '⚛️', color: 'cyan', coverPreview: '/covers/react.svg', pages: 36, demoPages: 4, tags: ['react', 'vite', 'frontend'], views: 8300, downloads: 890, likes: 724, rating: 4.6, createdAt: '2026-07-06', files: ['react-vite.docx'], gifts: [] },
+  { id: 'd4', title: 'Kỹ năng viết tin và bản tin: từ lý thuyết đến thực hành', subject: 'Kỹ năng viết tin', category: 'media', school: 'Học viện Báo chí và Tuyên truyền', authorId: 'u_teacher', type: 'PDF', price: 0, premiumOnly: false, cover: '📰', color: 'orange', coverPreview: '/covers/media.svg', pages: 92, demoPages: 5, tags: ['báo chí', 'truyền thông', 'kỹ năng viết'], views: 18900, downloads: 2300, likes: 976, rating: 4.7, createdAt: '2026-07-05', files: ['viet-tin-demo.pdf', 'viet-tin-full.pdf'], gifts: [{ userId: 'u_admin', giftId: 'g7', gift: 'Huy chương Giám tuyển', credit: 1000, date: '2026-07-08' }] },
+  { id: 'd5', title: 'Marketing căn bản và hành vi người tiêu dùng', subject: 'Marketing căn bản', category: 'economy', school: 'Đại học Kinh tế Quốc dân', authorId: 'u_teacher', type: 'PPTX', price: 90, premiumOnly: false, cover: '📈', color: 'green', coverPreview: '/covers/marketing.svg', pages: 44, demoPages: 3, tags: ['marketing', 'kinh tế'], views: 7200, downloads: 1100, likes: 650, rating: 4.5, createdAt: '2026-07-04', files: ['marketing.pptx'], gifts: [] },
+  { id: 'd6', title: 'Đề cương Giải tích 1 có lời giải chi tiết', subject: 'Giải tích 1', category: 'math', school: 'Đại học Bách Khoa', authorId: 'u_user', type: 'PDF', price: 0, premiumOnly: false, cover: '∫', color: 'red', coverPreview: '/covers/calculus.svg', pages: 70, demoPages: 7, tags: ['giải tích', 'toán', 'bài tập'], views: 22300, downloads: 3900, likes: 1320, rating: 4.9, createdAt: '2026-07-08', files: ['giai-tich-demo.pdf', 'giai-tich-full.pdf'], gifts: [{ userId: 'u_teacher', giftId: 'g11', gift: 'Vương miện Danh dự', credit: 800, date: '2026-07-08' }] },
+  { id: 'd7', title: 'Phân tích dữ liệu với Excel: từ cơ bản đến nâng cao', subject: 'Excel', category: 'economy', school: 'Đại học Kinh tế Quốc dân', authorId: 'u_minh', type: 'PPTX', price: 120, premiumOnly: false, cover: '📊', color: 'teal', coverPreview: '/covers/excel.svg', pages: 65, demoPages: 4, tags: ['excel', 'phân tích dữ liệu'], views: 10450, downloads: 7210, likes: 724, rating: 4.6, createdAt: '2026-07-03', files: ['excel-demo.pptx', 'excel-full.pptx'], gifts: [] },
 ];
 
 export const posts = [
@@ -188,7 +188,7 @@ export const notifications = [
   { id: 'n1', title: 'Có người thích tài liệu', text: 'Tài liệu Python của bạn vừa nhận thêm lượt thích.', to: '/documents/d1', unread: true, important: false, kind: 'like', date: '2 phút trước' },
   { id: 'n2', title: 'Giao dịch chờ xác nhận', text: 'Yêu cầu nạp credit đang chờ admin xử lý.', to: '/wallet', unread: true, important: true, kind: 'wallet', date: '5 phút trước' },
   { id: 'n3', title: 'Báo cáo mới', text: 'Có báo cáo nội dung cần kiểm tra.', to: '/admin', unread: true, important: true, kind: 'report', date: '10 phút trước' },
-  { id: 'n4', title: 'Bạn nhận được khung mới', text: 'Khung Quasar Premium đã được thêm vào túi đồ.', to: '/profile', unread: false, important: false, kind: 'frame', date: '1 giờ trước' },
+  { id: 'n4', title: 'Bạn nhận được khung mới', text: 'Khung Mùa Thu Học Thuật đã được thêm vào bộ sưu tập theo mùa.', to: '/profile', unread: false, important: false, kind: 'frame', date: '1 giờ trước' },
 ];
 
 export const reports = [
@@ -202,7 +202,6 @@ export const supportTickets = [
 
 export const transactions = [
   { id: 't1', userId: 'u_user', type: 'topup', amount: 50000, credit: 100, status: 'done', note: 'Nạp credit', date: '2026-07-07' },
-  { id: 't2', userId: 'u_user', type: 'buy', amount: 0, credit: 35, status: 'done', note: 'Mua tài liệu SQL', date: '2026-07-07' },
   { id: 't3', userId: 'u_teacher', type: 'withdraw', amount: 300000, credit: 0, status: 'pending', note: 'BIDV - 260123456789', date: '2026-07-08' },
   { id: 't4', userId: 'u_linh', type: 'premium', amount: 249000, credit: 900, status: 'pending', note: 'Premium 3 tháng', date: '2026-07-08' },
 ];
@@ -210,24 +209,33 @@ export const transactions = [
 export const bannedWords = ['lừa đảo', 'đồi trụy', 'cờ bạc', 'hack', 'spam', 'phản động', 'thù ghét', 'chửi tục', 'mua bán tài khoản', 'link độc'];
 
 export const giftStore = [
-  { id: 'g1', name: 'Hoa hồng', icon: '🌹', credit: 10, effect: 'small', sound: null, theme: 'rose' },
-  { id: 'g2', name: 'Cà phê', icon: '☕', credit: 20, effect: 'small', sound: null, theme: 'coffee' },
-  { id: 'g3', name: 'Ngôi sao', icon: '⭐', credit: 50, effect: 'medium', sound: null, theme: 'star' },
-  { id: 'g4', name: 'Hộp quà', icon: '🎁', credit: 80, effect: 'medium', sound: null, theme: 'giftbox' },
-  { id: 'g5', name: 'Tên lửa', icon: '🚀', credit: 300, effect: 'big', sound: 'rocket', theme: 'rocket' },
-  { id: 'g6', name: 'Siêu xe', icon: '🏎️', credit: 500, effect: 'big', sound: 'car', theme: 'car' },
-  { id: 'g7', name: 'Sư tử hoàng kim', icon: '🦁', credit: 1000, effect: 'mega', sound: 'lion', theme: 'lion' },
-  { id: 'g8', name: 'Kim cương', icon: '💎', credit: 1500, effect: 'mega', sound: 'crystal', theme: 'diamond' },
-  { id: 'g9', name: 'Trái tim pha lê', icon: '💖', credit: 100, effect: 'medium', sound: null, theme: 'heart' },
-  { id: 'g10', name: 'Bó hoa', icon: '💐', credit: 150, effect: 'medium', sound: null, theme: 'bouquet' },
-  { id: 'g11', name: 'Vương miện', icon: '👑', credit: 800, effect: 'big', sound: 'crown', theme: 'crown' },
-  { id: 'g12', name: 'Lâu đài ánh sáng', icon: '🏰', credit: 2200, effect: 'mega', sound: 'castle', theme: 'castle' },
-  { id: 'g13', name: 'Rồng huyền thoại', icon: '🐉', credit: 3500, effect: 'mega', sound: 'dragon', theme: 'dragon' },
-  { id: 'g14', name: 'Du thuyền', icon: '🛥️', credit: 5000, effect: 'mega', sound: 'yacht', theme: 'yacht' },
-  { id: 'g15', name: 'Phượng hoàng', icon: '🔥', credit: 6500, effect: 'legendary', sound: 'phoenix', theme: 'phoenix' },
-  { id: 'g16', name: 'Thiên thần', icon: '🪽', credit: 8000, effect: 'legendary', sound: 'angel', theme: 'angel' },
-  { id: 'g17', name: 'Ngai vàng', icon: '🪑', credit: 12000, effect: 'legendary', sound: 'throne', theme: 'throne' },
-  { id: 'g18', name: 'Đế chế hoàng gia', icon: '🏛️', credit: 20000, effect: 'legendary', sound: 'empire', theme: 'empire' },
+  { id:'g1', name:'Dấu trang Tri thức', icon:'✦', credit:10, effect:'small', sound:null, theme:'star' },
+  { id:'g2', name:'Tách cà phê Học giả', icon:'☕', credit:20, effect:'small', sound:null, theme:'coffee' },
+  { id:'g3', name:'Ngôi sao Ghi nhận', icon:'✧', credit:50, effect:'medium', sound:null, theme:'star' },
+  { id:'g4', name:'Hộp thư Cảm ơn', icon:'❦', credit:80, effect:'medium', sound:null, theme:'giftbox' },
+  { id:'g5', name:'Huy hiệu Cống hiến', icon:'◆', credit:300, effect:'big', sound:null, theme:'rocket' },
+  { id:'g6', name:'Kỷ niệm chương Bạc', icon:'◈', credit:500, effect:'big', sound:null, theme:'crown' },
+  { id:'g7', name:'Huy chương Giám tuyển', icon:'◉', credit:1000, effect:'mega', sound:null, theme:'lion' },
+  { id:'g8', name:'Bảo thạch Học thuật', icon:'◇', credit:1500, effect:'mega', sound:null, theme:'diamond' },
+  { id:'g9', name:'Trái tim Đồng hành', icon:'♥', credit:100, effect:'medium', sound:null, theme:'rose' },
+  { id:'g10', name:'Bó nguyệt quế', icon:'❧', credit:150, effect:'medium', sound:null, theme:'bouquet' },
+  { id:'g11', name:'Vương miện Danh dự', icon:'♛', credit:800, effect:'big', sound:null, theme:'crown' },
+  { id:'g12', name:'Thư viện Bảo trợ', icon:'⌂', credit:2200, effect:'mega', sound:null, theme:'castle' },
+  { id:'g13', name:'Ngôi sao Cổ vũ', icon:'✹', credit:30, effect:'small', sound:null, theme:'star' },
+  { id:'g14', name:'Tách Espresso Đêm Khuya', icon:'☕', credit:60, effect:'medium', sound:null, theme:'coffee' },
+  { id:'g15', name:'Hộp Quà Tri Ân', icon:'🎁', credit:120, effect:'medium', sound:null, theme:'giftbox' },
+  { id:'g16', name:'Hoa Hồng Khích Lệ', icon:'🌹', credit:180, effect:'medium', sound:null, theme:'rose' },
+  { id:'g17', name:'Bó Hoa Vinh Danh', icon:'💐', credit:260, effect:'big', sound:null, theme:'bouquet' },
+  { id:'g18', name:'Tên Lửa Bứt Phá', icon:'🚀', credit:420, effect:'big', sound:null, theme:'rocket' },
+  { id:'g19', name:'Vương Miện Học Giả', icon:'👑', credit:900, effect:'mega', sound:null, theme:'crown' },
+  { id:'g20', name:'Linh Vật Sư Tử Vàng', icon:'🦁', credit:1300, effect:'mega', sound:null, theme:'lion' },
+  { id:'g21', name:'Kim Cương Thành Tựu', icon:'💎', credit:1800, effect:'mega', sound:null, theme:'diamond' },
+  { id:'g22', name:'Lâu Đài Tri Thức', icon:'🏛️', credit:3000, effect:'legendary', sound:null, theme:'castle' },
+  { id:'g23', name:'Siêu Tân Tinh Tri Ân', icon:'🌟', credit:3600, effect:'legendary', sound:null, theme:'star', artwork:'/gifts/v38/supernova.svg' },
+  { id:'g24', name:'Du Thuyền Học Giả', icon:'🚢', credit:4200, effect:'legendary', sound:null, theme:'castle', artwork:'/gifts/v38/yacht.svg' },
+  { id:'g25', name:'Vương Miện Ngọc Lục Bảo', icon:'👑', credit:5000, effect:'legendary', sound:null, theme:'crown', artwork:'/gifts/v38/emerald-crown.svg' },
+  { id:'g26', name:'Tinh Vân Kim Cương', icon:'💠', credit:6500, effect:'legendary', sound:null, theme:'diamond', artwork:'/gifts/v38/nebula-diamond.svg' },
+  { id:'g27', name:'Lễ Hội Pháo Hoa Tri Thức', icon:'🎆', credit:8888, effect:'legendary', sound:null, theme:'rocket', artwork:'/gifts/v38/fireworks.svg' },
 ];
 
 export const petCatalog = [
@@ -285,72 +293,26 @@ export const banks = [
 ];
 
 export const avatarFrames = [
-  { id:'orbit-basic', name:'Viền khởi đầu', className:'frame-orbit-basic', decoration:'spark', effect:'static', tier:1, type:'basic', requirement:'Mặc định', description:'Viền mảnh tối giản dành cho mọi thành viên.' },
-  { id:'level-lunar', name:'Học giả Bạc', className:'frame-level-lunar', decoration:'book', effect:'pulse', tier:2, type:'level', minLevel:10, requirement:'Cấp 10', description:'Viền bạc nhịp sáng nhẹ cho người học chăm chỉ.' },
-  { id:'level-nebula', name:'Mạch Công Nghệ', className:'frame-level-nebula', decoration:'zap', effect:'scan', tier:3, type:'level', minLevel:30, requirement:'Cấp 30', description:'Mạch điện quét quanh avatar, không xoay vòng.' },
-  { id:'level-supernova', name:'Vương Miện Danh Dự', className:'frame-level-supernova', decoration:'crown', effect:'crown', tier:4, type:'level', minLevel:60, requirement:'Cấp 60', description:'Vương miện ánh kim dành cho thành viên cấp cao.' },
-  { id:'premium-quasar', name:'Premium Aurora', className:'frame-premium-quasar', decoration:'gem', effect:'rainbow', tier:5, type:'premium', requirement:'Premium', description:'Khung cầu vồng bảy màu chuyển động chậm.' },
-  { id:'admin-singularity', name:'Master Admin', className:'frame-admin-singularity', decoration:'shield', effect:'admin', tier:6, type:'admin', requirement:'Admin', description:'Khung quản trị tối cao với khiên đôi và lõi năng lượng.' },
-
-  { id:'element-lightning', name:'Thiên Lôi Phá Không', className:'frame-element-lightning', decoration:'zap', effect:'lightningBurst', tier:5, type:'event', requirement:'Hoàn thành chuỗi thử thách Lôi Điện', description:'Tia sét phân nhánh đánh theo nhịp, không xoay vòng.' },
-  { id:'element-fire', name:'Hỏa Tâm Bất Diệt', className:'frame-element-fire', decoration:'flame', effect:'fireBreath', tier:5, type:'event', requirement:'Duy trì hoạt động 90 ngày', description:'Lửa sống chuyển động ở chân khung và bùng sáng theo chu kỳ.' },
-  { id:'element-water', name:'Thủy Giới Lam Ngọc', className:'frame-element-water', decoration:'wave', effect:'waterFlow', tier:5, type:'event', requirement:'Hoàn thành 40 tài liệu', description:'Dòng nước và bong bóng chạy quanh viền theo nhịp sóng.' },
-  { id:'element-wind', name:'Phong Vũ Thanh Linh', className:'frame-element-wind', decoration:'feather', effect:'windFlow', tier:4, type:'event', requirement:'Chia sẻ 25 bài viết hữu ích', description:'Dải gió và lá chuyển động mềm, nhẹ nhàng.' },
-  { id:'seraph-wings', name:'Đại Thiên Sứ Seraph', className:'frame-seraph-wings', decoration:'feather', effect:'angelWings', tier:7, type:'event', requirement:'Thành tựu Cống hiến thuần khiết', description:'Đôi cánh thiên thần nhiều lớp nhấp nhô sau avatar.' },
-  { id:'celestial-dragon', name:'Thần Long Thiên Mệnh', className:'frame-celestial-dragon', decoration:'dragon', effect:'dragonFlight', tier:7, type:'event', requirement:'Top 1 tác giả ba mùa', description:'Rồng linh khí bay chậm quanh avatar, đổi hướng và phát sáng.' },
-  { id:'nature-spirit', name:'Mộc Linh Cổ Thụ', className:'frame-nature-spirit', decoration:'leaf', effect:'leafBloom', tier:4, type:'event', requirement:'Sự kiện Mùa Xanh', description:'Dây leo và lá non nở quanh viền.' },
-  { id:'ice-crystal', name:'Băng Tâm Pha Lê', className:'frame-ice-crystal', decoration:'gem', effect:'iceShard', tier:5, type:'event', requirement:'Sự kiện Băng Tinh', description:'Tinh thể băng mọc ở bốn hướng và phản sáng.' },
-  { id:'shadow-assassin', name:'Ảnh Kiếm Vô Thanh', className:'frame-shadow-assassin', decoration:'sword', effect:'shadowSlash', tier:6, type:'event', requirement:'Thử thách Bóng Đêm', description:'Bóng kiếm lướt qua avatar bằng hai nhát chém tím.' },
-  { id:'royal-sun', name:'Đế Quang Hoàng Gia', className:'frame-royal-sun', decoration:'crown', effect:'royalSun', tier:7, type:'rank', requirement:'Top 1 toàn mùa', description:'Vương miện, huy hiệu và tia nắng vàng thể hiện đẳng cấp tối cao.' },
-
-  { id:'rocket-trail', name:'Rocket Trail', className:'frame-rocket-trail', decoration:'rocket', effect:'rocket', tier:3, type:'event', requirement:'Nhiệm vụ tăng tốc', description:'Tên lửa nhỏ bay qua một lần rồi nghỉ.' },
-  { id:'satellite-link', name:'Satellite Link', className:'frame-satellite-link', decoration:'satellite', effect:'satellite', tier:3, type:'event', requirement:'Kết nối 50 thành viên', description:'Vệ tinh di chuyển theo quỹ đạo elip.' },
-  { id:'black-hole', name:'Hố Đen Huyền Bí', className:'frame-black-hole', decoration:'blackhole', effect:'eclipse', tier:4, type:'event', requirement:'Sự kiện Hố Đen', description:'Vệt nhật thực quét chậm qua viền.' },
-  { id:'comet-rush', name:'Sao Chổi Băng', className:'frame-comet-rush', decoration:'spark', effect:'comet', tier:4, type:'event', requirement:'Chuỗi hoạt động 30 ngày', description:'Một sao chổi lướt qua mép khung theo chu kỳ.' },
-  { id:'solar-crown', name:'Thái Dương Miện', className:'frame-solar-crown', decoration:'crown', effect:'sun', tier:5, type:'event', requirement:'Thành tựu Mặt Trời', description:'Tia nắng bung nhịp quanh vương miện.' },
-  { id:'ocean-nebula', name:'Hải Triều Lam Ngọc', className:'frame-ocean-nebula', decoration:'wave', effect:'wave', tier:4, type:'event', requirement:'Sự kiện Đại Dương', description:'Sóng nước nhấp nhô nhẹ ở chân avatar.' },
-  { id:'cosmic-dragon', name:'Rồng Thiên Thanh', className:'frame-cosmic-dragon', decoration:'dragon', effect:'dragon', tier:6, type:'event', requirement:'Nhiệm vụ Rồng Huyền Thoại', description:'Rồng xanh lượn chậm quanh viền, không che khuôn mặt.' },
-  { id:'void-eclipse', name:'Nguyệt Thực Tím', className:'frame-void-eclipse', decoration:'moon', effect:'eclipse', tier:5, type:'event', requirement:'Sự kiện Nhật Thực', description:'Vầng trăng tím trượt qua viền tối.' },
-  { id:'galaxy-orion', name:'Chòm Sao Orion', className:'frame-galaxy-orion', decoration:'spark', effect:'twinkle', tier:4, type:'event', requirement:'Hoàn thành 12 nhiệm vụ', description:'Các điểm sao nhấp nháy bất đồng bộ.' },
-  { id:'sakura-garden', name:'Hoa Anh Đào', className:'frame-sakura-garden', decoration:'flower', effect:'petal', tier:3, type:'event', requirement:'Sự kiện Mùa Xuân', description:'Cánh hoa rơi nhẹ ở hai bên avatar.' },
-  { id:'samurai-blade', name:'Kiếm Khách Bóng Đêm', className:'frame-samurai-blade', decoration:'sword', effect:'slash', tier:5, type:'event', requirement:'Thử thách Kiếm Khách', description:'Hai đường kiếm lóe sáng theo nhịp.' },
-  { id:'phoenix-flare', name:'Phượng Hoàng Lửa', className:'frame-phoenix-flare', decoration:'feather', effect:'flame', tier:6, type:'event', requirement:'Chuỗi 100 ngày', description:'Cánh lửa mở ra phía sau avatar.' },
-  { id:'diamond-emperor', name:'Đế Vương Kim Cương', className:'frame-diamond-emperor', decoration:'gem', effect:'diamond', tier:7, type:'event', requirement:'Thành tựu Kim Cương', description:'Các mặt cắt kim cương phản sáng sang trọng.' },
-  { id:'cyber-grid', name:'Cyber Grid', className:'frame-cyber-grid', decoration:'zap', effect:'scan', tier:4, type:'event', requirement:'Hoàn thành 25 nhiệm vụ công nghệ', description:'Lưới neon và vệt quét kỹ thuật số.' },
-  { id:'royal-laurel', name:'Vòng Nguyệt Quế Hoàng Gia', className:'frame-royal-laurel', decoration:'leaf', effect:'laurel', tier:6, type:'event', requirement:'Top cộng đồng 3 mùa', description:'Lá nguyệt quế vàng ôm hai bên avatar.' },
-
-  { id:'rank-nexus-1', name:'Quán Quân Mùa', className:'frame-rank-nexus-1', decoration:'crown', effect:'champion', tier:7, type:'rank', board:'members', rank:1, requirement:'Top 1 thành viên', description:'Khung quán quân độc quyền với vương miện lớn.' },
-  { id:'rank-nexus-2', name:'Á Quân Bạch Kim', className:'frame-rank-nexus-2', decoration:'gem', effect:'silver', tier:6, type:'rank', board:'members', rank:2, requirement:'Top 2 thành viên', description:'Khung bạch kim lạnh dành cho hạng nhì.' },
-  { id:'rank-nexus-3', name:'Quý Tộc Đồng', className:'frame-rank-nexus-3', decoration:'shield', effect:'bronze', tier:5, type:'rank', board:'members', rank:3, requirement:'Top 3 thành viên', description:'Khung đồng cổ điển dành cho hạng ba.' },
-  { id:'rank-nexus-10', name:'Dải Băng Danh Dự', className:'frame-rank-nexus-10', decoration:'spark', effect:'ribbon', tier:3, type:'rank', board:'members', rank:10, requirement:'Top 4-10 thành viên', description:'Khung ghi nhận Top 4-10.' },
-  { id:'rank-quasar-creator-1', name:'Bút Vàng Sáng Tạo', className:'frame-rank-quasar-creator-1', decoration:'feather', effect:'ink', tier:7, type:'rank', board:'authors', rank:1, requirement:'Top 1 tác giả', description:'Ngòi bút vàng và vệt mực ánh sáng.' },
-  { id:'rank-nebula-donor-1', name:'Nhà Bảo Trợ Kim Cương', className:'frame-rank-nebula-donor-1', decoration:'gem', effect:'diamond', tier:7, type:'rank', board:'donate', rank:1, requirement:'Top 1 ủng hộ', description:'Khung kim cương dành cho người ủng hộ dẫn đầu.' },
-  { id:'rank-stellar-heart-1', name:'Trái Tim Cộng Đồng', className:'frame-rank-stellar-heart-1', decoration:'heart', effect:'heartbeat', tier:6, type:'rank', board:'liked', rank:1, requirement:'Top 1 yêu thích', description:'Nhịp tim ánh hồng dành cho người được yêu thích nhất.' },
-  { id:'rank-oracle-view-1', name:'Mắt Thần Tri Thức', className:'frame-rank-oracle-view-1', decoration:'eye', effect:'eye', tier:6, type:'rank', board:'views', rank:1, requirement:'Top 1 lượt xem', description:'Con mắt ánh lam mở khép nhẹ ở đỉnh khung.' },
-  { id:'rank-comet-download-1', name:'Kho Báu Lưu Trữ', className:'frame-rank-comet-download-1', decoration:'download', effect:'download', tier:6, type:'rank', board:'downloads', rank:1, requirement:'Top 1 lượt tải', description:'Dải dữ liệu rơi xuống chân khung.' },
-  { id:'rank-nova-post-1', name:'Giọng Nói Dẫn Đầu', className:'frame-rank-nova-post-1', decoration:'message', effect:'voice', tier:6, type:'rank', board:'posts', rank:1, requirement:'Top 1 bài đăng', description:'Sóng âm lan tỏa ở hai bên avatar.' },
-
-
-  { id:'thunder-lord', name:'Lôi Thần Thiên Kích', className:'frame-thunder-lord', decoration:'zap', effect:'thunder', tier:6, type:'event', requirement:'Hoàn thành thử thách Lôi Điện', description:'Tia sét đánh chéo theo nhịp, viền mảnh không che avatar.' },
-  { id:'inferno-lord', name:'Hỏa Vương Bất Diệt', className:'frame-inferno-lord', decoration:'flame', effect:'inferno', tier:6, type:'event', requirement:'Chuỗi hoạt động 150 ngày', description:'Lửa bùng nhẹ ở chân khung và cánh lửa mở chậm.' },
-  { id:'aqua-emperor', name:'Hải Đế Lam Triều', className:'frame-aqua-emperor', decoration:'wave', effect:'aqua', tier:5, type:'event', requirement:'Hoàn thành 50 tài liệu', description:'Dải nước chuyển động quanh đáy avatar.' },
-  { id:'storm-dragon', name:'Long Vương Bão Tố', className:'frame-storm-dragon', decoration:'dragon', effect:'stormDragon', tier:7, type:'event', requirement:'Top 1 ba mùa liên tiếp', description:'Rồng bão lượn chậm cùng chớp xanh, hiệu ứng hiếm.' },
-  { id:'frost-queen', name:'Nữ Vương Băng Sương', className:'frame-frost-queen', decoration:'gem', effect:'frost', tier:5, type:'event', requirement:'Sự kiện Băng Giá', description:'Tinh thể băng phản sáng nhẹ ở bốn góc.' },
-
-  { id:'mission-first-upload', name:'Người Khai Phá', className:'frame-mission-explorer', decoration:'rocket', effect:'rocket', tier:2, type:'mission', requirement:'Đăng tài liệu đầu tiên', description:'Khung nhiệm vụ đầu tiên, hiệu ứng nhẹ.' },
-  { id:'mission-100-followers', name:'Kết Nối 100', className:'frame-mission-signal', decoration:'users', effect:'signal', tier:3, type:'mission', requirement:'100 người theo dõi', description:'Hai nhịp sóng kết nối ở hai bên.' },
-  { id:'follower-galaxy', name:'Cộng Đồng 1.000', className:'frame-follower-galaxy', decoration:'users', effect:'laurel', tier:5, type:'mission', requirement:'1.000 người theo dõi', description:'Vòng nguyệt quế dành cho mốc 1.000 follower.' },
-  { id:'mission-1000-likes', name:'Ngàn Tim', className:'frame-mission-pulsar', decoration:'heart', effect:'heartbeat', tier:4, type:'mission', requirement:'1.000 lượt thích', description:'Nhịp tim hồng sáng mỗi vài giây.' },
-  { id:'mission-10000-support', name:'Ân Nhân Hoàng Kim', className:'frame-mission-benefactor', decoration:'crown', effect:'sun', tier:6, type:'mission', requirement:'10.000 điểm ủng hộ', description:'Khung vàng dành cho nhà hảo tâm lâu năm.' },
-
-  { id:'tempest-azure', name:'Phong Bạo Thiên Thanh', className:'frame-tempest-azure', decoration:'feather', effect:'gust', tier:5, type:'event', requirement:'Hoàn thành chuỗi nhiệm vụ Gió', description:'Hai dải gió xé chéo, lá sáng bay theo nhịp.' },
-  { id:'volcanic-core', name:'Hạch Tâm Núi Lửa', className:'frame-volcanic-core', decoration:'flame', effect:'magma', tier:6, type:'event', requirement:'100 ngày hoạt động', description:'Dung nham nứt sáng, lửa bùng theo từng nhịp.' },
-  { id:'leviathan-tide', name:'Hải Vương Leviathan', className:'frame-leviathan-tide', decoration:'wave', effect:'leviathan', tier:7, type:'event', requirement:'Top 1 tải xuống 3 mùa', description:'Sóng biển dựng cao cùng bóng leviathan lướt sau avatar.' },
-  { id:'thunder-wings', name:'Thiên Dực Lôi Đình', className:'frame-thunder-wings', decoration:'zap', effect:'thunderWing', tier:7, type:'event', requirement:'Top 1 tương tác', description:'Cánh điện mở rộng, tia sét đánh bất đối xứng.' },
-  { id:'phoenix-empress', name:'Phượng Đế Hỏa Vũ', className:'frame-phoenix-empress', decoration:'feather', effect:'phoenixWing', tier:8, type:'rank', requirement:'Top 1 tác giả 5 mùa', description:'Đôi cánh phượng lớn tung nhịp, lông lửa rơi quanh avatar.' },
-  { id:'dragon-sovereign', name:'Long Đế Cửu Thiên', className:'frame-dragon-sovereign', decoration:'dragon', effect:'dragonCrown', tier:8, type:'rank', requirement:'Top 1 toàn hệ thống', description:'Rồng dài quấn quanh, đầu rồng dừng phía trên vương miện.' },
-  { id:'celestial-seraph', name:'Thánh Dực Thiên Quang', className:'frame-celestial-seraph', decoration:'feather', effect:'seraphPulse', tier:8, type:'mission', requirement:'10.000 người theo dõi', description:'Ba lớp cánh thiên thần nhấp nhô, quầng sáng mở theo chu kỳ.' },
-  { id:'void-samurai', name:'Hắc Kiếm Hư Không', className:'frame-void-samurai', decoration:'sword', effect:'voidSlash', tier:7, type:'event', requirement:'Thử thách ẩn', description:'Hai thanh kiếm chéo, nhát chém tím xuất hiện bất chợt.' },
+  { id:'frame-classic', name:'Khung Trang Sách', className:'frame-classic', tier:1, type:'basic', requirement:'Mặc định', season:'Nền tảng', description:'Viền ngà mỏng ôm sát avatar.' },
+  { id:'frame-ink', name:'Khung Mực Xanh', className:'frame-ink', tier:1, type:'basic', requirement:'Mặc định', season:'Nền tảng', description:'Đường mực xanh thư viện thanh lịch.' },
+  { id:'frame-paper', name:'Khung Giấy Cổ', className:'frame-paper', tier:1, type:'basic', requirement:'Mặc định', season:'Nền tảng', description:'Tông giấy kem gần gũi.' },
+  { id:'frame-oxford', name:'Khung Oxford', className:'frame-oxford', tier:2, type:'level', minLevel:10, requirement:'Đạt cấp 10', season:'Học giả', description:'Xanh lá đậm trưởng thành.' },
+  { id:'frame-laurel', name:'Khung Lá Nguyệt Quế', className:'frame-laurel', tier:2, type:'level', minLevel:15, requirement:'Đạt cấp 15', season:'Học giả', description:'Cành lá ôm hai bên avatar.' },
+  { id:'frame-bronze', name:'Khung Gỗ Đồng', className:'frame-bronze', tier:2, type:'level', minLevel:20, requirement:'Đạt cấp 20', season:'Học giả', description:'Sắc gỗ đồng ấm.' },
+  { id:'frame-emerald', name:'Khung Lá Ngọc', className:'frame-emerald', tier:3, type:'premium', requirement:'Premium', season:'Bảo trợ', description:'Xanh ngọc tự nhiên.' },
+  { id:'frame-sapphire', name:'Khung Sương Sớm', className:'frame-sapphire', tier:3, type:'premium', requirement:'Premium', season:'Bảo trợ', description:'Xanh biển nhẹ và sáng.' },
+  { id:'frame-platinum', name:'Khung Bạch Diệp', className:'frame-platinum', tier:3, type:'premium', requirement:'Premium', season:'Bảo trợ', description:'Bạc lá cây tinh tế.' },
+  { id:'frame-spring-laurel', name:'Khung Mùa Xuân', className:'frame-spring-laurel', tier:4, type:'season', requirement:'Phần thưởng mùa Xuân', season:'Mùa Xuân 2026', description:'Lá non và hoa nhỏ ôm sát.' },
+  { id:'frame-summer-olive', name:'Khung Ô Liu Hè', className:'frame-summer-olive', tier:4, type:'season', requirement:'Phần thưởng mùa Hè', season:'Mùa Hè 2026', description:'Lá ô liu xanh đậm.' },
+  { id:'frame-autumn-gold', name:'Khung Thu Vàng', className:'frame-autumn-gold', tier:4, type:'season', requirement:'Top 10 mùa Thu', season:'Mùa Thu 2026', description:'Lá thu vàng đồng.' },
+  { id:'frame-winter-silver', name:'Khung Đông Tùng', className:'frame-winter-silver', tier:4, type:'season', requirement:'Phần thưởng mùa Đông', season:'Mùa Đông 2026', description:'Lá tùng bạc tối giản.' },
+  { id:'frame-scholar', name:'Khung Học Giả', className:'frame-scholar', tier:5, type:'rank', requirement:'Top thành viên học tập', season:'Bảng xếp hạng', description:'Cành sách và lá xanh.' },
+  { id:'frame-author', name:'Khung Tác Giả', className:'frame-author', tier:5, type:'rank', requirement:'Top tác giả', season:'Bảng xếp hạng', description:'Bút mảnh và vòng lá.' },
+  { id:'frame-curator', name:'Khung Giám Tuyển', className:'frame-curator', tier:5, type:'admin', requirement:'Quản trị viên', season:'Quản trị', description:'Huy hiệu xanh thư viện.' },
+  { id:'frame-archive', name:'Khung Thủ Thư', className:'frame-archive', tier:5, type:'mission', requirement:'Hoàn thành nhiệm vụ lưu trữ', season:'Nhiệm vụ', description:'Gỗ thư viện và lá nguyệt quế.' },
+  { id:'frame-citation', name:'Khung Trích Dẫn', className:'frame-citation', tier:6, type:'mission', requirement:'10.000 điểm đóng góp', season:'Nhiệm vụ', description:'Dấu trích dẫn và nhánh lá.' },
+  { id:'frame-manuscript', name:'Khung Bản Thảo', className:'frame-manuscript', tier:6, type:'event', requirement:'Sự kiện viết học thuật', season:'Sự kiện', description:'Mực cổ và hoa văn trang sách.' },
+  { id:'frame-patron', name:'Khung Bảo Trợ', className:'frame-patron', tier:6, type:'rank', requirement:'Nhà bảo trợ nổi bật', season:'Bảng xếp hạng', description:'Vàng đồng cao cấp với vòng lá.' },
 ];
 
 export function getFrameById(id) {

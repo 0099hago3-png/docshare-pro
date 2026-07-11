@@ -1,6 +1,6 @@
-# DOCSHARE COMPLETE V24
+# DOCSHARE PRO V25 · MODERN ACADEMIC LIBRARY
 
-Bản V24 sử dụng giao diện **thư viện học thuật hiện đại** với nền trắng/kem, xanh Oxford và vàng đồng.
+Bản V25 sử dụng giao diện thư viện học thuật hiện đại với nền trắng kem dịu mắt, xanh thư viện và vàng đồng.
 
 ## Chạy trên máy
 
@@ -25,9 +25,11 @@ npm run build
 
 ## Đưa bản mới lên GitHub
 
+Nếu bạn dán V25 đè vào thư mục `document-share-react` cũ đã liên kết GitHub:
+
 ```powershell
-git add .
-git commit -m "Cap nhat DocShare V24"
+git add -A
+git commit -m "Cap nhat DocShare Pro V25"
 git push origin main
 ```
 
@@ -40,4 +42,4 @@ VITE_SUPABASE_URL
 VITE_SUPABASE_PUBLISHABLE_KEY
 ```
 
-Lưu ý: V24 vẫn giữ kiến trúc dữ liệu demo/localStorage của các bản trước. Biến Supabase mới chỉ là cấu hình kết nối; muốn dữ liệu đồng bộ thật cần chuyển từng chức năng sang Supabase.
+Lưu ý: V25 vẫn giữ kiến trúc dữ liệu demo/localStorage của các bản trước. Biến Supabase mới chỉ là cấu hình kết nối; muốn dữ liệu đồng bộ thật cần chuyển từng chức năng sang Supabase.
