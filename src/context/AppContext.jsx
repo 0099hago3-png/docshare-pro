@@ -26,7 +26,7 @@ const AppContext = createContext(null);
 function defaultState() {
   return {
     users: defaultUsers,
-    currentUserId: 'u_admin',
+    currentUserId: null, 
     documents: defaultDocuments,
     posts: defaultPosts,
     categories: defaultCategories,

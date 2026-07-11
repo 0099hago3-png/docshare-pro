@@ -5,7 +5,7 @@ import { useApp } from '../context/AppContext.jsx';
 export default function Login() {
   const navigate = useNavigate();
   const { login, state } = useApp();
-  const [form, setForm] = useState({ email: 'admin@docshare.vn', password: '123456' });
+  const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [hint, setHint] = useState('');
   function submit(e) { e.preventDefault(); const res = login(form.email, form.password); if (!res.ok) setError(res.message); else navigate(res.user.role === 'admin' ? '/admin' : '/'); }
