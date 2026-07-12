@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
+import { CloudUpload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext.jsx';
 import { PageHeader } from '../components/LiveUI.jsx';
+import CategoryIcon from '../components/CategoryIcon.jsx';
 
 const initialForm = {
   title: '',
@@ -19,6 +21,14 @@ const initialForm = {
   visibility: 'public',
 };
 
+function UploadCloud({ selected }) {
+  return (
+    <span className={selected ? 'live-upload-cloud-v42 selected' : 'live-upload-cloud-v42'}>
+      <CloudUpload size={42} strokeWidth={1.7} />
+    </span>
+  );
+}
+
 export default function UploadPage() {
   const navigate = useNavigate();
   const { state, uploadDocument } = useApp();
@@ -33,12 +43,22 @@ export default function UploadPage() {
     coverFile ? URL.createObjectURL(coverFile) : ''
   ), [coverFile]);
 
+  const selectedCategory = useMemo(
+    () => state.categories.find((category) => category.id === form.categoryId) || null,
+    [form.categoryId, state.categories],
+  );
+
   function updateField(key, value) {
     setForm((previous) => ({ ...previous, [key]: value }));
   }
 
   async function handleSubmit(event) {
     event.preventDefault();
+
+    if (!form.categoryId) {
+      window.alert('Bạn cần chọn một danh mục có sẵn.');
+      return;
+    }
 
     if (!fullFiles.length) {
       window.alert('Bạn cần chọn ít nhất một file tài liệu đầy đủ.');
@@ -68,6 +88,12 @@ export default function UploadPage() {
         title="Đăng tài liệu lên Supabase"
         text="Thông tin lưu vào PostgreSQL; ảnh bìa, file demo và file đầy đủ lưu vào Supabase Storage."
       />
+
+      {!state.categories.length && (
+        <div className="live-alert error live-category-warning">
+          Chưa có danh mục để chọn. Hãy chạy file SQL danh mục trong Supabase trước khi đăng tài liệu.
+        </div>
+      )}
 
       <form className="live-upload-layout" onSubmit={handleSubmit}>
         <div className="live-upload-main">
@@ -110,16 +136,25 @@ export default function UploadPage() {
               </label>
 
               <label className="live-field">
-                <span>Danh mục</span>
+                <span>Danh mục *</span>
                 <select
                   value={form.categoryId}
                   onChange={(event) => updateField('categoryId', event.target.value)}
+                  required
+                  disabled={!state.categories.length}
                 >
-                  <option value="">Không chọn</option>
+                  <option value="">
+                    {state.categories.length
+                      ? 'Chọn danh mục có sẵn'
+                      : 'Chưa có danh mục trong Supabase'}
+                  </option>
                   {state.categories.map((category) => (
                     <option key={category.id} value={category.id}>{category.name}</option>
                   ))}
                 </select>
+                <small className="live-category-note">
+                  Người dùng chỉ được chọn. Danh mục mới chỉ do Admin thêm trong SQL.
+                </small>
               </label>
             </div>
 
@@ -217,12 +252,13 @@ export default function UploadPage() {
               <span>02</span>
               <div>
                 <h2>Tệp tài liệu</h2>
-                <p>File đầy đủ được lưu riêng tư; người mua mới có quyền truy cập.</p>
+                <p>Bấm vào từng vùng có biểu tượng đám mây để chọn file.</p>
               </div>
             </div>
 
-            <div className="live-file-grid">
-              <label className="live-file-box">
+            <div className="live-file-grid live-file-grid-v42">
+              <label className="live-file-box live-file-box-v42">
+                <UploadCloud selected={Boolean(coverFile)} />
                 <b>Ảnh bìa</b>
                 <small>JPG, PNG hoặc WEBP</small>
                 <input
@@ -230,10 +266,13 @@ export default function UploadPage() {
                   accept="image/jpeg,image/png,image/webp"
                   onChange={(event) => setCoverFile(event.target.files?.[0] || null)}
                 />
-                <span>{coverFile?.name || 'Chọn ảnh bìa'}</span>
+                <span className="live-file-name">
+                  {coverFile?.name || 'Bấm để tải ảnh bìa lên'}
+                </span>
               </label>
 
-              <label className="live-file-box">
+              <label className="live-file-box live-file-box-v42">
+                <UploadCloud selected={Boolean(demoFile)} />
                 <b>File xem trước</b>
                 <small>PDF, không bắt buộc</small>
                 <input
@@ -241,10 +280,13 @@ export default function UploadPage() {
                   accept="application/pdf"
                   onChange={(event) => setDemoFile(event.target.files?.[0] || null)}
                 />
-                <span>{demoFile?.name || 'Chọn file demo'}</span>
+                <span className="live-file-name">
+                  {demoFile?.name || 'Bấm để tải file xem trước lên'}
+                </span>
               </label>
 
-              <label className="live-file-box full">
+              <label className="live-file-box live-file-box-v42 full">
+                <UploadCloud selected={fullFiles.length > 0} />
                 <b>File tài liệu đầy đủ *</b>
                 <small>PDF, Word, PowerPoint, Excel hoặc ZIP</small>
                 <input
@@ -252,10 +294,10 @@ export default function UploadPage() {
                   multiple
                   onChange={(event) => setFullFiles(Array.from(event.target.files || []))}
                 />
-                <span>
+                <span className="live-file-name">
                   {fullFiles.length
                     ? `${fullFiles.length} file đã chọn`
-                    : 'Chọn file tài liệu'}
+                    : 'Bấm để tải file tài liệu đầy đủ lên'}
                 </span>
               </label>
             </div>
@@ -276,6 +318,13 @@ export default function UploadPage() {
 
             <h3>{form.title || 'Tên tài liệu sẽ hiện ở đây'}</h3>
             <p>{form.description || 'Mô tả ngắn sẽ hiện ở đây.'}</p>
+            <div className="live-selected-category live-selected-category-v42">
+              <span className="live-selected-category-icon-v42">
+                <CategoryIcon category={selectedCategory} size={22} />
+              </span>
+              <span>Danh mục</span>
+              <b>{selectedCategory?.name || 'Chưa chọn'}</b>
+            </div>
 
             <ul className="live-check-list">
               <li className={form.title ? 'done' : ''}>Thông tin tài liệu</li>
@@ -284,7 +333,7 @@ export default function UploadPage() {
               <li className={demoFile ? 'done' : ''}>File demo</li>
             </ul>
 
-            <button className="live-primary-button" type="submit" disabled={loading}>
+            <button className="live-primary-button live-upload-submit-button" type="submit" disabled={loading || !state.categories.length}>
               {loading ? 'Đang tải lên Supabase...' : 'Đăng tài liệu'}
             </button>
 

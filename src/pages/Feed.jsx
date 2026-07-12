@@ -160,7 +160,6 @@ export default function Feed() {
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [documentId, setDocumentId] = useState('');
   const [filter, setFilter] = useState('all');
   const [posting, setPosting] = useState(false);
 
@@ -181,13 +180,12 @@ export default function Feed() {
     if (!content.trim()) return;
 
     setPosting(true);
-    const ok = await addPost(content, documentId || null, title);
+    const ok = await addPost(content, null, title);
     setPosting(false);
 
     if (ok) {
       setTitle('');
       setContent('');
-      setDocumentId('');
     }
   }
 
@@ -221,13 +219,7 @@ export default function Feed() {
                 placeholder="Chia sẻ câu hỏi, kiến thức hoặc kinh nghiệm học tập..."
                 required
               />
-              <div className="live-composer-footer">
-                <select value={documentId} onChange={(event) => setDocumentId(event.target.value)}>
-                  <option value="">Không đính kèm tài liệu</option>
-                  {state.documents.map((document) => (
-                    <option key={document.id} value={document.id}>{document.title}</option>
-                  ))}
-                </select>
+              <div className="live-composer-footer live-composer-footer-v42">
                 <button className="live-primary-button" type="submit" disabled={posting}>
                   {posting ? 'Đang đăng...' : 'Đăng bài'}
                 </button>

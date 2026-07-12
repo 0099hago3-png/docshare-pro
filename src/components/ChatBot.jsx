@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   BookOpen, Bot, ChevronDown, CircleHelp, CreditCard, FileUp, Gift,
   HelpCircle, History, MessageCircleQuestion, Search, Send, ShieldCheck,
@@ -87,6 +87,22 @@ export default function ChatBot() {
   const [showQuestions, setShowQuestions] = useState(true);
   const bodyRef = useRef(null);
 
+  useEffect(() => {
+    const closeChatBot = () => setOpen(false);
+    window.addEventListener('docshare:open-messenger', closeChatBot);
+    return () => window.removeEventListener('docshare:open-messenger', closeChatBot);
+  }, []);
+
+  function toggleChatBot() {
+    setOpen((previous) => {
+      const next = !previous;
+      if (next) {
+        window.dispatchEvent(new CustomEvent('docshare:open-chatbot'));
+      }
+      return next;
+    });
+  }
+
   const activeGroup = useMemo(() => faqGroups.find((group) => group.id === category) || faqGroups[0], [category]);
 
   function appendQuestion(question) {
@@ -117,7 +133,7 @@ export default function ChatBot() {
 
   return (
     <>
-      <button className="ai-fab help-fab-v28" onClick={() => setOpen((value) => !value)} title="Hỏi đáp DocShare Pro" aria-label="Mở hộp hỏi đáp">
+      <button className="ai-fab help-fab-v28" onClick={toggleChatBot} title="Hỏi đáp DocShare Pro" aria-label="Mở hộp hỏi đáp">
         {open ? <X size={21}/> : <MessageCircleQuestion size={23}/>}
       </button>
       {open && (
