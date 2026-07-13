@@ -5,11 +5,13 @@ import BotanicalHero from '../components/BotanicalHero.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import Loading from '../components/Loading.jsx';
 import { useApp } from '../context/AppContext.jsx';
+import { useUnread } from '../context/UnreadContext.jsx';
 import { formatDateTime, getProfileName, normalizeError } from '../lib/helpers.js';
 import { supabase } from '../lib/supabase.js';
 
 export default function Messages() {
   const { currentUser, toast } = useApp();
+  const { markMessagesRead, refresh: refreshUnread } = useUnread();
   const [people, setPeople] = useState([]);
   const [selected, setSelected] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -33,9 +35,15 @@ export default function Messages() {
     if (!personId) return setMessages([]);
     const { data, error } = await supabase.from('direct_messages').select('*').or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${personId}),and(sender_id.eq.${personId},receiver_id.eq.${currentUser.id})`).order('created_at', { ascending: true });
     if (error) return toast(normalizeError(error), 'error');
+
     setMessages(data || []);
-    setTimeout(() => endRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
-  }, [currentUser.id, toast]);
+
+    await markMessagesRead(personId);
+
+    setTimeout(() => {
+      endRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 50);
+  }, [currentUser.id, markMessagesRead, toast]);
 
   useEffect(() => { loadPeople(); }, [loadPeople]);
   useEffect(() => { if (selected) loadMessages(selected.id); }, [selected, loadMessages]);
@@ -44,10 +52,21 @@ export default function Messages() {
     const channel = supabase.channel(`dm-${currentUser.id}-${selected.id}`).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'direct_messages' }, (payload) => {
       const item = payload.new;
       const belongs = (item.sender_id === currentUser.id && item.receiver_id === selected.id) || (item.sender_id === selected.id && item.receiver_id === currentUser.id);
-      if (belongs) setMessages((items) => [...items, item]);
+      if (belongs) {
+        setMessages((items) => [...items, item]);
+
+        if (
+          item.sender_id === selected.id
+          && item.receiver_id === currentUser.id
+        ) {
+          markMessagesRead(selected.id);
+        } else {
+          refreshUnread();
+        }
+      }
     }).subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [currentUser.id, selected]);
+  }, [currentUser.id, markMessagesRead, refreshUnread, selected]);
 
   const filtered = useMemo(() => {
     const text = query.trim().toLowerCase();

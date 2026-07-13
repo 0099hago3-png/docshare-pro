@@ -1,0 +1,152 @@
+
+/*
+  DOCSHARE PRO V61
+  - Sửa lỗi font chữ ở thống kê Admin và thống kê tác giả.
+  - Thêm chấm đỏ/số chưa đọc cho thông báo, tin nhắn, Admin.
+*/
+
+/* Font thống kê đồng bộ với thanh header */
+:where(
+  .admin-page,
+  .admin-font-unified,
+  .creator-analytics,
+  .stock-chart-card,
+  .analytics-detail-card,
+  .analytics-selector-card,
+  .analytics-finance-breakdown,
+  .analytics-custom-range
+),
+:where(
+  .admin-page,
+  .admin-font-unified,
+  .creator-analytics,
+  .stock-chart-card,
+  .analytics-detail-card,
+  .analytics-selector-card,
+  .analytics-finance-breakdown,
+  .analytics-custom-range
+) * {
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Arial,
+    sans-serif !important;
+  font-kerning: normal !important;
+  font-variant-ligatures: normal !important;
+  word-spacing: normal !important;
+}
+
+:where(
+  .admin-page,
+  .admin-font-unified,
+  .creator-analytics,
+  .stock-chart-card,
+  .analytics-detail-card
+) :where(h1, h2, h3, h4) {
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Arial,
+    sans-serif !important;
+  letter-spacing: -0.025em !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  line-height: 1.15 !important;
+}
+
+/* Không cho chữ "Biến động" bị tách bất thường */
+.stock-chart-card__header h2,
+.creator-analytics__heading h2,
+.analytics-toolbar h1 {
+  white-space: normal !important;
+  text-wrap: balance;
+}
+
+/* Badge đỏ dùng chung */
+.unread-count-badge,
+.sidebar-unread-badge {
+  z-index: 5;
+  min-width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: linear-gradient(145deg, #ef4545, #c81717);
+  color: #fff !important;
+  box-shadow:
+    0 4px 10px rgba(199, 23, 23, .25),
+    0 0 0 1px rgba(255, 255, 255, .5);
+  font-size: 9px !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+  letter-spacing: 0 !important;
+  white-space: nowrap;
+}
+
+.notification-icon-button,
+.navbar-admin-link {
+  position: relative;
+}
+
+.notification-icon-button > .unread-count-badge {
+  position: absolute;
+  top: -7px;
+  right: -8px;
+}
+
+.navbar-admin-link > .unread-count-badge {
+  position: absolute;
+  top: -9px;
+  right: -10px;
+}
+
+.account-menu__dropdown a {
+  position: relative;
+}
+
+.account-menu__dropdown a > .unread-count-badge {
+  margin-left: auto;
+}
+
+.sidebar nav a {
+  position: relative;
+}
+
+.sidebar-unread-badge {
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+
+/* Nhấp nháy nhẹ khi có mục mới */
+.unread-count-badge,
+.sidebar-unread-badge {
+  animation: docshare-unread-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes docshare-unread-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .unread-count-badge,
+  .sidebar-unread-badge {
+    animation: none;
+  }
+}
