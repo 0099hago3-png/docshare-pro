@@ -11,6 +11,7 @@ import '../v61-hotfix.css';
 import '../v62-admin-notifications.css';
 import '../v63-premium-notifications.css';
 import '../v64-premium-security-modal-fix.css';
+import '../v65-green-premium-wallet-gifts.css';
 
 export default function AppShell() {
   return (

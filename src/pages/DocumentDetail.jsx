@@ -1,4 +1,4 @@
-import { Bookmark, Download, Edit3, Eye, Flag, Gift, Heart, MessageCircle, MoreHorizontal, Reply, Send, Star, Trash2 } from 'lucide-react';
+import { Bookmark, Download, Edit3, Eye, Flag, Gift, Heart, Medal, MessageCircle, MoreHorizontal, Reply, Send, Sparkles, Star, Trash2, Trophy } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import Avatar from '../components/Avatar.jsx';
@@ -23,6 +23,7 @@ export default function DocumentDetail() {
   const [document, setDocument] = useState(null);
   const [stats, setStats] = useState({});
   const [comments, setComments] = useState([]);
+  const [documentGifts, setDocumentGifts] = useState([]);
   const [liked, setLiked] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
   const [hasPurchased, setHasPurchased] = useState(false);
@@ -47,14 +48,94 @@ export default function DocumentDetail() {
   const load = useCallback(async ({ silent = false } = {}) => {
     try {
       if (!silent) setLoading(true);
-      const [docResult, statsResult, commentsResult, likeResult, bookmarkResult, ratingResult, purchaseResult] = await Promise.all([
-        supabase.from('documents').select('*,profiles:author_id(*),categories(*),document_files(*)').eq('id', id).single(),
-        supabase.from('document_stats').select('*').eq('document_id', id).maybeSingle(),
-        supabase.from('document_comments').select('*,profiles:user_id(id,full_name,username,email,avatar_path,premium,premium_expires_at)').eq('document_id', id).order('created_at', { ascending: true }),
-        supabase.from('document_likes').select('document_id').eq('document_id', id).eq('user_id', currentUser.id).maybeSingle(),
-        supabase.from('document_bookmarks').select('document_id').eq('document_id', id).eq('user_id', currentUser.id).maybeSingle(),
-        supabase.from('document_ratings').select('*').eq('document_id', id).eq('user_id', currentUser.id).maybeSingle(),
-        supabase.from('document_purchases').select('id').eq('document_id', id).eq('buyer_id', currentUser.id).maybeSingle(),
+      const [
+        docResult,
+        statsResult,
+        commentsResult,
+        likeResult,
+        bookmarkResult,
+        ratingResult,
+        purchaseResult,
+        giftResult,
+      ] = await Promise.all([
+        supabase
+          .from('documents')
+          .select('*,profiles:author_id(*),categories(*),document_files(*)')
+          .eq('id', id)
+          .single(),
+
+        supabase
+          .from('document_stats')
+          .select('*')
+          .eq('document_id', id)
+          .maybeSingle(),
+
+        supabase
+          .from('document_comments')
+          .select('*,profiles:user_id(id,full_name,username,email,avatar_path,premium,premium_expires_at)')
+          .eq('document_id', id)
+          .order('created_at', { ascending: true }),
+
+        supabase
+          .from('document_likes')
+          .select('document_id')
+          .eq('document_id', id)
+          .eq('user_id', currentUser.id)
+          .maybeSingle(),
+
+        supabase
+          .from('document_bookmarks')
+          .select('document_id')
+          .eq('document_id', id)
+          .eq('user_id', currentUser.id)
+          .maybeSingle(),
+
+        supabase
+          .from('document_ratings')
+          .select('*')
+          .eq('document_id', id)
+          .eq('user_id', currentUser.id)
+          .maybeSingle(),
+
+        supabase
+          .from('document_purchases')
+          .select('id')
+          .eq('document_id', id)
+          .eq('buyer_id', currentUser.id)
+          .maybeSingle(),
+
+        supabase
+          .from('gift_transactions')
+          .select(`
+            id,
+            sender_id,
+            receiver_id,
+            gift_id,
+            target_type,
+            target_id,
+            cost_credit,
+            receiver_credit,
+            created_at,
+            gifts(
+              id,
+              name,
+              icon,
+              credit_price
+            ),
+            sender:sender_id(
+              id,
+              full_name,
+              username,
+              email,
+              avatar_path,
+              premium,
+              premium_expires_at
+            )
+          `)
+          .eq('target_type', 'document')
+          .eq('target_id', id)
+          .order('created_at', { ascending: false })
+          .limit(100),
       ]);
       if (docResult.error) throw docResult.error;
       setDocument(docResult.data);
@@ -63,6 +144,17 @@ export default function DocumentDetail() {
       setLiked(Boolean(likeResult.data));
       setBookmarked(Boolean(bookmarkResult.data));
       setHasPurchased(Boolean(purchaseResult.data));
+
+      if (giftResult.error) {
+        console.warn(
+          'Không tải được bảng quà tài liệu:',
+          giftResult.error.message,
+        );
+        setDocumentGifts([]);
+      } else {
+        setDocumentGifts(giftResult.data || []);
+      }
+
       setMyRating(ratingResult.data || null);
       setRatingValue(ratingResult.data?.rating || 5);
       setReview(ratingResult.data?.review || '');
@@ -117,8 +209,53 @@ export default function DocumentDetail() {
     ? Math.max(1, Math.ceil(originalPrice * 0.9))
     : originalPrice;
   const premiumSaved = Math.max(0, originalPrice - premiumPrice);
-  const topLevelComments = useMemo(() => comments.filter((item) => !item.parent_id), [comments]);
-  const repliesFor = (commentId) => comments.filter((item) => item.parent_id === commentId);
+  const topLevelComments = useMemo(
+    () => comments.filter((item) => !item.parent_id),
+    [comments],
+  );
+
+  const repliesFor = (commentId) => (
+    comments.filter((item) => item.parent_id === commentId)
+  );
+
+  const giftStats = useMemo(() => {
+    const donors = new Map();
+
+    for (const item of documentGifts) {
+      const senderId = item.sender_id;
+      const current = donors.get(senderId) || {
+        sender: item.sender,
+        totalCredit: 0,
+        giftCount: 0,
+        latestGift: null,
+      };
+
+      current.totalCredit += Number(item.cost_credit || 0);
+      current.giftCount += 1;
+
+      if (!current.latestGift) {
+        current.latestGift = item;
+      }
+
+      donors.set(senderId, current);
+    }
+
+    const topDonors = [...donors.values()]
+      .sort((left, right) => (
+        right.totalCredit - left.totalCredit
+        || right.giftCount - left.giftCount
+      ));
+
+    return {
+      totalCredit: documentGifts.reduce(
+        (sum, item) => sum + Number(item.cost_credit || 0),
+        0,
+      ),
+      totalGifts: documentGifts.length,
+      uniqueDonors: topDonors.length,
+      topDonors,
+    };
+  }, [documentGifts]);
 
   async function toggleLike() {
     try {
@@ -424,6 +561,161 @@ export default function DocumentDetail() {
         </aside>
       </div>
 
+      <section className="document-gift-board-v65 botanical-card">
+        <header className="document-gift-board-v65__header">
+          <div>
+            <span className="eyebrow">
+              <Gift size={15} />
+              QUÀ TRI ÂN TÀI LIỆU
+            </span>
+
+            <h2>Top người tặng quà</h2>
+
+            <p>
+              Ghi nhận những thành viên đã ủng hộ tác giả
+              và đóng góp cho tài liệu này.
+            </p>
+          </div>
+
+          <button
+            className="button"
+            type="button"
+            onClick={() => setGiftOpen(true)}
+          >
+            <Sparkles size={17} />
+            Tặng quà cho tài liệu
+          </button>
+        </header>
+
+        <div className="document-gift-board-v65__summary">
+          <article>
+            <Gift size={18} />
+            <span>
+              <small>Tổng quà đã nhận</small>
+              <strong>{formatNumber(giftStats.totalGifts)}</strong>
+            </span>
+          </article>
+
+          <article>
+            <Trophy size={18} />
+            <span>
+              <small>Tổng credit ủng hộ</small>
+              <strong>{formatNumber(giftStats.totalCredit)}</strong>
+            </span>
+          </article>
+
+          <article>
+            <Heart size={18} />
+            <span>
+              <small>Người đã tặng</small>
+              <strong>{formatNumber(giftStats.uniqueDonors)}</strong>
+            </span>
+          </article>
+        </div>
+
+        {giftStats.topDonors.length ? (
+          <>
+            <div className="document-gift-podium-v65">
+              {giftStats.topDonors
+                .slice(0, 3)
+                .map((item, index) => {
+                  const rank = index + 1;
+
+                  return (
+                    <article
+                      key={item.sender?.id || rank}
+                      className={`is-rank-${rank}`}
+                    >
+                      <span className="document-gift-podium-v65__rank">
+                        {rank === 1
+                          ? <Trophy size={17} />
+                          : <Medal size={16} />}
+                        #{rank}
+                      </span>
+
+                      <Avatar
+                        profile={item.sender}
+                        size={rank === 1 ? 62 : 52}
+                      />
+
+                      <div className="document-gift-podium-v65__name">
+                        <strong>
+                          {getProfileName(item.sender)}
+                        </strong>
+
+                        <PremiumBadge
+                          profile={item.sender}
+                          compact
+                        />
+                      </div>
+
+                      <span>
+                        {item.latestGift?.gifts?.icon || '🎁'}
+                        {' '}
+                        {item.giftCount} quà
+                      </span>
+
+                      <b>
+                        {formatNumber(item.totalCredit)} credit
+                      </b>
+                    </article>
+                  );
+                })}
+            </div>
+
+            <div className="document-gift-recent-v65">
+              <div className="section-heading">
+                <div>
+                  <Sparkles size={19} />
+                  <h3>Quà tặng gần đây</h3>
+                </div>
+              </div>
+
+              <div className="document-gift-recent-v65__list">
+                {documentGifts.slice(0, 8).map((item) => (
+                  <article key={item.id}>
+                    <Avatar profile={item.sender} size={36} />
+
+                    <div>
+                      <span>
+                        <strong>
+                          {getProfileName(item.sender)}
+                        </strong>
+
+                        <PremiumBadge
+                          profile={item.sender}
+                          compact
+                        />
+                      </span>
+
+                      <small>
+                        đã tặng
+                        {' '}
+                        <b>
+                          {item.gifts?.icon || '🎁'}
+                          {' '}
+                          {item.gifts?.name || 'Quà tặng'}
+                        </b>
+                      </small>
+                    </div>
+
+                    <em>
+                      {formatNumber(item.cost_credit)} credit
+                    </em>
+                  </article>
+                ))}
+              </div>
+            </div>
+          </>
+        ) : (
+          <EmptyState
+            title="Chưa có quà tặng"
+            description="Hãy là người đầu tiên gửi lời tri ân tới tác giả tài liệu."
+            icon={Gift}
+          />
+        )}
+      </section>
+
       <section className="reviews-section botanical-card">
         <div className="section-heading"><div><Star size={23} /><h2>Bình luận và đánh giá</h2></div><span>{comments.length} bình luận</span></div>
         <form className="rating-form" onSubmit={saveRating}>
@@ -508,7 +800,16 @@ export default function DocumentDetail() {
           </button>
         </div>
       </Modal>
-      <DonateModal open={giftOpen} onClose={() => setGiftOpen(false)} receiver={document.profiles} targetType="document" targetId={document.id} />
+      <DonateModal
+        open={giftOpen}
+        onClose={() => {
+          setGiftOpen(false);
+          load({ silent: true });
+        }}
+        receiver={document.profiles}
+        targetType="document"
+        targetId={document.id}
+      />
     </div>
   );
 }

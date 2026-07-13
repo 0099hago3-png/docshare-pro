@@ -44,6 +44,6 @@ export const CREDIT_PACKAGES = [
 export const BANK_CONFIG = {
   bankCode: 'TCB',
   bankName: 'Techcombank',
-  accountNumber: 'DIEN_SO_TAI_KHOAN',
-  accountName: 'DOCSHARE PRO',
+  accountNumber: '6666665261',
+  accountName: 'Nguyen Trong Hoang Giang',
 };

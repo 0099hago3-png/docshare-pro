@@ -67,6 +67,7 @@ export default function SecurityModal({
     confirm: false,
   });
   const [busy, setBusy] = useState(false);
+  const [resetBusy, setResetBusy] = useState(false);
 
   function close() {
     if (busy) return;
@@ -119,6 +120,29 @@ export default function SecurityModal({
       toast(normalizeError(error), 'error');
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function sendRecoveryEmail() {
+    try {
+      setResetBusy(true);
+
+      const redirectTo = `${window.location.origin}/reset-password`;
+
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        currentUser.email,
+        { redirectTo },
+      );
+
+      if (error) throw error;
+
+      toast(
+        `Đã gửi liên kết đặt lại mật khẩu tới ${currentUser.email}.`,
+      );
+    } catch (error) {
+      toast(normalizeError(error), 'error');
+    } finally {
+      setResetBusy(false);
     }
   }
 
@@ -193,6 +217,27 @@ export default function SecurityModal({
           <KeyRound size={16} />
           Gợi ý: dùng mật khẩu riêng cho DocShare, không dùng lại mật khẩu email.
         </div>
+
+        <section className="security-recovery-v65">
+          <div>
+            <strong>Quên mật khẩu hiện tại?</strong>
+
+            <span>
+              Nhận liên kết bảo mật qua email {currentUser.email}.
+            </span>
+          </div>
+
+          <button
+            className="button button--outline"
+            type="button"
+            onClick={sendRecoveryEmail}
+            disabled={resetBusy}
+          >
+            {resetBusy
+              ? 'Đang gửi...'
+              : 'Gửi liên kết khôi phục'}
+          </button>
+        </section>
 
         <div className="form-actions form-actions--end">
           <button

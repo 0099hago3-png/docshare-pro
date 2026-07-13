@@ -7,6 +7,7 @@ import Categories from './pages/Categories.jsx';
 import DocumentDetail from './pages/DocumentDetail.jsx';
 import Documents from './pages/Documents.jsx';
 import Feed from './pages/Feed.jsx';
+import ForgotPassword from './pages/ForgotPassword.jsx';
 import GiftVault from './pages/GiftVault.jsx';
 import History from './pages/History.jsx';
 import Home from './pages/Home.jsx';
@@ -16,6 +17,7 @@ import Messages from './pages/Messages.jsx';
 import NotFound from './pages/NotFound.jsx';
 import Profile from './pages/Profile.jsx';
 import Register from './pages/Register.jsx';
+import ResetPassword from './pages/ResetPassword.jsx';
 import Support from './pages/Support.jsx';
 import UploadPage from './pages/UploadPage.jsx';
 import Wallet from './pages/Wallet.jsx';
@@ -24,6 +26,16 @@ export default function App() {
   return (
     <>
       <Routes>
+        <Route
+          path="/forgot-password"
+          element={<ForgotPassword />}
+        />
+
+        <Route
+          path="/reset-password"
+          element={<ResetPassword />}
+        />
+
         <Route element={<GuestOnly />}>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />

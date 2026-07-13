@@ -1,0 +1,686 @@
+/*
+  DOCSHARE PRO V65
+  PREMIUM XANH + QUÊN MẬT KHẨU + QR LỚN + TOP QUÀ TÀI LIỆU
+*/
+
+/* =========================================================
+   PREMIUM XANH LÁ
+   ========================================================= */
+
+/* Xóa hoàn toàn viền vàng lớn quanh khu vực tài khoản */
+.account-menu__trigger.is-premium-v63,
+.account-menu__dropdown--v63,
+.account-summary-v63.is-premium {
+  border-color: #c9dfcf !important;
+  box-shadow:
+    0 8px 22px rgba(28, 102, 66, .10) !important;
+}
+
+.account-menu__dropdown--v63 {
+  outline: 0 !important;
+}
+
+.account-menu__dropdown--v63::before,
+.account-menu__dropdown--v63::after,
+.account-summary-v63.is-premium::before,
+.account-summary-v63.is-premium::after {
+  display: none !important;
+  content: none !important;
+}
+
+.account-summary-v63.is-premium {
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(64, 176, 104, .13),
+      transparent 42%
+    ),
+    linear-gradient(145deg, #f9fff9, #eff8ef) !important;
+}
+
+/* Huy hiệu Premium xanh, có ánh sáng chuyển động nhẹ nhưng không 7 màu */
+.premium-badge-v63 {
+  overflow: hidden !important;
+  border-color: rgba(42, 150, 89, .58) !important;
+  background:
+    linear-gradient(
+      110deg,
+      #0f6f45,
+      #26a768,
+      #8fd48a,
+      #1c8a56,
+      #0f6f45
+    ) !important;
+  background-size: 260% 100% !important;
+  color: #fff !important;
+  text-shadow: 0 1px 2px rgba(8, 60, 36, .35) !important;
+  box-shadow:
+    0 5px 15px rgba(29, 132, 79, .20),
+    inset 0 1px 0 rgba(255, 255, 255, .42) !important;
+  animation:
+    premium-green-flow-v65 4.8s linear infinite,
+    premium-green-float-v65 2.8s ease-in-out infinite !important;
+}
+
+.premium-badge-v63__shine {
+  display: block !important;
+  background: rgba(255, 255, 255, .38) !important;
+  animation: premium-green-shine-v65 3.4s ease-in-out infinite !important;
+}
+
+.premium-badge-v63__sparkle {
+  opacity: .92 !important;
+  animation: premium-green-sparkle-v65 1.7s ease-in-out infinite !important;
+}
+
+/*
+  Quan trọng:
+  position: relative để vòng Premium chỉ nằm quanh avatar,
+  không còn kéo thành khung vàng lớn bao quanh menu.
+*/
+.avatar--premium-v63 {
+  position: relative !important;
+  isolation: isolate !important;
+  overflow: visible !important;
+  box-shadow:
+    0 0 0 2px #e8fff0,
+    0 0 0 5px rgba(42, 164, 95, .16),
+    0 8px 20px rgba(25, 94, 59, .17) !important;
+}
+
+.avatar--premium-v63::before {
+  content: '' !important;
+  position: absolute !important;
+  inset: -5px !important;
+  z-index: -2 !important;
+  display: block !important;
+  border-radius: 50% !important;
+  background:
+    conic-gradient(
+      from 0deg,
+      #0c6d42,
+      #3ec57b,
+      #b2e6a2,
+      #1b8e56,
+      #0c6d42
+    ) !important;
+  animation: premium-green-ring-v65 5.8s linear infinite !important;
+  transform-origin: center !important;
+}
+
+.avatar--premium-v63::after {
+  content: '' !important;
+  position: absolute !important;
+  inset: -2px !important;
+  z-index: -1 !important;
+  display: block !important;
+  border-radius: 50% !important;
+  background: #fffdf7 !important;
+}
+
+.avatar--premium-v63 > img,
+.avatar--premium-v63 > span {
+  position: relative;
+  z-index: 1;
+}
+
+.avatar__premium-crown-v63 {
+  border-color: #fff !important;
+  background:
+    linear-gradient(145deg, #b9eca9, #329560) !important;
+  color: #0c4d30 !important;
+  box-shadow: 0 4px 10px rgba(23, 112, 67, .25) !important;
+}
+
+.account-menu__trigger.is-premium-v63 {
+  background:
+    linear-gradient(145deg, #fbfffb, #eff9ef) !important;
+}
+
+.profile-hero.is-premium-v63 {
+  border-color: rgba(66, 151, 88, .32) !important;
+  background:
+    radial-gradient(
+      circle at 86% 0%,
+      rgba(89, 190, 110, .15),
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at 16% 100%,
+      rgba(179, 224, 153, .17),
+      transparent 38%
+    ),
+    linear-gradient(145deg, #fffdf7, #f0f8eb) !important;
+}
+
+@keyframes premium-green-flow-v65 {
+  to {
+    background-position: 260% 0;
+  }
+}
+
+@keyframes premium-green-float-v65 {
+  0%, 100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-1px);
+  }
+}
+
+@keyframes premium-green-shine-v65 {
+  0%, 20% {
+    left: -45%;
+  }
+
+  65%, 100% {
+    left: 120%;
+  }
+}
+
+@keyframes premium-green-sparkle-v65 {
+  0%, 100% {
+    opacity: .58;
+    transform: rotate(0deg) scale(.92);
+  }
+
+  50% {
+    opacity: 1;
+    transform: rotate(18deg) scale(1.12);
+  }
+}
+
+@keyframes premium-green-ring-v65 {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* =========================================================
+   QUÊN MẬT KHẨU
+   ========================================================= */
+
+.login-help-row-v65 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: -3px;
+  color: #7a887f;
+  font-size: 10px;
+}
+
+.login-help-row-v65 a {
+  color: #19764e;
+  font-weight: 900;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.login-help-row-v65 a:hover {
+  text-decoration: underline;
+}
+
+.auth-icon-field-v65 {
+  height: 43px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 12px;
+  border: 1px solid #cddbd0;
+  border-radius: 11px;
+  background: #fff;
+  color: #5f796b;
+}
+
+.auth-icon-field-v65:focus-within {
+  border-color: #218257;
+  box-shadow: 0 0 0 3px rgba(33, 130, 87, .10);
+}
+
+.auth-icon-field-v65 input {
+  min-width: 0;
+  flex: 1;
+  border: 0 !important;
+  outline: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.forgot-hint-v65 {
+  display: grid;
+  gap: 4px;
+  padding: 11px 12px;
+  border: 1px solid #d6e6d7;
+  border-radius: 11px;
+  background: #f3f9f1;
+}
+
+.forgot-hint-v65 strong {
+  color: #1e6847;
+  font-size: 11px;
+}
+
+.forgot-hint-v65 span {
+  color: #74847b;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.forgot-success-v65 {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 26px 18px;
+  border: 1px solid #d6e5d7;
+  border-radius: 16px;
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(67, 168, 96, .14),
+      transparent 45%
+    ),
+    #f9fcf7;
+  text-align: center;
+}
+
+.forgot-success-v65 > span {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #e2f3e3;
+  color: #17714a;
+}
+
+.forgot-success-v65 strong {
+  color: #174b35;
+  font-size: 18px;
+}
+
+.forgot-success-v65 p {
+  margin: 0;
+  color: #67796f;
+  line-height: 1.6;
+}
+
+.forgot-success-v65 p b {
+  display: block;
+  margin-top: 4px;
+  color: #155f43;
+}
+
+.forgot-success-v65 small {
+  color: #839087;
+  font-size: 10px;
+}
+
+.forgot-success-v65.is-error > span {
+  background: #fff0ea;
+  color: #bf4b38;
+}
+
+.auth-switch a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.security-recovery-v65 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 13px;
+  padding: 12px;
+  border: 1px solid #d5e4d7;
+  border-radius: 12px;
+  background: #f5faf3;
+}
+
+.security-recovery-v65 > div {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.security-recovery-v65 strong {
+  color: #234f39;
+  font-size: 11px;
+}
+
+.security-recovery-v65 span {
+  color: #7b8981;
+  font-size: 9px;
+}
+
+/* Password field có icon bên trái ở trang reset */
+.auth-page--forgot-v65 .password-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 11px;
+  border: 1px solid #cddbd0;
+  border-radius: 11px;
+  background: #fff;
+  color: #657e70;
+}
+
+.auth-page--forgot-v65 .password-field input {
+  min-width: 0;
+  flex: 1;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.auth-page--forgot-v65 .password-field button {
+  position: static;
+  flex: 0 0 42px;
+}
+
+/* =========================================================
+   QR THANH TOÁN LỚN HƠN
+   ========================================================= */
+
+.payment-info {
+  grid-template-columns: 255px minmax(0, 1fr) !important;
+  align-items: center;
+}
+
+.payment-info > img {
+  width: 255px !important;
+  min-width: 255px;
+  max-width: 255px;
+  justify-self: center;
+  padding: 5px;
+  border: 1px solid #d5e2d6 !important;
+  border-radius: 15px !important;
+  background: #fff !important;
+  box-shadow: 0 8px 20px rgba(31, 84, 58, .08);
+}
+
+.payment-info h3 {
+  margin-bottom: 8px;
+}
+
+.payment-info p {
+  font-size: 12px !important;
+}
+
+/* =========================================================
+   TOP QUÀ TÀI LIỆU
+   ========================================================= */
+
+.document-gift-board-v65 {
+  margin-top: 18px;
+  margin-bottom: 18px;
+  padding: 20px;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(73, 168, 94, .11),
+      transparent 32%
+    ),
+    rgba(255, 253, 247, .96);
+}
+
+.document-gift-board-v65__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.document-gift-board-v65__header h2 {
+  margin: 0 0 5px;
+  color: #17452f;
+  font-family: inherit;
+  font-size: 24px;
+  font-weight: 950;
+}
+
+.document-gift-board-v65__header p {
+  margin: 0;
+  color: #74827a;
+  font-size: 11px;
+}
+
+.document-gift-board-v65__summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 16px;
+}
+
+.document-gift-board-v65__summary article {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #dbe6dc;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, .78);
+  color: #1d8255;
+}
+
+.document-gift-board-v65__summary article > span {
+  min-width: 0;
+  display: grid;
+}
+
+.document-gift-board-v65__summary small {
+  color: #7b8981;
+  font-size: 9px;
+}
+
+.document-gift-board-v65__summary strong {
+  color: #17472f;
+  font-size: 17px;
+}
+
+.document-gift-podium-v65 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: 11px;
+  margin-top: 17px;
+}
+
+.document-gift-podium-v65 article {
+  min-width: 0;
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  padding: 16px 10px;
+  border: 1px solid #d7e3d8;
+  border-radius: 16px;
+  background:
+    linear-gradient(145deg, #fffefa, #f4f9f0);
+  text-align: center;
+}
+
+.document-gift-podium-v65 article.is-rank-1 {
+  min-height: 208px;
+  padding-top: 20px;
+  border-color: #bedabe;
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(64, 169, 95, .17),
+      transparent 48%
+    ),
+    linear-gradient(145deg, #fbfffa, #edf7e9);
+  box-shadow:
+    0 13px 28px rgba(38, 103, 65, .10);
+}
+
+.document-gift-podium-v65__rank {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #24764e;
+  font-size: 10px;
+  font-weight: 950;
+}
+
+.document-gift-podium-v65__name {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.document-gift-podium-v65__name strong {
+  overflow: hidden;
+  max-width: 160px;
+  color: #1d4a34;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.document-gift-podium-v65 article > span:not(.document-gift-podium-v65__rank) {
+  color: #697d71;
+  font-size: 10px;
+}
+
+.document-gift-podium-v65 article > b {
+  color: #19774e;
+  font-size: 13px;
+}
+
+.document-gift-recent-v65 {
+  margin-top: 17px;
+}
+
+.document-gift-recent-v65 .section-heading {
+  margin-bottom: 9px;
+}
+
+.document-gift-recent-v65 .section-heading h3 {
+  margin: 0;
+  color: #214b37;
+  font-family: inherit;
+  font-size: 15px;
+}
+
+.document-gift-recent-v65__list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.document-gift-recent-v65__list article {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 10px;
+  border: 1px solid #e0e8df;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .78);
+}
+
+.document-gift-recent-v65__list article > div {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 3px;
+}
+
+.document-gift-recent-v65__list article > div > span {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.document-gift-recent-v65__list strong {
+  overflow: hidden;
+  max-width: 180px;
+  color: #234d39;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.document-gift-recent-v65__list small {
+  color: #74847a;
+  font-size: 9px;
+}
+
+.document-gift-recent-v65__list small b {
+  color: #27724d;
+}
+
+.document-gift-recent-v65__list em {
+  color: #19754d;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 920px) {
+  .payment-info {
+    grid-template-columns: 1fr !important;
+  }
+
+  .payment-info > img {
+    width: min(280px, 100%) !important;
+    min-width: 0;
+  }
+
+  .document-gift-board-v65__header {
+    flex-direction: column;
+  }
+
+  .document-gift-board-v65__summary,
+  .document-gift-podium-v65 {
+    grid-template-columns: 1fr;
+  }
+
+  .document-gift-podium-v65 article.is-rank-1 {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 620px) {
+  .login-help-row-v65,
+  .security-recovery-v65 {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .security-recovery-v65 .button {
+    width: 100%;
+  }
+
+  .document-gift-recent-v65__list {
+    grid-template-columns: 1fr;
+  }
+
+  .document-gift-board-v65 {
+    padding: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .premium-badge-v63,
+  .premium-badge-v63__shine,
+  .premium-badge-v63__sparkle,
+  .avatar--premium-v63::before {
+    animation: none !important;
+  }
+}

@@ -1,0 +1,58 @@
+/*
+  DOCSHARE PRO V65
+  THU NHỎ TOÀN BỘ GIAO DIỆN DESKTOP CÒN 75%.
+  Modal dùng portal vẫn giữ kích thước dễ đọc.
+*/
+
+:root {
+  --docshare-desktop-scale-v65: .75;
+  --docshare-tablet-scale-v65: .88;
+}
+
+html,
+body {
+  width: 100%;
+  min-width: 320px;
+  margin: 0;
+  overflow-x: hidden;
+}
+
+@media screen and (min-width: 1100px) {
+  #root {
+    zoom: var(--docshare-desktop-scale-v65) !important;
+    width: calc(100% / var(--docshare-desktop-scale-v65)) !important;
+    min-width: calc(100% / var(--docshare-desktop-scale-v65)) !important;
+    min-height: calc(100vh / var(--docshare-desktop-scale-v65)) !important;
+    transform-origin: top left !important;
+  }
+}
+
+@media screen and (min-width: 768px) and (max-width: 1099px) {
+  #root {
+    zoom: var(--docshare-tablet-scale-v65) !important;
+    width: calc(100% / var(--docshare-tablet-scale-v65)) !important;
+    min-width: calc(100% / var(--docshare-tablet-scale-v65)) !important;
+    min-height: calc(100vh / var(--docshare-tablet-scale-v65)) !important;
+    transform-origin: top left !important;
+  }
+}
+
+@media screen and (max-width: 767px) {
+  #root {
+    zoom: 1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 100vh !important;
+  }
+}
+
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+}
+
+body {
+  background: #f7f4ea;
+}
