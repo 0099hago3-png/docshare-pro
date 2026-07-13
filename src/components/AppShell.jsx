@@ -8,6 +8,8 @@ import MiniMessenger from './MiniMessenger.jsx';
 import { UnreadProvider } from '../context/UnreadContext.jsx';
 
 import '../v61-hotfix.css';
+import '../v62-admin-notifications.css';
+import '../v63-premium-notifications.css';
 
 export default function AppShell() {
   return (

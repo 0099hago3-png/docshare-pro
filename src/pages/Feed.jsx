@@ -1,5 +1,6 @@
 import { PenLine, Send } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Avatar from '../components/Avatar.jsx';
 import BotanicalHero from '../components/BotanicalHero.jsx';
 import DonateModal from '../components/DonateModal.jsx';
@@ -13,6 +14,7 @@ import { supabase } from '../lib/supabase.js';
 import '../comment-gift-system.css';
 
 export default function Feed() {
+  const [searchParams] = useSearchParams();
   const { currentUser, toast } = useApp();
   const [posts, setPosts] = useState([]);
   const [title, setTitle] = useState('');
@@ -22,9 +24,9 @@ export default function Feed() {
   const [giftPost, setGiftPost] = useState(null);
   const [giftEffect, setGiftEffect] = useState(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async ({ silent = false } = {}) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
 
       const { data: postRows, error: postError } = await supabase
         .from('posts')
@@ -37,6 +39,7 @@ export default function Feed() {
             email,
             avatar_path,
             premium,
+            premium_expires_at,
             verified
           ),
           post_likes(user_id)
@@ -158,13 +161,46 @@ export default function Feed() {
     } catch (error) {
       toast(normalizeError(error), 'error');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [currentUser.id, toast]);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (loading || !posts.length) return;
+
+    const commentId = searchParams.get('comment');
+    const postId = searchParams.get('post');
+    const elementId = commentId
+      ? `comment-${commentId}`
+      : postId
+        ? `post-${postId}`
+        : null;
+
+    if (!elementId) return;
+
+    const timer = window.setTimeout(() => {
+      const element = document.getElementById(elementId);
+
+      if (!element) return;
+
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+
+      element.classList.add('notification-target-v63');
+
+      window.setTimeout(() => {
+        element.classList.remove('notification-target-v63');
+      }, 2600);
+    }, 120);
+
+    return () => window.clearTimeout(timer);
+  }, [loading, posts, searchParams]);
 
   async function createPost(event) {
     event.preventDefault();
@@ -252,7 +288,7 @@ export default function Feed() {
                 <PostCard
                   key={post.id}
                   post={post}
-                  onChanged={load}
+                  onChanged={() => load({ silent: true })}
                   onGift={setGiftPost}
                 />
               ))}
@@ -294,7 +330,7 @@ export default function Feed() {
             gift,
             receiverName: getProfileName(giftPost?.profiles),
           });
-          load();
+          load({ silent: true });
         }}
       />
 

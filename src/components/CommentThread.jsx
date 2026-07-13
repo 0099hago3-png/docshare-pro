@@ -21,6 +21,7 @@ import ConfirmDialog from './ConfirmDialog.jsx';
 import DonateModal from './DonateModal.jsx';
 import GiftBurst from './GiftBurst.jsx';
 import Modal from './Modal.jsx';
+import PremiumBadge from './PremiumBadge.jsx';
 
 const DEFAULT_VISIBLE_COMMENTS = 2;
 
@@ -245,14 +246,14 @@ function CommentItem({
   }
 
   return (
-    <article className={`feed-comment feed-comment--depth-${Math.min(depth, 3)}`}>
+    <article id={`comment-${comment.id}`} className={`feed-comment feed-comment--depth-${Math.min(depth, 3)}`}>
       <Avatar profile={author} size={depth > 0 ? 30 : 34} />
 
       <div className="feed-comment__body">
         <div className="feed-comment__bubble">
           <div className="feed-comment__head">
             <div>
-              <strong>{authorName}</strong>
+              <span className="feed-comment__name-row-v63"><strong>{authorName}</strong><PremiumBadge profile={author} compact /></span>
               <span>{formatRelativeTime(comment.created_at)}</span>
             </div>
 

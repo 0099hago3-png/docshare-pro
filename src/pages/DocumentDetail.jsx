@@ -1,12 +1,13 @@
 import { Bookmark, Download, Edit3, Eye, Flag, Gift, Heart, MessageCircle, MoreHorizontal, Reply, Send, Star, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import Avatar from '../components/Avatar.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import DonateModal from '../components/DonateModal.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import Loading from '../components/Loading.jsx';
 import Modal from '../components/Modal.jsx';
+import PremiumBadge, { isPremiumActive } from '../components/PremiumBadge.jsx';
 import { useApp } from '../context/AppContext.jsx';
 import { formatDate, formatNumber, getProfileName, normalizeError, publicAssetUrl } from '../lib/helpers.js';
 import { safeFileName } from '../lib/analytics.js';
@@ -16,6 +17,7 @@ import '../payment-admin-report.css';
 
 export default function DocumentDetail() {
   const { id } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const { currentUser, toast, refreshProfile } = useApp();
   const [document, setDocument] = useState(null);
@@ -42,12 +44,13 @@ export default function DocumentDetail() {
   const [loading, setLoading] = useState(true);
   const recorded = useRef(false);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async ({ silent = false } = {}) => {
     try {
+      if (!silent) setLoading(true);
       const [docResult, statsResult, commentsResult, likeResult, bookmarkResult, ratingResult, purchaseResult] = await Promise.all([
         supabase.from('documents').select('*,profiles:author_id(*),categories(*),document_files(*)').eq('id', id).single(),
         supabase.from('document_stats').select('*').eq('document_id', id).maybeSingle(),
-        supabase.from('document_comments').select('*,profiles:user_id(id,full_name,username,email,avatar_path,premium)').eq('document_id', id).order('created_at', { ascending: true }),
+        supabase.from('document_comments').select('*,profiles:user_id(id,full_name,username,email,avatar_path,premium,premium_expires_at)').eq('document_id', id).order('created_at', { ascending: true }),
         supabase.from('document_likes').select('document_id').eq('document_id', id).eq('user_id', currentUser.id).maybeSingle(),
         supabase.from('document_bookmarks').select('document_id').eq('document_id', id).eq('user_id', currentUser.id).maybeSingle(),
         supabase.from('document_ratings').select('*').eq('document_id', id).eq('user_id', currentUser.id).maybeSingle(),
@@ -67,11 +70,36 @@ export default function DocumentDetail() {
       toast(normalizeError(error), 'error');
       navigate('/documents');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [id, currentUser.id, navigate, toast]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    const hash = String(location.hash || '').replace(/^#/, '');
+
+    if (!hash || !comments.length) return;
+
+    const timer = window.setTimeout(() => {
+      const element = document.getElementById(hash);
+
+      if (!element) return;
+
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+
+      element.classList.add('notification-target-v63');
+
+      window.setTimeout(() => {
+        element.classList.remove('notification-target-v63');
+      }, 2600);
+    }, 120);
+
+    return () => window.clearTimeout(timer);
+  }, [comments, location.hash]);
 
   useEffect(() => {
     if (recorded.current || !id) return;
@@ -83,6 +111,12 @@ export default function DocumentDetail() {
   const fullFile = document?.document_files?.find((file) => file.file_kind === 'full');
   const canManage = document && (document.author_id === currentUser.id || currentUser.role === 'admin');
   const hasAccess = Boolean(document && (document.price_credit === 0 || canManage || hasPurchased));
+  const buyerPremium = isPremiumActive(currentUser);
+  const originalPrice = Number(document?.price_credit || 0);
+  const premiumPrice = buyerPremium && originalPrice > 0
+    ? Math.max(1, Math.ceil(originalPrice * 0.9))
+    : originalPrice;
+  const premiumSaved = Math.max(0, originalPrice - premiumPrice);
   const topLevelComments = useMemo(() => comments.filter((item) => !item.parent_id), [comments]);
   const repliesFor = (commentId) => comments.filter((item) => item.parent_id === commentId);
 
@@ -126,7 +160,7 @@ export default function DocumentDetail() {
       const { error } = await supabase.from('document_ratings').upsert({ document_id: id, user_id: currentUser.id, rating: Number(ratingValue), review: review.trim() || null }, { onConflict: 'document_id,user_id' });
       if (error) throw error;
       toast(myRating ? 'Đã cập nhật đánh giá.' : 'Đã gửi đánh giá.');
-      await load();
+      await load({ silent: true });
     } catch (error) {
       toast(normalizeError(error), 'error');
     } finally {
@@ -143,7 +177,7 @@ export default function DocumentDetail() {
       setMyRating(null);
       setRatingValue(5);
       setReview('');
-      await load();
+      await load({ silent: true });
     } catch (error) {
       toast(normalizeError(error), 'error');
     } finally {
@@ -160,7 +194,8 @@ export default function DocumentDetail() {
       if (error) throw error;
       setCommentValue('');
       setReplyTo(null);
-      await load();
+      toast('Đã gửi bình luận.');
+      await load({ silent: true });
     } catch (error) {
       toast(normalizeError(error), 'error');
     } finally {
@@ -177,7 +212,7 @@ export default function DocumentDetail() {
       setEditingComment(null);
       setCommentEditValue('');
       toast('Đã cập nhật bình luận.');
-      await load();
+      await load({ silent: true });
     } catch (error) {
       toast(normalizeError(error), 'error');
     } finally {
@@ -192,7 +227,7 @@ export default function DocumentDetail() {
       if (error) throw error;
       setDeleteCommentId(null);
       toast('Đã xóa bình luận.');
-      await load();
+      await load({ silent: true });
     } catch (error) {
       toast(normalizeError(error), 'error');
     } finally {
@@ -308,9 +343,10 @@ export default function DocumentDetail() {
         if (data?.code === 'INSUFFICIENT_CREDIT') throw new Error(`Không đủ credit. Bạn có ${data.balance || 0} credit, tài liệu cần ${data.price || 0} credit.`);
         throw new Error('Không thể mua tài liệu.');
       }
-      toast(data.code === 'PURCHASED' ? 'Mua tài liệu thành công.' : 'Bạn đã có quyền truy cập tài liệu.');
+      toast(data.code === 'PURCHASED' ? (data.premium_discount_percent ? `Mua thành công với ưu đãi Premium ${data.premium_discount_percent}%.` : 'Mua tài liệu thành công.') : 'Bạn đã có quyền truy cập tài liệu.');
       setPurchaseOpen(false);
       await refreshProfile();
+      window.dispatchEvent(new Event('docshare:wallet-refresh'));
       setHasPurchased(true);
       await getFullFile('download', true);
     } catch (error) {
@@ -331,12 +367,61 @@ export default function DocumentDetail() {
           <div className="detail-topline"><span>{document.categories?.name || 'Học thuật'}</span>{canManage && <div className="detail-owner-actions"><Link className="button button--small button--outline" to={`/documents/${id}/edit`}><Edit3 size={16} /> Sửa</Link><button className="button button--small button--danger-soft" type="button" onClick={() => setDeleteDocumentOpen(true)}><Trash2 size={16} /> Xóa</button></div>}</div>
           <h1>{document.title}</h1>
           <p className="document-detail-description">{document.description}</p>
-          <Link className="author-card" to={`/profile/${document.author_id}`}><Avatar profile={document.profiles} size={50} /><div><strong>{getProfileName(document.profiles)}</strong><small>{document.profiles?.school_name || 'Thành viên DocShare'}</small></div></Link>
+          <Link className="author-card" to={`/profile/${document.author_id}`}><Avatar profile={document.profiles} size={50} /><div><span className="author-card__name-v63"><strong>{getProfileName(document.profiles)}</strong><PremiumBadge profile={document.profiles} compact /></span><small>{document.profiles?.school_name || 'Thành viên DocShare'}</small></div></Link>
           <div className="tag-row">{(document.tags || []).map((tag) => <span key={tag}>#{tag}</span>)}</div>
           <div className="document-detail-stats"><span><Eye size={15} /> {formatNumber(stats.view_count || 0)} lượt xem</span><span><Heart size={15} /> {formatNumber(stats.like_count || 0)} lượt thích</span><span><Star size={15} /> {Number(stats.average_rating || 0).toFixed(1)} / 5</span><span><MessageCircle size={15} /> {formatNumber(stats.comment_count || 0)} bình luận</span><span><Download size={15} /> {formatNumber(stats.download_count || 0)} lượt tải</span></div>
           <div className="document-detail-actions"><button className={liked ? 'button is-liked' : 'button button--outline'} type="button" onClick={toggleLike}><Heart size={17} fill={liked ? 'currentColor' : 'none'} /> {liked ? 'Đã thích' : 'Thích'}</button><button className={bookmarked ? 'button' : 'button button--outline'} type="button" onClick={toggleBookmark}><Bookmark size={17} /> {bookmarked ? 'Đã lưu' : 'Lưu tài liệu'}</button><button className="button button--outline" type="button" onClick={() => setGiftOpen(true)}><Gift size={17} /> Tặng quà</button><button className="button button--outline document-report-button" type="button" onClick={() => setReportOpen(true)}><Flag size={17} /> Báo cáo tài liệu</button></div>
         </section>
-        <aside className="access-card botanical-card"><span className="eyebrow">QUYỀN TRUY CẬP</span><h2>Tài liệu sẵn sàng</h2><strong>{document.price_credit > 0 ? `${document.price_credit} credit` : 'Miễn phí'}</strong>{!hasAccess ? <button className="button button--wide" type="button" onClick={() => setPurchaseOpen(true)}>Mua tài liệu</button> : <div className="document-file-actions"><button className="button button--wide button--outline" type="button" onClick={() => getFullFile('open')}><Eye size={18} /> Mở file</button><button className="button button--wide document-download-button" type="button" onClick={() => getFullFile('download')}><Download size={18} /> Tải xuống tài liệu</button></div>}<small>Đăng ngày {formatDate(document.created_at)}</small></aside>
+        <aside className="access-card botanical-card">
+          <span className="eyebrow">QUYỀN TRUY CẬP</span>
+          <h2>Tài liệu sẵn sàng</h2>
+
+          {originalPrice > 0 ? (
+            buyerPremium ? (
+              <div className="premium-document-price-v63">
+                <span>{originalPrice} credit</span>
+                <strong>{premiumPrice} credit</strong>
+                <em>Premium giảm 10% · tiết kiệm {premiumSaved} credit</em>
+              </div>
+            ) : (
+              <strong>{originalPrice} credit</strong>
+            )
+          ) : (
+            <strong>Miễn phí</strong>
+          )}
+
+          {!hasAccess ? (
+            <button
+              className="button button--wide"
+              type="button"
+              onClick={() => setPurchaseOpen(true)}
+            >
+              Mua tài liệu
+            </button>
+          ) : (
+            <div className="document-file-actions">
+              <button
+                className="button button--wide button--outline"
+                type="button"
+                onClick={() => getFullFile('open')}
+              >
+                <Eye size={18} />
+                Mở file
+              </button>
+
+              <button
+                className="button button--wide document-download-button"
+                type="button"
+                onClick={() => getFullFile('download')}
+              >
+                <Download size={18} />
+                Tải xuống tài liệu
+              </button>
+            </div>
+          )}
+
+          <small>Đăng ngày {formatDate(document.created_at)}</small>
+        </aside>
       </div>
 
       <section className="reviews-section botanical-card">
@@ -367,7 +452,62 @@ export default function DocumentDetail() {
       <Modal open={Boolean(editingComment)} onClose={() => setEditingComment(null)} title="Sửa bình luận" width={600}><form className="stack-form" onSubmit={saveCommentEdit}><label>Nội dung<textarea rows="5" value={commentEditValue} onChange={(event) => setCommentEditValue(event.target.value)} required /></label><div className="form-actions form-actions--end"><button className="button button--ghost" type="button" onClick={() => setEditingComment(null)}>Hủy</button><button className="button" disabled={busy}>Lưu thay đổi</button></div></form></Modal>
       <ConfirmDialog open={deleteDocumentOpen} onClose={() => setDeleteDocumentOpen(false)} onConfirm={removeDocument} title="Xóa tài liệu" message="Tài liệu, file, lượt thích, bình luận và đánh giá liên quan sẽ bị xóa. Bạn có chắc chắn không?" confirmLabel="Xóa tài liệu" danger loading={busy} />
       <ConfirmDialog open={Boolean(deleteCommentId)} onClose={() => setDeleteCommentId(null)} onConfirm={deleteComment} title="Xóa bình luận" message="Bạn có chắc chắn muốn xóa bình luận này?" confirmLabel="Xóa bình luận" danger loading={busy} />
-      <Modal open={purchaseOpen} onClose={() => setPurchaseOpen(false)} title="Xác nhận mua tài liệu" width={500}><div className="purchase-confirm"><img src={coverPath ? publicAssetUrl('document-covers', coverPath) : '/assets/default-cover.svg'} alt="" /><div><strong>{document.title}</strong><span>Tác giả: {getProfileName(document.profiles)}</span><b>Giá: {document.price_credit} credit</b></div></div><div className="form-actions form-actions--end"><button className="button button--ghost" type="button" onClick={() => setPurchaseOpen(false)}>Hủy</button><button className="button" type="button" onClick={purchase} disabled={busy}>{busy ? 'Đang xử lý...' : 'Xác nhận mua'}</button></div></Modal>
+      <Modal
+        open={purchaseOpen}
+        onClose={() => setPurchaseOpen(false)}
+        title="Xác nhận mua tài liệu"
+        width={520}
+        className="modal-card--no-scrollbar"
+      >
+        <div className="purchase-confirm">
+          <img
+            src={
+              coverPath
+                ? publicAssetUrl('document-covers', coverPath)
+                : '/assets/default-cover.svg'
+            }
+            alt=""
+          />
+
+          <div>
+            <strong>{document.title}</strong>
+            <span>
+              Tác giả: {getProfileName(document.profiles)}
+            </span>
+
+            {buyerPremium && originalPrice > 0 ? (
+              <div className="purchase-premium-discount-v63">
+                <small>Giá gốc {originalPrice} credit</small>
+                <b>Premium còn {premiumPrice} credit</b>
+                <em>Đã giảm {premiumSaved} credit</em>
+              </div>
+            ) : (
+              <b>Giá: {originalPrice} credit</b>
+            )}
+          </div>
+        </div>
+
+        <div className="form-actions form-actions--end">
+          <button
+            className="button button--ghost"
+            type="button"
+            onClick={() => setPurchaseOpen(false)}
+          >
+            Hủy
+          </button>
+
+          <button
+            className="button"
+            type="button"
+            onClick={purchase}
+            disabled={busy}
+          >
+            {busy
+              ? 'Đang xử lý...'
+              : `Xác nhận mua ${premiumPrice} credit`}
+          </button>
+        </div>
+      </Modal>
       <DonateModal open={giftOpen} onClose={() => setGiftOpen(false)} receiver={document.profiles} targetType="document" targetId={document.id} />
     </div>
   );
@@ -376,9 +516,9 @@ export default function DocumentDetail() {
 function CommentItem({ comment, replies, currentUser, onReply, onEdit, onDelete, onHeart }) {
   const canManage = comment.user_id === currentUser.id || currentUser.role === 'admin';
   return (
-    <div className="comment-item">
+    <div id={`comment-${comment.id}`} className="comment-item">
       <Avatar profile={comment.profiles} size={38} />
-      <div className="comment-item__body"><div className="comment-item__bubble"><strong>{getProfileName(comment.profiles)}</strong><p>{comment.content}</p></div><div className="comment-item__actions"><button type="button" onClick={() => onHeart(comment.id)}><Heart size={14} /> Thích</button><button type="button" onClick={() => onReply(comment)}><Reply size={14} /> Trả lời</button>{canManage && <><button type="button" onClick={() => onEdit(comment)}><Edit3 size={14} /> Sửa</button><button type="button" onClick={() => onDelete(comment.id)}><Trash2 size={14} /> Xóa</button></>}</div>{replies.map((reply) => <div className="comment-reply" key={reply.id}><Avatar profile={reply.profiles} size={32} /><div><strong>{getProfileName(reply.profiles)}</strong><p>{reply.content}</p></div></div>)}</div>
+      <div className="comment-item__body"><div className="comment-item__bubble"><span className="comment-name-row-v63"><strong>{getProfileName(comment.profiles)}</strong><PremiumBadge profile={comment.profiles} compact /></span><p>{comment.content}</p></div><div className="comment-item__actions"><button type="button" onClick={() => onHeart(comment.id)}><Heart size={14} /> Thích</button><button type="button" onClick={() => onReply(comment)}><Reply size={14} /> Trả lời</button>{canManage && <><button type="button" onClick={() => onEdit(comment)}><Edit3 size={14} /> Sửa</button><button type="button" onClick={() => onDelete(comment.id)}><Trash2 size={14} /> Xóa</button></>}</div>{replies.map((reply) => <div id={`comment-${reply.id}`} className="comment-reply" key={reply.id}><Avatar profile={reply.profiles} size={32} /><div><span className="comment-name-row-v63"><strong>{getProfileName(reply.profiles)}</strong><PremiumBadge profile={reply.profiles} compact /></span><p>{reply.content}</p></div></div>)}</div>
     </div>
   );
 }

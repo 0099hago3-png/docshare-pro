@@ -88,6 +88,37 @@ export function AppProvider({ children }) {
     };
   }, [fetchProfile]);
 
+  useEffect(() => {
+    const userId = session?.user?.id;
+
+    if (!userId) return undefined;
+
+    const channel = supabase
+      .channel(`docshare-current-profile-${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${userId}`,
+        },
+        ({ new: nextProfile }) => {
+          setCurrentUser(nextProfile || null);
+          window.dispatchEvent(
+            new CustomEvent('docshare:profile-updated', {
+              detail: nextProfile || null,
+            }),
+          );
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [session?.user?.id]);
+
   const register = useCallback(async (payload) => {
     const { email, password, fullName, username, phone, schoolName, faculty, major } = payload;
     const { data, error } = await supabase.auth.signUp({

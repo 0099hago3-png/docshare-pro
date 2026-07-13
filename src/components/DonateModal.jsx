@@ -87,6 +87,7 @@ export default function DonateModal({
 
       toast(`Đã gửi ${selected.name} tới ${receiverName}.`);
       await refreshProfile();
+      window.dispatchEvent(new Event('docshare:wallet-refresh'));
 
       onSent?.({
         ...selected,

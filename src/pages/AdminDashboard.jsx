@@ -32,11 +32,13 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import Loading from '../components/Loading.jsx';
 import StockAnalyticsChart, { AnalyticsMetricCard } from '../components/StockAnalyticsChart.jsx';
 import { useApp } from '../context/AppContext.jsx';
+import { useUnread } from '../context/UnreadContext.jsx';
 import {
   formatCredit,
   formatCurrency,
@@ -221,8 +223,19 @@ function QuickStatButton({ active, icon: Icon, label, value, helper, onClick, to
 }
 
 export default function AdminDashboard() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useApp();
-  const [tab, setTab] = useState('overview');
+  const {
+    adminPendingPayments,
+    adminPendingReports,
+    refresh: refreshUnread,
+  } = useUnread();
+  const [tab, setTab] = useState(() => {
+    const requested = searchParams.get('tab');
+    return tabs.some(([value]) => value === requested)
+      ? requested
+      : 'overview';
+  });
   const [range, setRange] = useState(30);
   const [customRangeOpen, setCustomRangeOpen] = useState(false);
   const [customRangeDraft, setCustomRangeDraft] = useState(() => getDefaultCustomRange());
@@ -250,6 +263,62 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+
+  useEffect(() => {
+    const requested = searchParams.get('tab');
+
+    if (
+      requested
+      && tabs.some(([value]) => value === requested)
+      && requested !== tab
+    ) {
+      setTab(requested);
+    }
+  }, [searchParams, tab]);
+
+  function changeAdminTab(nextTab) {
+    setTab(nextTab);
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('tab', nextTab);
+    nextParams.delete('request');
+    nextParams.delete('report');
+
+    setSearchParams(nextParams, {
+      replace: true,
+    });
+  }
+
+  useEffect(() => {
+    const requestId = searchParams.get('request');
+    const reportId = searchParams.get('report');
+    const elementId = requestId
+      ? `payment-request-${requestId}`
+      : reportId
+        ? `report-${reportId}`
+        : null;
+
+    if (!elementId || loading) return;
+
+    const timer = window.setTimeout(() => {
+      const element = document.getElementById(elementId);
+
+      if (!element) return;
+
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+
+      element.classList.add('notification-target-v63');
+
+      window.setTimeout(() => {
+        element.classList.remove('notification-target-v63');
+      }, 2600);
+    }, 160);
+
+    return () => window.clearTimeout(timer);
+  }, [data.reports, data.requests, loading, searchParams]);
 
   const load = useCallback(async () => {
     try {
@@ -673,6 +742,7 @@ export default function AdminDashboard() {
       if (!result?.ok) throw new Error(result?.message || 'Không thể xử lý yêu cầu.');
       toast(action === 'approve' ? 'Đã duyệt yêu cầu.' : 'Đã từ chối yêu cầu.');
       await load();
+      await refreshUnread();
     } catch (error) {
       toast(normalizeError(error), 'error');
     } finally {
@@ -697,6 +767,7 @@ export default function AdminDashboard() {
 
       toast(action === 'resolve' ? 'Đã đánh dấu báo cáo là đã xử lý.' : 'Đã từ chối báo cáo.');
       await load();
+      await refreshUnread();
     } catch (error) {
       toast(normalizeError(error), 'error');
     } finally {
@@ -892,11 +963,31 @@ export default function AdminDashboard() {
       )}
 
       <div className="admin-tabs botanical-card">
-        {tabs.map(([value, Icon, label]) => (
-          <button key={value} className={tab === value ? 'is-active' : ''} type="button" onClick={() => setTab(value)}>
-            <Icon size={18} /> {label}
-          </button>
-        ))}
+        {tabs.map(([value, Icon, label]) => {
+          const pendingCount = value === 'payments'
+            ? adminPendingPayments
+            : value === 'reports'
+              ? adminPendingReports
+              : 0;
+
+          return (
+            <button
+              key={value}
+              className={tab === value ? 'is-active' : ''}
+              type="button"
+              onClick={() => changeAdminTab(value)}
+            >
+              <Icon size={18} />
+              <span>{label}</span>
+
+              {pendingCount > 0 && (
+                <b className="admin-tab-pending-badge">
+                  {pendingCount > 99 ? '99+' : pendingCount}
+                </b>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {tab === 'overview' && (
@@ -969,7 +1060,7 @@ export default function AdminDashboard() {
                 <span className="analytics-eyebrow">TÀI CHÍNH CHI TIẾT</span>
                 <h2>Nạp, rút, Premium, gia hạn và Donate</h2>
               </div>
-              <button type="button" className="button button--outline button--small" onClick={() => setTab('payments')}>Mở quản lý giao dịch</button>
+              <button type="button" className="button button--outline button--small" onClick={() => changeAdminTab('payments')}>Mở quản lý giao dịch</button>
             </div>
 
             <div className="analytics-finance-breakdown__grid">
@@ -1021,7 +1112,7 @@ export default function AdminDashboard() {
 
       {tab === 'posts' && <AdminTable headings={['Bài viết', 'Tác giả', 'Trạng thái', 'Ngày đăng', 'Thao tác']}>{data.posts.map((item) => <tr key={item.id}><td><strong>{item.title || item.content.slice(0, 60)}</strong></td><td>{getProfileName(item.profiles)}</td><td><span className={`status status--${item.status}`}>{item.status}</span></td><td>{formatDateTime(item.created_at)}</td><td><button className="button button--small button--danger-soft" type="button" onClick={() => setDeleteTarget({ type: 'post', id: item.id })}><Trash2 size={15} /> Xóa</button></td></tr>)}</AdminTable>}
 
-      {tab === 'payments' && <AdminTable headings={['Người dùng', 'Loại', 'Số tiền', 'Nội dung', 'Trạng thái', 'Ngày tạo', 'Thao tác']}>{data.requests.map((item) => <tr key={item.id}><td><strong>{getProfileName(item.profiles)}</strong><small>{item.profiles?.public_id}</small></td><td>{item.type === 'topup' ? 'Nạp tiền' : item.type === 'withdraw' ? 'Rút tiền' : isRenewalRequest(item) ? 'Gia hạn Premium' : 'Mua Premium'}</td><td>{formatNumber(item.amount_vnd)}đ</td><td><code>{item.transfer_note}</code></td><td><span className={`status status--${item.status}`}>{item.status}</span></td><td>{formatDateTime(item.created_at)}</td><td>{item.status === 'pending' ? <div className="inline-actions"><button className="button button--small" type="button" onClick={() => processRequest(item, 'approve')}><CheckCircle2 size={15} /> Duyệt</button><button className="button button--small button--danger-soft" type="button" onClick={() => processRequest(item, 'reject')}><XCircle size={15} /> Từ chối</button></div> : '-'}</td></tr>)}</AdminTable>}
+      {tab === 'payments' && <AdminTable headings={['Người dùng', 'Loại', 'Số tiền', 'Nội dung', 'Trạng thái', 'Ngày tạo', 'Thao tác']}>{data.requests.map((item) => <tr id={`payment-request-${item.id}`} key={item.id}><td><strong>{getProfileName(item.profiles)}</strong><small>{item.profiles?.public_id}</small></td><td>{item.type === 'topup' ? 'Nạp tiền' : item.type === 'withdraw' ? 'Rút tiền' : isRenewalRequest(item) ? 'Gia hạn Premium' : 'Mua Premium'}</td><td>{formatNumber(item.amount_vnd)}đ</td><td><code>{item.transfer_note}</code></td><td><span className={`status status--${item.status}`}>{item.status}</span></td><td>{formatDateTime(item.created_at)}</td><td>{item.status === 'pending' ? <div className="inline-actions"><button className="button button--small" type="button" onClick={() => processRequest(item, 'approve')}><CheckCircle2 size={15} /> Duyệt</button><button className="button button--small button--danger-soft" type="button" onClick={() => processRequest(item, 'reject')}><XCircle size={15} /> Từ chối</button></div> : '-'}</td></tr>)}</AdminTable>}
 
       {tab === 'reports' && (
         <AdminTable headings={['Người báo cáo', 'Nội dung bị báo cáo', 'Lý do', 'Trạng thái', 'Ngày gửi', 'Thao tác']}>
@@ -1031,7 +1122,7 @@ export default function AdminDashboard() {
             const targetLabel = targetDocument?.title || targetPost?.title || targetPost?.content?.slice(0, 70) || item.target_type;
 
             return (
-              <tr key={item.id}>
+              <tr id={`report-${item.id}`} key={item.id}>
                 <td><strong>{getProfileName(item.reporter)}</strong><small>{item.reporter?.public_id || item.reporter?.email}</small></td>
                 <td><div className="admin-report-target"><strong>{targetLabel}</strong><small>{item.target_type} · {item.target_id}</small></div></td>
                 <td><div className="admin-report-reason"><strong>{item.reason}</strong>{item.detail && <small>{item.detail}</small>}</div></td>

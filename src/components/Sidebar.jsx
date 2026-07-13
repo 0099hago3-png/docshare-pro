@@ -24,10 +24,10 @@ const primary = [
   ['/feed', Newspaper, 'Bảng tin', null],
   ['/leaderboard', Trophy, 'Xếp hạng', null],
   ['/upload', Upload, 'Đăng tải', null],
-  ['/wallet', WalletCards, 'Ví & Premium', 'payments'],
+  ['/wallet', WalletCards, 'Ví & Premium', null],
   ['/gifts', Gift, 'Kho quà', null],
   ['/messages', Mail, 'Tin nhắn', 'messages'],
-  ['/history', History, 'Lịch sử', 'notifications'],
+  ['/history', History, 'Lịch sử', null],
   ['/support', CircleHelp, 'Hỗ trợ', null],
 ];
 
@@ -37,7 +37,10 @@ function CountBadge({ value, title }) {
   if (count <= 0) return null;
 
   return (
-    <span className="sidebar-unread-badge" title={title}>
+    <span
+      className="sidebar-unread-badge"
+      title={title}
+    >
       {count > 99 ? '99+' : count}
     </span>
   );
@@ -45,21 +48,7 @@ function CountBadge({ value, title }) {
 
 export default function Sidebar() {
   const { currentUser } = useApp();
-
-  const {
-    messages,
-    notifications,
-    ownPendingPayments,
-    adminTotal,
-  } = useUnread();
-
-  function countFor(key) {
-    if (key === 'messages') return messages;
-    if (key === 'notifications') return notifications;
-    if (key === 'payments') return ownPendingPayments;
-
-    return 0;
-  }
+  const { messages } = useUnread();
 
   return (
     <aside className="sidebar">
@@ -73,34 +62,26 @@ export default function Sidebar() {
       </div>
 
       <nav>
-        {primary.map(([to, Icon, label, badgeKey]) => {
-          const badgeValue = countFor(badgeKey);
+        {primary.map(([to, Icon, label, badgeKey]) => (
+          <NavLink
+            key={to}
+            to={to}
+            end={to === '/'}
+            className={({ isActive }) => (
+              isActive ? 'active' : ''
+            )}
+          >
+            <Icon size={18} />
+            <span>{label}</span>
 
-          return (
-            <NavLink
-              key={to}
-              to={to}
-              end={to === '/'}
-              className={({ isActive }) => (
-                isActive ? 'active' : ''
-              )}
-            >
-              <Icon size={18} />
-              <span>{label}</span>
-
+            {badgeKey === 'messages' && (
               <CountBadge
-                value={badgeValue}
-                title={
-                  badgeKey === 'messages'
-                    ? 'Tin nhắn chưa đọc'
-                    : badgeKey === 'notifications'
-                      ? 'Thông báo chưa đọc'
-                      : 'Yêu cầu đang chờ duyệt'
-                }
+                value={messages}
+                title="Tin nhắn chưa đọc"
               />
-            </NavLink>
-          );
-        })}
+            )}
+          </NavLink>
+        ))}
 
         {currentUser?.role === 'admin' && (
           <NavLink
@@ -111,11 +92,6 @@ export default function Sidebar() {
           >
             <ShieldCheck size={18} />
             <span>Quản trị Admin</span>
-
-            <CountBadge
-              value={adminTotal}
-              title="Báo cáo hoặc giao dịch đang chờ xử lý"
-            />
           </NavLink>
         )}
       </nav>

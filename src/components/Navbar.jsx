@@ -1,18 +1,36 @@
 import {
   Bell,
   ChevronDown,
+  CreditCard,
   LogOut,
   Search,
   ShieldCheck,
   Upload,
   UserRound,
+  WalletCards,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+import {
+  Link,
+  NavLink,
+  useNavigate,
+} from 'react-router-dom';
 
 import { useApp } from '../context/AppContext.jsx';
 import { useUnread } from '../context/UnreadContext.jsx';
+import { formatNumber } from '../lib/helpers.js';
+import { supabase } from '../lib/supabase.js';
 import Avatar from './Avatar.jsx';
+import NotificationPanel from './NotificationPanel.jsx';
+import PremiumBadge, {
+  isPremiumActive,
+} from './PremiumBadge.jsx';
+import SecurityModal from './SecurityModal.jsx';
 
 const links = [
   ['/', 'Trang chủ'],
@@ -28,29 +46,94 @@ function CountBadge({ value, title }) {
   if (count <= 0) return null;
 
   return (
-    <span className="unread-count-badge" title={title}>
+    <span
+      className="unread-count-badge"
+      title={title}
+    >
       {count > 99 ? '99+' : count}
     </span>
   );
 }
 
 export default function Navbar() {
-  const { currentUser, logout, toast } = useApp();
   const {
-    notifications,
-    adminTotal,
-    markNotificationsRead,
-  } = useUnread();
+    currentUser,
+    logout,
+    toast,
+  } = useApp();
+
+  const { notifications } = useUnread();
 
   const [keyword, setKeyword] = useState('');
   const [open, setOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [securityOpen, setSecurityOpen] = useState(false);
+  const [accountSummary, setAccountSummary] = useState({
+    credit: 0,
+    cash: 0,
+    loading: false,
+  });
 
   const navigate = useNavigate();
 
   const name = useMemo(
-    () => currentUser?.full_name || currentUser?.username || 'Tài khoản',
+    () => (
+      currentUser?.full_name
+      || currentUser?.username
+      || 'Tài khoản'
+    ),
     [currentUser],
   );
+
+  const premium = isPremiumActive(currentUser);
+
+  const loadAccountSummary = useCallback(async () => {
+    if (!currentUser?.id) return;
+
+    try {
+      setAccountSummary((current) => ({
+        ...current,
+        loading: true,
+      }));
+
+      const { data, error } = await supabase
+        .from('wallets')
+        .select('credit_balance,cash_balance')
+        .eq('user_id', currentUser.id)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      setAccountSummary({
+        credit: Number(data?.credit_balance || 0),
+        cash: Number(data?.cash_balance || 0),
+        loading: false,
+      });
+    } catch (error) {
+      console.warn('Không tải được số dư:', error?.message || error);
+
+      setAccountSummary((current) => ({
+        ...current,
+        loading: false,
+      }));
+    }
+  }, [currentUser?.id]);
+
+  useEffect(() => {
+    if (open) {
+      loadAccountSummary();
+    }
+  }, [loadAccountSummary, open]);
+
+  useEffect(() => {
+    const refresh = () => loadAccountSummary();
+
+    window.addEventListener('docshare:wallet-refresh', refresh);
+
+    return () => {
+      window.removeEventListener('docshare:wallet-refresh', refresh);
+    };
+  }, [loadAccountSummary]);
 
   function search(event) {
     event.preventDefault();
@@ -69,11 +152,6 @@ export default function Navbar() {
     } catch (error) {
       toast(error.message, 'error');
     }
-  }
-
-  async function openNotifications() {
-    await markNotificationsRead();
-    navigate('/history');
   }
 
   return (
@@ -105,7 +183,9 @@ export default function Navbar() {
             key={to}
             to={to}
             end={to === '/'}
-            className={({ isActive }) => (isActive ? 'active' : '')}
+            className={({ isActive }) => (
+              isActive ? 'active' : ''
+            )}
           >
             {label}
           </NavLink>
@@ -128,49 +208,68 @@ export default function Navbar() {
               `navbar-admin-link${isActive ? ' active' : ''}`
             )}
           >
-            <span>Admin</span>
-            <CountBadge
-              value={adminTotal}
-              title="Mục Admin đang chờ xử lý"
-            />
+            Admin
           </NavLink>
         )}
       </nav>
 
       <div className="navbar-actions">
-        <button
-          className="icon-button notification-icon-button"
-          type="button"
-          onClick={openNotifications}
-          title={
-            notifications > 0
-              ? `${notifications} thông báo chưa đọc`
-              : 'Thông báo'
-          }
-          aria-label="Thông báo"
-        >
-          <Bell size={19} />
+        <div className="navbar-notification-wrap-v63">
+          <button
+            className="icon-button notification-icon-button"
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              setNotificationsOpen((value) => !value);
+            }}
+            title={
+              notifications > 0
+                ? `${notifications} thông báo chưa đọc`
+                : 'Thông báo'
+            }
+            aria-label="Thông báo"
+          >
+            <Bell size={19} />
 
-          <CountBadge
-            value={notifications}
-            title="Thông báo chưa đọc"
+            <CountBadge
+              value={notifications}
+              title="Thông báo chưa đọc"
+            />
+          </button>
+
+          <NotificationPanel
+            open={notificationsOpen}
+            onClose={() => setNotificationsOpen(false)}
           />
-        </button>
+        </div>
 
         <div className="account-menu">
           <button
-            className="account-menu__trigger"
+            className={`account-menu__trigger${premium ? ' is-premium-v63' : ''}`}
             type="button"
-            onClick={() => setOpen((value) => !value)}
+            onClick={() => {
+              setNotificationsOpen(false);
+              setOpen((value) => !value);
+            }}
           >
             <Avatar profile={currentUser} size={34} />
 
-            <span>
-              <strong>{name}</strong>
+            <span className="account-menu__identity-v63">
+              <span>
+                <strong>{name}</strong>
+                <PremiumBadge
+                  profile={currentUser}
+                  compact
+                  showText={false}
+                />
+              </span>
+
               <small>
-                {currentUser?.role === 'admin'
-                  ? 'Quản trị viên'
-                  : 'Thành viên'}
+                {premium
+                  ? 'Thành viên Premium'
+                  : currentUser?.role === 'admin'
+                    ? 'Quản trị viên'
+                    : 'Thành viên'}
               </small>
             </span>
 
@@ -186,14 +285,73 @@ export default function Navbar() {
                 aria-label="Đóng"
               />
 
-              <div className="account-menu__dropdown">
+              <div className="account-menu__dropdown account-menu__dropdown--v63">
+                <section className={`account-summary-v63${premium ? ' is-premium' : ''}`}>
+                  <div className="account-summary-v63__head">
+                    <Avatar profile={currentUser} size={44} />
+
+                    <div>
+                      <strong>{name}</strong>
+                      <PremiumBadge
+                        profile={currentUser}
+                        compact
+                      />
+                    </div>
+                  </div>
+
+                  <div className="account-summary-v63__balances">
+                    <article>
+                      <WalletCards size={16} />
+                      <span>
+                        <small>Số dư credit</small>
+                        <strong>
+                          {accountSummary.loading
+                            ? '...'
+                            : `${formatNumber(accountSummary.credit)} credit`}
+                        </strong>
+                      </span>
+                    </article>
+
+                    <article>
+                      <CreditCard size={16} />
+                      <span>
+                        <small>Tiền tác giả</small>
+                        <strong>
+                          {accountSummary.loading
+                            ? '...'
+                            : `${formatNumber(accountSummary.cash)}đ`}
+                        </strong>
+                      </span>
+                    </article>
+                  </div>
+
+                  <Link
+                    className="account-summary-v63__wallet-link"
+                    to="/wallet"
+                    onClick={() => setOpen(false)}
+                  >
+                    Mở Ví & Premium
+                  </Link>
+                </section>
+
                 <Link
                   to={`/profile/${currentUser?.id}`}
                   onClick={() => setOpen(false)}
                 >
                   <UserRound size={17} />
-                  Hồ sơ
+                  Hồ sơ cá nhân
                 </Link>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen(false);
+                    setSecurityOpen(true);
+                  }}
+                >
+                  <ShieldCheck size={17} />
+                  Bảo mật & đổi mật khẩu
+                </button>
 
                 {currentUser?.role === 'admin' && (
                   <Link
@@ -202,11 +360,6 @@ export default function Navbar() {
                   >
                     <ShieldCheck size={17} />
                     Quản trị
-
-                    <CountBadge
-                      value={adminTotal}
-                      title="Mục Admin đang chờ xử lý"
-                    />
                   </Link>
                 )}
 
@@ -219,6 +372,11 @@ export default function Navbar() {
           )}
         </div>
       </div>
+
+      <SecurityModal
+        open={securityOpen}
+        onClose={() => setSecurityOpen(false)}
+      />
     </header>
   );
 }
