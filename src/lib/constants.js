@@ -37,6 +37,8 @@ export const CREDIT_PACKAGES = [
   { amount: 100000, credit: 220 },
   { amount: 200000, credit: 460 },
   { amount: 500000, credit: 1200 },
+  { amount: 1000000, credit: 2500 },
+  { amount: 2000000, credit: 5200 },
 ];
 
 export const BANK_CONFIG = {

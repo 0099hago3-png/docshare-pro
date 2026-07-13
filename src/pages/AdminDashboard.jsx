@@ -13,6 +13,7 @@ import {
   Download,
   Eye,
   FileText,
+  Flag,
   Gift,
   HandCoins,
   Heart,
@@ -45,6 +46,7 @@ import {
 } from '../lib/analytics.js';
 import { formatDateTime, formatNumber, getProfileName, normalizeError } from '../lib/helpers.js';
 import { supabase } from '../lib/supabase.js';
+import '../payment-admin-report.css';
 
 const tabs = [
   ['overview', BarChart3, 'Thống kê'],
@@ -52,6 +54,7 @@ const tabs = [
   ['documents', BookOpen, 'Tài liệu'],
   ['posts', FileText, 'Bảng tin'],
   ['payments', CreditCard, 'Nạp / Rút / Premium'],
+  ['reports', Flag, 'Báo cáo'],
   ['gifts', Gift, 'Kho quà'],
 ];
 
@@ -242,6 +245,7 @@ export default function AdminDashboard() {
     postComments: [],
     giftTransactions: [],
     subscriptions: [],
+    reports: [],
   });
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -268,6 +272,7 @@ export default function AdminDashboard() {
         supabase.from('post_comments').select('id,post_id,user_id,created_at'),
         supabase.from('gift_transactions').select('id,gift_id,sender_id,receiver_id,cost_credit,receiver_credit,created_at'),
         supabase.from('premium_subscriptions').select('id,user_id,plan_code,starts_at,ends_at,status,created_at').order('created_at', { ascending: false }),
+        supabase.from('reports').select('*,reporter:reporter_id(full_name,username,email,public_id),reported_user:reported_user_id(full_name,username,email,public_id)').order('created_at', { ascending: false }),
       ]);
 
       const firstError = results.find((item) => item.error)?.error;
@@ -290,6 +295,7 @@ export default function AdminDashboard() {
         postComments: results[13].data || [],
         giftTransactions: results[14].data || [],
         subscriptions: results[15].data || [],
+        reports: results[16].data || [],
       });
     } catch (error) {
       toast(normalizeError(error), 'error');
@@ -674,6 +680,30 @@ export default function AdminDashboard() {
     }
   }
 
+  async function processReport(report, action) {
+    try {
+      setBusy(true);
+
+      const { data: result, error } = await supabase.rpc('admin_process_report', {
+        p_report_id: report.id,
+        p_action: action,
+        p_admin_action: action === 'resolve'
+          ? 'Admin đã tiếp nhận và xử lý báo cáo.'
+          : 'Admin đã kiểm tra và từ chối báo cáo.',
+      });
+
+      if (error) throw error;
+      if (!result?.ok) throw new Error(result?.message || 'Không thể xử lý báo cáo.');
+
+      toast(action === 'resolve' ? 'Đã đánh dấu báo cáo là đã xử lý.' : 'Đã từ chối báo cáo.');
+      await load();
+    } catch (error) {
+      toast(normalizeError(error), 'error');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function removeTarget() {
     if (!deleteTarget) return;
     try {
@@ -992,6 +1022,27 @@ export default function AdminDashboard() {
       {tab === 'posts' && <AdminTable headings={['Bài viết', 'Tác giả', 'Trạng thái', 'Ngày đăng', 'Thao tác']}>{data.posts.map((item) => <tr key={item.id}><td><strong>{item.title || item.content.slice(0, 60)}</strong></td><td>{getProfileName(item.profiles)}</td><td><span className={`status status--${item.status}`}>{item.status}</span></td><td>{formatDateTime(item.created_at)}</td><td><button className="button button--small button--danger-soft" type="button" onClick={() => setDeleteTarget({ type: 'post', id: item.id })}><Trash2 size={15} /> Xóa</button></td></tr>)}</AdminTable>}
 
       {tab === 'payments' && <AdminTable headings={['Người dùng', 'Loại', 'Số tiền', 'Nội dung', 'Trạng thái', 'Ngày tạo', 'Thao tác']}>{data.requests.map((item) => <tr key={item.id}><td><strong>{getProfileName(item.profiles)}</strong><small>{item.profiles?.public_id}</small></td><td>{item.type === 'topup' ? 'Nạp tiền' : item.type === 'withdraw' ? 'Rút tiền' : isRenewalRequest(item) ? 'Gia hạn Premium' : 'Mua Premium'}</td><td>{formatNumber(item.amount_vnd)}đ</td><td><code>{item.transfer_note}</code></td><td><span className={`status status--${item.status}`}>{item.status}</span></td><td>{formatDateTime(item.created_at)}</td><td>{item.status === 'pending' ? <div className="inline-actions"><button className="button button--small" type="button" onClick={() => processRequest(item, 'approve')}><CheckCircle2 size={15} /> Duyệt</button><button className="button button--small button--danger-soft" type="button" onClick={() => processRequest(item, 'reject')}><XCircle size={15} /> Từ chối</button></div> : '-'}</td></tr>)}</AdminTable>}
+
+      {tab === 'reports' && (
+        <AdminTable headings={['Người báo cáo', 'Nội dung bị báo cáo', 'Lý do', 'Trạng thái', 'Ngày gửi', 'Thao tác']}>
+          {data.reports.map((item) => {
+            const targetDocument = item.target_type === 'document' ? data.documents.find((documentItem) => documentItem.id === item.target_id) : null;
+            const targetPost = item.target_type === 'post' ? data.posts.find((postItem) => postItem.id === item.target_id) : null;
+            const targetLabel = targetDocument?.title || targetPost?.title || targetPost?.content?.slice(0, 70) || item.target_type;
+
+            return (
+              <tr key={item.id}>
+                <td><strong>{getProfileName(item.reporter)}</strong><small>{item.reporter?.public_id || item.reporter?.email}</small></td>
+                <td><div className="admin-report-target"><strong>{targetLabel}</strong><small>{item.target_type} · {item.target_id}</small></div></td>
+                <td><div className="admin-report-reason"><strong>{item.reason}</strong>{item.detail && <small>{item.detail}</small>}</div></td>
+                <td><span className={`status status--${item.status}`}>{item.status === 'pending' ? 'Chờ xử lý' : item.status === 'resolved' ? 'Đã xử lý' : 'Đã từ chối'}</span></td>
+                <td>{formatDateTime(item.created_at)}</td>
+                <td>{item.status === 'pending' ? <div className="inline-actions"><button className="button button--small" type="button" onClick={() => processReport(item, 'resolve')} disabled={busy}><CheckCircle2 size={15} /> Đã xử lý</button><button className="button button--small button--danger-soft" type="button" onClick={() => processReport(item, 'reject')} disabled={busy}><XCircle size={15} /> Từ chối</button></div> : item.admin_action || '-'}</td>
+              </tr>
+            );
+          })}
+        </AdminTable>
+      )}
 
       {tab === 'gifts' && <div className="gift-grid admin-gift-grid">{data.gifts.map((item) => <article className="gift-option botanical-card" key={item.id}><span>{item.icon}</span><strong>{item.name}</strong><small>{item.credit_price} credit · tác giả nhận {item.creator_share_percent}%</small><span className={`status status--${item.active ? 'active' : 'locked'}`}>{item.active ? 'Đang bán' : 'Đã ẩn'}</span></article>)}</div>}
 

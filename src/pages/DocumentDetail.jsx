@@ -1,4 +1,4 @@
-import { Bookmark, Download, Edit3, Eye, Gift, Heart, MessageCircle, MoreHorizontal, Reply, Send, Star, Trash2 } from 'lucide-react';
+import { Bookmark, Download, Edit3, Eye, Flag, Gift, Heart, MessageCircle, MoreHorizontal, Reply, Send, Star, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import Avatar from '../components/Avatar.jsx';
@@ -12,6 +12,7 @@ import { formatDate, formatNumber, getProfileName, normalizeError, publicAssetUr
 import { safeFileName } from '../lib/analytics.js';
 import '../analytics-dashboard.css';
 import { supabase } from '../lib/supabase.js';
+import '../payment-admin-report.css';
 
 export default function DocumentDetail() {
   const { id } = useParams();
@@ -34,6 +35,9 @@ export default function DocumentDetail() {
   const [deleteCommentId, setDeleteCommentId] = useState(null);
   const [giftOpen, setGiftOpen] = useState(false);
   const [purchaseOpen, setPurchaseOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState('Nội dung sai lệch');
+  const [reportDetail, setReportDetail] = useState('');
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const recorded = useRef(false);
@@ -207,6 +211,37 @@ export default function DocumentDetail() {
     }
   }
 
+  async function submitDocumentReport(event) {
+    event.preventDefault();
+
+    try {
+      setBusy(true);
+
+      const { data: result, error } = await supabase.rpc('create_document_report', {
+        p_document_id: id,
+        p_reason: reportReason,
+        p_detail: reportDetail.trim() || null,
+      });
+
+      if (error) throw error;
+
+      if (!result?.ok) {
+        if (result?.code === 'DUPLICATE_REPORT') throw new Error('Bạn đã gửi báo cáo cho tài liệu này và Admin đang kiểm tra.');
+        if (result?.code === 'CANNOT_REPORT_OWN_DOCUMENT') throw new Error('Bạn không thể báo cáo tài liệu do chính mình đăng.');
+        throw new Error(result?.message || 'Không thể gửi báo cáo.');
+      }
+
+      toast('Đã gửi báo cáo tài liệu tới Admin để kiểm tra.');
+      setReportOpen(false);
+      setReportReason('Nội dung sai lệch');
+      setReportDetail('');
+    } catch (error) {
+      toast(normalizeError(error), 'error');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function removeDocument() {
     try {
       setBusy(true);
@@ -299,7 +334,7 @@ export default function DocumentDetail() {
           <Link className="author-card" to={`/profile/${document.author_id}`}><Avatar profile={document.profiles} size={50} /><div><strong>{getProfileName(document.profiles)}</strong><small>{document.profiles?.school_name || 'Thành viên DocShare'}</small></div></Link>
           <div className="tag-row">{(document.tags || []).map((tag) => <span key={tag}>#{tag}</span>)}</div>
           <div className="document-detail-stats"><span><Eye size={15} /> {formatNumber(stats.view_count || 0)} lượt xem</span><span><Heart size={15} /> {formatNumber(stats.like_count || 0)} lượt thích</span><span><Star size={15} /> {Number(stats.average_rating || 0).toFixed(1)} / 5</span><span><MessageCircle size={15} /> {formatNumber(stats.comment_count || 0)} bình luận</span><span><Download size={15} /> {formatNumber(stats.download_count || 0)} lượt tải</span></div>
-          <div className="document-detail-actions"><button className={liked ? 'button is-liked' : 'button button--outline'} type="button" onClick={toggleLike}><Heart size={17} fill={liked ? 'currentColor' : 'none'} /> {liked ? 'Đã thích' : 'Thích'}</button><button className={bookmarked ? 'button' : 'button button--outline'} type="button" onClick={toggleBookmark}><Bookmark size={17} /> {bookmarked ? 'Đã lưu' : 'Lưu tài liệu'}</button><button className="button button--outline" type="button" onClick={() => setGiftOpen(true)}><Gift size={17} /> Tặng quà</button></div>
+          <div className="document-detail-actions"><button className={liked ? 'button is-liked' : 'button button--outline'} type="button" onClick={toggleLike}><Heart size={17} fill={liked ? 'currentColor' : 'none'} /> {liked ? 'Đã thích' : 'Thích'}</button><button className={bookmarked ? 'button' : 'button button--outline'} type="button" onClick={toggleBookmark}><Bookmark size={17} /> {bookmarked ? 'Đã lưu' : 'Lưu tài liệu'}</button><button className="button button--outline" type="button" onClick={() => setGiftOpen(true)}><Gift size={17} /> Tặng quà</button><button className="button button--outline document-report-button" type="button" onClick={() => setReportOpen(true)}><Flag size={17} /> Báo cáo tài liệu</button></div>
         </section>
         <aside className="access-card botanical-card"><span className="eyebrow">QUYỀN TRUY CẬP</span><h2>Tài liệu sẵn sàng</h2><strong>{document.price_credit > 0 ? `${document.price_credit} credit` : 'Miễn phí'}</strong>{!hasAccess ? <button className="button button--wide" type="button" onClick={() => setPurchaseOpen(true)}>Mua tài liệu</button> : <div className="document-file-actions"><button className="button button--wide button--outline" type="button" onClick={() => getFullFile('open')}><Eye size={18} /> Mở file</button><button className="button button--wide document-download-button" type="button" onClick={() => getFullFile('download')}><Download size={18} /> Tải xuống tài liệu</button></div>}<small>Đăng ngày {formatDate(document.created_at)}</small></aside>
       </div>
@@ -321,6 +356,14 @@ export default function DocumentDetail() {
         <div className="comment-list">{topLevelComments.map((comment) => <CommentItem key={comment.id} comment={comment} replies={repliesFor(comment.id)} currentUser={currentUser} onReply={setReplyTo} onEdit={(item) => { setEditingComment(item); setCommentEditValue(item.content); }} onDelete={setDeleteCommentId} onHeart={toggleCommentHeart} />)}</div>
       </section>
 
+      <Modal open={reportOpen} onClose={() => setReportOpen(false)} title="Báo cáo tài liệu" width={560}>
+        <form className="document-report-form" onSubmit={submitDocumentReport}>
+          <div className="document-report-form__notice"><Flag size={18} /><span>Báo cáo sẽ được chuyển tới Admin. Vui lòng chọn đúng lý do và mô tả rõ vấn đề.</span></div>
+          <label>Lý do báo cáo *<select value={reportReason} onChange={(event) => setReportReason(event.target.value)}><option>Nội dung sai lệch</option><option>Vi phạm bản quyền</option><option>Tài liệu giả hoặc lừa đảo</option><option>Nội dung phản cảm</option><option>Spam / quảng cáo</option><option>File lỗi hoặc không đúng mô tả</option><option>Lý do khác</option></select></label>
+          <label>Mô tả chi tiết<textarea value={reportDetail} onChange={(event) => setReportDetail(event.target.value)} placeholder="Mô tả phần nào của tài liệu có vấn đề..." /></label>
+          <div className="form-actions form-actions--end"><button className="button button--ghost" type="button" onClick={() => setReportOpen(false)}>Hủy</button><button className="button button--danger-soft" disabled={busy}><Flag size={16} /> {busy ? 'Đang gửi...' : 'Gửi báo cáo tới Admin'}</button></div>
+        </form>
+      </Modal>
       <Modal open={Boolean(editingComment)} onClose={() => setEditingComment(null)} title="Sửa bình luận" width={600}><form className="stack-form" onSubmit={saveCommentEdit}><label>Nội dung<textarea rows="5" value={commentEditValue} onChange={(event) => setCommentEditValue(event.target.value)} required /></label><div className="form-actions form-actions--end"><button className="button button--ghost" type="button" onClick={() => setEditingComment(null)}>Hủy</button><button className="button" disabled={busy}>Lưu thay đổi</button></div></form></Modal>
       <ConfirmDialog open={deleteDocumentOpen} onClose={() => setDeleteDocumentOpen(false)} onConfirm={removeDocument} title="Xóa tài liệu" message="Tài liệu, file, lượt thích, bình luận và đánh giá liên quan sẽ bị xóa. Bạn có chắc chắn không?" confirmLabel="Xóa tài liệu" danger loading={busy} />
       <ConfirmDialog open={Boolean(deleteCommentId)} onClose={() => setDeleteCommentId(null)} onConfirm={deleteComment} title="Xóa bình luận" message="Bạn có chắc chắn muốn xóa bình luận này?" confirmLabel="Xóa bình luận" danger loading={busy} />
