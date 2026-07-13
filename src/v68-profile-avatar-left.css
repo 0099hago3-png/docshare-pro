@@ -1,0 +1,61 @@
+/*
+  DOCSHARE PRO V68
+  ĐƯA AVATAR / LOGO HỒ SƠ VỀ BÊN TRÁI NHƯ BỐ CỤC CŨ
+*/
+
+@media screen and (min-width: 721px) {
+  .profile-hero-v67 {
+    display: grid !important;
+    grid-template-columns: auto minmax(0, 1fr) auto !important;
+    grid-template-areas: "profile-avatar profile-main profile-actions" !important;
+    align-items: end !important;
+    justify-items: stretch !important;
+    gap: 20px !important;
+  }
+
+  .profile-hero-v67 .profile-avatar-wrap-v67 {
+    grid-area: profile-avatar !important;
+    justify-self: start !important;
+    align-self: end !important;
+    margin: 0 !important;
+    transform: none !important;
+  }
+
+  .profile-hero-v67 .profile-hero__main {
+    grid-area: profile-main !important;
+    min-width: 0 !important;
+    justify-self: stretch !important;
+    align-self: end !important;
+    text-align: left !important;
+  }
+
+  .profile-hero-v67 .profile-actions {
+    grid-area: profile-actions !important;
+    justify-self: end !important;
+    align-self: end !important;
+    margin: 0 !important;
+  }
+
+  .profile-hero-v67 .profile-meta {
+    justify-content: flex-start !important;
+  }
+}
+
+/* Điện thoại vẫn xếp giữa để không bị chật */
+@media screen and (max-width: 720px) {
+  .profile-hero-v67 {
+    grid-template-columns: 1fr !important;
+    justify-items: center !important;
+    text-align: center !important;
+  }
+
+  .profile-hero-v67 .profile-avatar-wrap-v67,
+  .profile-hero-v67 .profile-hero__main,
+  .profile-hero-v67 .profile-actions {
+    justify-self: center !important;
+  }
+
+  .profile-hero-v67 .profile-meta {
+    justify-content: center !important;
+  }
+}
