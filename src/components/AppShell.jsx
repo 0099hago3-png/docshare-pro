@@ -13,6 +13,7 @@ import '../v63-premium-notifications.css';
 import '../v64-premium-security-modal-fix.css';
 import '../v65-green-premium-wallet-gifts.css';
 import '../v66-layout-avatar-fix.css';
+import '../v67-profile-images.css';
 
 export default function AppShell() {
   return (

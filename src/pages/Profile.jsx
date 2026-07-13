@@ -1,5 +1,6 @@
 import {
   BookOpen,
+  Camera,
   CalendarDays,
   Edit3,
   Gift,
@@ -29,12 +30,14 @@ import PremiumBadge, {
   isPremiumActive,
 } from '../components/PremiumBadge.jsx';
 import PremiumBenefits from '../components/PremiumBenefits.jsx';
+import ProfileImageEditor from '../components/ProfileImageEditor.jsx';
 import SecurityModal from '../components/SecurityModal.jsx';
 import { useApp } from '../context/AppContext.jsx';
 import {
   formatDate,
   getProfileName,
   normalizeError,
+  publicAssetUrl,
 } from '../lib/helpers.js';
 import { supabase } from '../lib/supabase.js';
 
@@ -64,12 +67,17 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
   const [securityOpen, setSecurityOpen] = useState(false);
+  const [imageEditorOpen, setImageEditorOpen] = useState(false);
   const [giftOpen, setGiftOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
 
   const isOwn = profileId === currentUser.id;
   const premium = isPremiumActive(profile);
+
+  const coverUrl = profile?.cover_path
+    ? publicAssetUrl('avatars', profile.cover_path)
+    : '';
 
   const load = useCallback(async () => {
     try {
@@ -174,10 +182,47 @@ export default function Profile() {
 
   return (
     <div className="page profile-page profile-page--v63">
-      <section className={`profile-hero botanical-card${premium ? ' is-premium-v63' : ''}`}>
+      <section
+        className={[
+          'profile-hero',
+          'profile-hero-v67',
+          'botanical-card',
+          premium ? 'is-premium-v63' : '',
+          coverUrl ? 'has-cover-v67' : '',
+        ].filter(Boolean).join(' ')}
+      >
+        <div className="profile-cover-media-v67" aria-hidden="true">
+          {coverUrl && <img src={coverUrl} alt="" />}
+        </div>
+
         <div className="profile-hero__leaf" />
 
-        <Avatar profile={profile} size={104} />
+        {isOwn && (
+          <button
+            className="profile-cover-edit-v67"
+            type="button"
+            onClick={() => setImageEditorOpen(true)}
+          >
+            <Camera size={15} />
+            <span>Đổi ảnh bìa</span>
+          </button>
+        )}
+
+        <div className="profile-avatar-wrap-v67">
+          <Avatar profile={profile} size={104} />
+
+          {isOwn && (
+            <button
+              className="profile-avatar-edit-v67"
+              type="button"
+              onClick={() => setImageEditorOpen(true)}
+              title="Đổi ảnh đại diện"
+              aria-label="Đổi ảnh đại diện"
+            >
+              <Camera size={16} />
+            </button>
+          )}
+        </div>
 
         <div className="profile-hero__main">
           <div className="profile-name-row">
@@ -444,6 +489,13 @@ export default function Profile() {
           </div>
         </form>
       </Modal>
+
+      <ProfileImageEditor
+        open={imageEditorOpen}
+        onClose={() => setImageEditorOpen(false)}
+        profile={profile}
+        onSaved={load}
+      />
 
       <SecurityModal
         open={securityOpen}

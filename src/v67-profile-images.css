@@ -1,0 +1,344 @@
+
+/*
+  DOCSHARE PRO V67
+  ĐỔI ẢNH ĐẠI DIỆN + ẢNH BÌA HỒ SƠ
+*/
+
+/* =========================================================
+   ẢNH BÌA TRÊN HỒ SƠ
+   ========================================================= */
+
+.profile-hero-v67 {
+  position: relative;
+}
+
+.profile-cover-media-v67 {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.profile-cover-media-v67 img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center;
+}
+
+.profile-cover-media-v67::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(247, 248, 238, .91) 0%,
+      rgba(247, 248, 238, .78) 47%,
+      rgba(247, 248, 238, .56) 100%
+    ),
+    linear-gradient(
+      0deg,
+      rgba(247, 248, 238, .72),
+      rgba(247, 248, 238, .18)
+    );
+}
+
+.profile-hero-v67.has-cover-v67 .profile-hero__leaf {
+  opacity: .18;
+}
+
+.profile-hero-v67 > *:not(.profile-cover-media-v67) {
+  position: relative;
+  z-index: 2;
+}
+
+.profile-avatar-wrap-v67 {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+}
+
+.profile-avatar-edit-v67 {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  z-index: 8;
+  width: 35px;
+  height: 35px;
+  display: grid;
+  place-items: center;
+  border: 3px solid #fffdf7;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #25845b, #0d6744);
+  color: #fff;
+  box-shadow: 0 6px 15px rgba(15, 91, 59, .24);
+  cursor: pointer;
+}
+
+.profile-avatar-edit-v67:hover {
+  transform: translateY(-1px) scale(1.03);
+}
+
+.profile-cover-edit-v67 {
+  position: absolute !important;
+  top: 14px;
+  right: 14px;
+  z-index: 8 !important;
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 11px;
+  border: 1px solid rgba(27, 107, 72, .22);
+  border-radius: 10px;
+  background: rgba(255, 253, 247, .88);
+  color: #176c48;
+  box-shadow: 0 7px 18px rgba(38, 76, 55, .10);
+  backdrop-filter: blur(8px);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.profile-cover-edit-v67:hover {
+  background: #fff;
+  transform: translateY(-1px);
+}
+
+/* =========================================================
+   TRÌNH ĐỔI ẢNH
+   ========================================================= */
+
+.profile-image-editor-modal-v67 {
+  max-height: min(92vh, 850px);
+  overflow-y: auto !important;
+}
+
+.profile-image-editor-v67 {
+  display: grid;
+  gap: 16px;
+}
+
+.profile-image-editor__intro {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid #d8e5d9;
+  border-radius: 13px;
+  background: linear-gradient(145deg, #eff8f0, #fbfcf5);
+  color: #2e684b;
+}
+
+.profile-image-editor__intro > svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.profile-image-editor__intro strong {
+  display: block;
+  color: #1d5038;
+  font-size: 13px;
+}
+
+.profile-image-editor__intro p {
+  margin: 4px 0 0;
+  color: #718078;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.profile-image-editor__grid {
+  display: grid;
+  grid-template-columns: minmax(240px, .8fr) minmax(360px, 1.4fr);
+  gap: 14px;
+}
+
+.profile-image-editor__card {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #dce6dc;
+  border-radius: 15px;
+  background: #fffdf8;
+  box-shadow: 0 8px 24px rgba(38, 75, 54, .05);
+}
+
+.profile-image-editor__card > header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.profile-image-editor__card > header > span {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: #e9f5eb;
+  color: #1c7a52;
+}
+
+.profile-image-editor__card > header strong {
+  display: block;
+  color: #214b37;
+  font-size: 13px;
+}
+
+.profile-image-editor__card > header p {
+  margin: 3px 0 0;
+  color: #7a8780;
+  font-size: 9px;
+}
+
+.profile-image-editor__preview {
+  position: relative;
+  overflow: hidden;
+  border: 1px dashed #bcd5c0;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(79, 148, 91, .10), transparent 35%),
+    #f3f8ef;
+}
+
+.profile-image-editor__preview.is-avatar {
+  width: 156px;
+  height: 156px;
+  margin: 0 auto;
+  border-radius: 50%;
+}
+
+.profile-image-editor__preview.is-cover {
+  width: 100%;
+  aspect-ratio: 16 / 5;
+  min-height: 150px;
+  border-radius: 13px;
+}
+
+.profile-image-editor__preview img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center;
+}
+
+.profile-image-editor__initials {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  border-radius: inherit;
+  background: linear-gradient(145deg, #2e9568, #0d6141);
+  color: #fff;
+  font-size: 44px;
+  font-weight: 950;
+  text-shadow: 0 2px 4px rgba(7, 47, 31, .25);
+}
+
+.profile-image-editor__empty-cover {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 7px;
+  color: #6c8376;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.profile-image-editor__selected {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(19, 118, 76, .91);
+  color: #fff;
+  box-shadow: 0 5px 12px rgba(17, 94, 61, .18);
+  font-size: 8px;
+  font-weight: 900;
+}
+
+.profile-image-editor__selected.is-remove {
+  background: rgba(190, 48, 48, .90);
+}
+
+.profile-image-editor__actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.profile-image-editor__remove {
+  color: #bc3b3b !important;
+}
+
+.profile-image-editor__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 13px;
+  border-top: 1px solid #e4ebe3;
+}
+
+.is-spinning-v67 {
+  animation: profile-image-spin-v67 .9s linear infinite;
+}
+
+@keyframes profile-image-spin-v67 {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 760px) {
+  .profile-image-editor__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-image-editor__preview.is-cover {
+    min-height: 120px;
+  }
+
+  .profile-cover-edit-v67 {
+    top: 9px;
+    right: 9px;
+  }
+}
+
+@media (max-width: 560px) {
+  .profile-cover-edit-v67 span {
+    display: none;
+  }
+
+  .profile-cover-edit-v67 {
+    width: 36px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .profile-image-editor__footer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .profile-image-editor__footer .button {
+    width: 100%;
+  }
+}
