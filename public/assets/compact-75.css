@@ -1,27 +1,49 @@
 /*
-  DOCSHARE PRO - COMPACT DESKTOP 75%
-  Mục tiêu: giao diện nhỏ, gọn như khi trình duyệt ở khoảng 75-80%.
-  Mobile và tablet nhỏ tự trở về 100% để không bị quá nhỏ.
+  DOCSHARE PRO - THU NHỎ TOÀN BỘ GIAO DIỆN DESKTOP CÒN 75%
+  Không ảnh hưởng điện thoại.
 */
 
 :root {
-  --docshare-ui-zoom: 0.78;
+  --docshare-desktop-scale: 0.75;
 }
 
-/* Chrome / Edge / Cốc Cốc */
+/* Chrome, Edge, Cốc Cốc */
 @media (min-width: 1100px) {
+  html {
+    min-width: calc(100% / var(--docshare-desktop-scale));
+    min-height: calc(100% / var(--docshare-desktop-scale));
+  }
+
   body {
-    zoom: var(--docshare-ui-zoom);
+    zoom: var(--docshare-desktop-scale);
+    min-width: calc(100% / var(--docshare-desktop-scale));
+    min-height: calc(100vh / var(--docshare-desktop-scale));
+    overflow-x: hidden;
   }
 
   #root {
-    min-height: calc(100vh / var(--docshare-ui-zoom));
+    min-height: calc(100vh / var(--docshare-desktop-scale));
   }
 }
 
-/* Không thu nhỏ điện thoại và tablet */
-@media (max-width: 1099px) {
+/* Tablet giữ ở mức 88% để không quá nhỏ */
+@media (min-width: 768px) and (max-width: 1099px) {
   body {
+    zoom: 0.88;
+    min-width: calc(100% / 0.88);
+    min-height: calc(100vh / 0.88);
+  }
+
+  #root {
+    min-height: calc(100vh / 0.88);
+  }
+}
+
+/* Điện thoại giữ nguyên 100% */
+@media (max-width: 767px) {
+  html,
+  body {
+    min-width: 320px;
     zoom: 1;
   }
 
@@ -30,36 +52,7 @@
   }
 }
 
-/* Nền thiên nhiên nhẹ, không che nội dung */
-html {
-  min-height: 100%;
-  background:
-    radial-gradient(circle at 3% 10%, rgba(103, 146, 91, 0.08), transparent 22%),
-    radial-gradient(circle at 96% 92%, rgba(190, 153, 68, 0.07), transparent 25%),
-    #f7f4ea;
-}
-
-body {
-  min-width: 320px;
-  margin: 0;
-  overflow-x: hidden;
-  background:
-    linear-gradient(rgba(250, 248, 240, 0.94), rgba(250, 248, 240, 0.94)),
-    radial-gradient(ellipse at 8% 18%, rgba(88, 137, 77, 0.10), transparent 20%),
-    radial-gradient(ellipse at 90% 74%, rgba(109, 151, 88, 0.08), transparent 21%);
-}
-
-/* Làm các khung chính gọn và đồng nhất hơn */
-.app-shell,
-.app-layout,
-.main-layout,
-.page-shell,
-.app-main,
-main {
-  min-width: 0;
-}
-
-/* Tránh nội dung tràn ngang sau khi thu nhỏ */
+/* Tránh ảnh, biểu đồ và bảng tràn ngang */
 img,
 video,
 canvas,
@@ -67,50 +60,11 @@ svg {
   max-width: 100%;
 }
 
-button,
-input,
-select,
-textarea {
-  font: inherit;
+table {
+  max-width: 100%;
 }
 
-/* Nút có cảm giác gọn và nổi hơn */
-button,
-.btn,
-.button,
-.primary-button,
-.secondary-button,
-.action-button {
-  transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease,
-    background-color 0.18s ease,
-    border-color 0.18s ease;
-}
-
-button:hover,
-.btn:hover,
-.button:hover,
-.primary-button:hover,
-.secondary-button:hover,
-.action-button:hover {
-  transform: translateY(-1px);
-}
-
-/* Card gọn hơn nhưng vẫn giữ khung lá và nền kem */
-.card,
-.panel,
-.section-card,
-.content-card,
-.document-card,
-.post-card {
-  box-shadow:
-    0 9px 24px rgba(37, 79, 57, 0.07),
-    inset 0 1px 0 rgba(255, 255, 255, 0.75);
-}
-
-/* Ẩn thanh cuộn ngang không cần thiết */
 body,
 #root {
-  max-width: 100%;
+  max-width: none;
 }
