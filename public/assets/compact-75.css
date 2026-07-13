@@ -1,58 +1,58 @@
 /*
-  DOCSHARE PRO - THU NHỎ TOÀN BỘ GIAO DIỆN DESKTOP CÒN 75%
-  Không ảnh hưởng điện thoại.
+  DOCSHARE PRO V57
+  ÉP TOÀN BỘ WEBSITE DESKTOP NHỎ CÒN 75%
+  Áp dụng trên Chrome / Edge / Cốc Cốc.
 */
 
 :root {
-  --docshare-desktop-scale: 0.75;
+  --docshare-scale-desktop: 0.75;
+  --docshare-scale-tablet: 0.88;
 }
 
-/* Chrome, Edge, Cốc Cốc */
-@media (min-width: 1100px) {
-  html {
-    min-width: calc(100% / var(--docshare-desktop-scale));
-    min-height: calc(100% / var(--docshare-desktop-scale));
-  }
+html,
+body {
+  width: 100%;
+  min-width: 320px;
+  margin: 0;
+  overflow-x: hidden;
+}
 
-  body {
-    zoom: var(--docshare-desktop-scale);
-    min-width: calc(100% / var(--docshare-desktop-scale));
-    min-height: calc(100vh / var(--docshare-desktop-scale));
-    overflow-x: hidden;
-  }
-
+/*
+  Cách cũ zoom trên body có thể bị stylesheet khác ghi đè.
+  Bản này zoom trực tiếp #root và tăng chiều rộng bù lại,
+  nên toàn bộ header, sidebar, card, biểu đồ và chữ đều nhỏ thật.
+*/
+@media screen and (min-width: 1100px) {
   #root {
-    min-height: calc(100vh / var(--docshare-desktop-scale));
+    zoom: var(--docshare-scale-desktop) !important;
+    width: calc(100% / var(--docshare-scale-desktop)) !important;
+    min-width: calc(100% / var(--docshare-scale-desktop)) !important;
+    min-height: calc(100vh / var(--docshare-scale-desktop)) !important;
+    transform-origin: top left !important;
   }
 }
 
-/* Tablet giữ ở mức 88% để không quá nhỏ */
-@media (min-width: 768px) and (max-width: 1099px) {
-  body {
-    zoom: 0.88;
-    min-width: calc(100% / 0.88);
-    min-height: calc(100vh / 0.88);
-  }
-
+/* Tablet nhỏ vừa phải */
+@media screen and (min-width: 768px) and (max-width: 1099px) {
   #root {
-    min-height: calc(100vh / 0.88);
+    zoom: var(--docshare-scale-tablet) !important;
+    width: calc(100% / var(--docshare-scale-tablet)) !important;
+    min-width: calc(100% / var(--docshare-scale-tablet)) !important;
+    min-height: calc(100vh / var(--docshare-scale-tablet)) !important;
+    transform-origin: top left !important;
   }
 }
 
-/* Điện thoại giữ nguyên 100% */
-@media (max-width: 767px) {
-  html,
-  body {
-    min-width: 320px;
-    zoom: 1;
-  }
-
+/* Điện thoại giữ 100% */
+@media screen and (max-width: 767px) {
   #root {
-    min-height: 100vh;
+    zoom: 1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 100vh !important;
   }
 }
 
-/* Tránh ảnh, biểu đồ và bảng tràn ngang */
 img,
 video,
 canvas,
@@ -60,11 +60,6 @@ svg {
   max-width: 100%;
 }
 
-table {
-  max-width: 100%;
-}
-
-body,
-#root {
-  max-width: none;
+body {
+  background: #f7f4ea;
 }
