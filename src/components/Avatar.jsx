@@ -1,9 +1,30 @@
 import {
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+
+import {
   getInitials,
   getProfileName,
   publicAssetUrl,
 } from '../lib/helpers.js';
 import { isPremiumActive } from './PremiumBadge.jsx';
+
+function getAvatarSource(profile) {
+  return (
+    profile?.avatar_url
+    || profile?.avatarUrl
+    || profile?.photo_url
+    || profile?.photoURL
+    || profile?.picture
+    || (
+      profile?.avatar_path
+        ? publicAssetUrl('avatars', profile.avatar_path)
+        : ''
+    )
+  );
+}
 
 export default function Avatar({
   profile,
@@ -11,11 +32,24 @@ export default function Avatar({
   className = '',
 }) {
   const name = getProfileName(profile);
-  const url = profile?.avatar_path
-    ? publicAssetUrl('avatars', profile.avatar_path)
-    : '';
+  const initials = useMemo(
+    () => getInitials(name),
+    [name],
+  );
+
+  const source = useMemo(
+    () => getAvatarSource(profile),
+    [profile],
+  );
+
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [source]);
 
   const premium = isPremiumActive(profile);
+  const showImage = Boolean(source) && !imageFailed;
 
   return (
     <span
@@ -30,10 +64,22 @@ export default function Avatar({
         fontSize: Math.max(12, size * 0.34),
       }}
       title={premium ? `${name} · Premium` : name}
+      aria-label={name}
     >
-      {url
-        ? <img src={url} alt={name} />
-        : getInitials(name)}
+      {showImage ? (
+        <img
+          className="avatar__image-v66"
+          src={source}
+          alt={name}
+          loading="lazy"
+          draggable="false"
+          onError={() => setImageFailed(true)}
+        />
+      ) : (
+        <span className="avatar__initials-v66" aria-hidden="true">
+          {initials}
+        </span>
+      )}
 
       {premium && (
         <i

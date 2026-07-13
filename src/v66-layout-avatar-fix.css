@@ -1,0 +1,167 @@
+/*
+  DOCSHARE PRO V66
+  SỬA AVATAR MẤT + KHÓA LẠI BỐ CỤC SAU KHI THU NHỎ
+*/
+
+/* =========================================================
+   AVATAR LUÔN HIỆN
+   ========================================================= */
+
+.avatar {
+  position: relative !important;
+  isolation: isolate !important;
+  flex: 0 0 auto !important;
+  aspect-ratio: 1 / 1 !important;
+  border-radius: 50% !important;
+  background:
+    linear-gradient(145deg, #2d9568, #0d6242) !important;
+  color: #fff !important;
+}
+
+.avatar__image-v66,
+.avatar__initials-v66 {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 3 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 100% !important;
+  min-height: 100% !important;
+  display: grid !important;
+  place-items: center !important;
+  overflow: hidden !important;
+  border-radius: 50% !important;
+}
+
+.avatar__image-v66 {
+  object-fit: cover !important;
+  object-position: center !important;
+  background: #eaf5ec !important;
+}
+
+.avatar__initials-v66 {
+  background:
+    linear-gradient(145deg, #2f9b6d, #0b5d3e) !important;
+  color: #fff !important;
+  font-size: inherit !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+  text-align: center !important;
+  text-shadow: 0 1px 2px rgba(7, 47, 31, .28);
+  white-space: nowrap !important;
+}
+
+/*
+  Không dùng z-index âm nữa.
+  Trước đây lớp nền trắng của Premium có thể che chữ GA khi chưa có ảnh.
+*/
+.avatar--premium-v63 {
+  position: relative !important;
+  isolation: isolate !important;
+  overflow: visible !important;
+  background: transparent !important;
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, .98),
+    0 0 0 5px rgba(32, 151, 86, .16),
+    0 8px 20px rgba(19, 92, 55, .16) !important;
+}
+
+.avatar--premium-v63::before {
+  content: '' !important;
+  position: absolute !important;
+  inset: -5px !important;
+  z-index: 0 !important;
+  display: block !important;
+  border-radius: 50% !important;
+  background:
+    conic-gradient(
+      from 0deg,
+      #075f3a,
+      #2fbd73,
+      #a9df91,
+      #158454,
+      #075f3a
+    ) !important;
+  animation: premium-green-ring-v65 6.5s linear infinite !important;
+  pointer-events: none !important;
+}
+
+.avatar--premium-v63::after {
+  content: '' !important;
+  position: absolute !important;
+  inset: -2px !important;
+  z-index: 1 !important;
+  display: block !important;
+  border-radius: 50% !important;
+  background: #fffdf7 !important;
+  pointer-events: none !important;
+}
+
+.avatar--premium-v63 .avatar__image-v66,
+.avatar--premium-v63 .avatar__initials-v66 {
+  z-index: 2 !important;
+}
+
+.avatar__premium-crown-v63 {
+  z-index: 5 !important;
+}
+
+/* =========================================================
+   KHÓA BỐ CỤC DESKTOP
+   ========================================================= */
+
+@media screen and (min-width: 1100px) {
+  .navbar {
+    left: 0 !important;
+    right: 0 !important;
+    width: auto !important;
+  }
+
+  .sidebar {
+    left: 0 !important;
+  }
+
+  .app-main {
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    margin-left: 224px !important;
+    padding-top: 74px !important;
+  }
+
+  .page {
+    width: min(1500px, calc(100% - 36px)) !important;
+    max-width: 1500px !important;
+    margin-right: auto !important;
+    margin-left: auto !important;
+  }
+
+  .profile-page,
+  .admin-page,
+  .wallet-page,
+  .feed-page,
+  .documents-page {
+    min-width: 0 !important;
+  }
+
+  .profile-hero,
+  .premium-benefits-v63,
+  .creator-analytics,
+  .creator-kpi-grid,
+  .analytics-chart-layout {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+@media screen and (max-width: 1099px) {
+  .page {
+    max-width: 100% !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avatar--premium-v63::before {
+    animation: none !important;
+  }
+}
