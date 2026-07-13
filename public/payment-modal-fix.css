@@ -1,0 +1,184 @@
+/*
+  DOCSHARE PRO V60
+  Ẩn thanh kéo trong cửa sổ:
+  - Nạp credit
+  - Rút tiền
+  - Mua Premium
+  - Gia hạn Premium
+
+  Nội dung vẫn cuộn được bằng con lăn chuột / touchpad / cảm ứng.
+*/
+
+/* Khung modal không được tràn ngang */
+:where(
+  .payment-modal,
+  .wallet-modal,
+  .topup-modal,
+  .withdraw-modal,
+  .premium-modal,
+  .renew-modal,
+  .payment-dialog,
+  .wallet-dialog,
+  .topup-dialog,
+  .withdraw-dialog,
+  .premium-dialog,
+  .renew-dialog,
+  [class*="payment-modal"],
+  [class*="wallet-modal"],
+  [class*="topup-modal"],
+  [class*="withdraw-modal"],
+  [class*="premium-modal"],
+  [class*="renew-modal"]
+) {
+  max-width: min(760px, calc(100vw - 24px)) !important;
+  max-height: min(92vh, 820px) !important;
+  overflow-x: hidden !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+:where(
+  .payment-modal,
+  .wallet-modal,
+  .topup-modal,
+  .withdraw-modal,
+  .premium-modal,
+  .renew-modal,
+  .payment-dialog,
+  .wallet-dialog,
+  .topup-dialog,
+  .withdraw-dialog,
+  .premium-dialog,
+  .renew-dialog,
+  [class*="payment-modal"],
+  [class*="wallet-modal"],
+  [class*="topup-modal"],
+  [class*="withdraw-modal"],
+  [class*="premium-modal"],
+  [class*="renew-modal"]
+)::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+}
+
+/* Phần nội dung bên trong vẫn cuộn dọc nhưng không hiện thanh kéo */
+:where(
+  .payment-modal,
+  .wallet-modal,
+  .topup-modal,
+  .withdraw-modal,
+  .premium-modal,
+  .renew-modal,
+  .payment-dialog,
+  .wallet-dialog,
+  .topup-dialog,
+  .withdraw-dialog,
+  .premium-dialog,
+  .renew-dialog,
+  [class*="payment-modal"],
+  [class*="wallet-modal"],
+  [class*="topup-modal"],
+  [class*="withdraw-modal"],
+  [class*="premium-modal"],
+  [class*="renew-modal"]
+) :where(
+  .modal-body,
+  .modal__body,
+  .dialog-body,
+  .payment-body,
+  .wallet-body,
+  .topup-body,
+  .withdraw-body,
+  .premium-body,
+  .renew-body,
+  [class*="modal-body"],
+  [class*="dialog-body"],
+  [class*="payment-body"],
+  [class*="wallet-body"]
+) {
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+:where(
+  .payment-modal,
+  .wallet-modal,
+  .topup-modal,
+  .withdraw-modal,
+  .premium-modal,
+  .renew-modal,
+  .payment-dialog,
+  .wallet-dialog,
+  .topup-dialog,
+  .withdraw-dialog,
+  .premium-dialog,
+  .renew-dialog,
+  [class*="payment-modal"],
+  [class*="wallet-modal"],
+  [class*="topup-modal"],
+  [class*="withdraw-modal"],
+  [class*="premium-modal"],
+  [class*="renew-modal"]
+) :where(
+  .modal-body,
+  .modal__body,
+  .dialog-body,
+  .payment-body,
+  .wallet-body,
+  .topup-body,
+  .withdraw-body,
+  .premium-body,
+  .renew-body,
+  [class*="modal-body"],
+  [class*="dialog-body"],
+  [class*="payment-body"],
+  [class*="wallet-body"]
+)::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+}
+
+/* Sửa thanh ngang xuất hiện vì phần tử con rộng hơn modal */
+:where(
+  .payment-modal,
+  .wallet-modal,
+  .topup-modal,
+  .withdraw-modal,
+  .premium-modal,
+  .renew-modal,
+  [class*="payment-modal"],
+  [class*="wallet-modal"],
+  [class*="topup-modal"],
+  [class*="withdraw-modal"],
+  [class*="premium-modal"],
+  [class*="renew-modal"]
+) * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* QR và khối chuyển khoản tự co gọn trên màn hình nhỏ */
+@media (max-width: 680px) {
+  :where(
+    .payment-modal,
+    .wallet-modal,
+    .topup-modal,
+    .withdraw-modal,
+    .premium-modal,
+    .renew-modal,
+    [class*="payment-modal"],
+    [class*="wallet-modal"],
+    [class*="topup-modal"],
+    [class*="withdraw-modal"],
+    [class*="premium-modal"],
+    [class*="renew-modal"]
+  ) {
+    width: calc(100vw - 18px) !important;
+    max-height: 94vh !important;
+  }
+}
