@@ -350,7 +350,7 @@ export default function Navbar() {
                   }}
                 >
                   <ShieldCheck size={17} />
-                  Bảo mật & đổi mật khẩu
+                  Bảo mật
                 </button>
 
                 {currentUser?.role === 'admin' && (

@@ -1,0 +1,126 @@
+/*
+  DOCSHARE PRO V64
+  - Tắt hiệu ứng 7 màu quay vòng của Premium.
+  - Giữ Premium sang trọng bằng vàng tĩnh.
+  - Căn giữa modal Bảo mật khi giao diện desktop đang zoom 75%.
+  - Ẩn thanh kéo nhưng vẫn cuộn bằng chuột/touchpad.
+*/
+
+/* Premium badge: màu vàng tĩnh, không chạy 7 màu */
+.premium-badge-v63 {
+  background: linear-gradient(135deg, #f7d979, #d79a2c) !important;
+  background-size: 100% 100% !important;
+  border-color: rgba(183, 122, 22, .55) !important;
+  color: #5d3907 !important;
+  text-shadow: none !important;
+  box-shadow:
+    0 4px 12px rgba(150, 101, 24, .16),
+    inset 0 1px 0 rgba(255, 255, 255, .62) !important;
+  animation: none !important;
+  transform: none !important;
+}
+
+.premium-badge-v63__shine {
+  display: none !important;
+}
+
+.premium-badge-v63__sparkle {
+  animation: none !important;
+  opacity: .78 !important;
+  transform: none !important;
+}
+
+/* Khung avatar Premium: vàng tĩnh, không quay vòng */
+.avatar--premium-v63 {
+  box-shadow:
+    0 0 0 2px #d8a237,
+    0 0 0 5px rgba(216, 162, 55, .13),
+    0 8px 20px rgba(38, 79, 56, .15) !important;
+}
+
+.avatar--premium-v63::before {
+  background: #d8a237 !important;
+  animation: none !important;
+  transform: none !important;
+}
+
+.avatar__premium-crown-v63 {
+  background: linear-gradient(145deg, #ffe89b, #d69a2e) !important;
+}
+
+/* Tắt toàn bộ chuyển động Premium còn sót */
+.account-menu__trigger.is-premium-v63,
+.profile-hero.is-premium-v63 {
+  animation: none !important;
+}
+
+/* Modal được render ngoài #root nên không bị zoom 75% kéo lên trên */
+.modal-backdrop--portal-v64 {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 999999 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 22px !important;
+  overflow: auto !important;
+  background: rgba(13, 45, 32, .48) !important;
+  backdrop-filter: blur(5px);
+}
+
+.modal-backdrop--portal-v64 > .modal-card {
+  position: relative !important;
+  inset: auto !important;
+  margin: auto !important;
+  transform: none !important;
+  width: min(100%, 700px);
+  max-height: calc(100vh - 44px) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+/* Bảng Bảo mật gọn và luôn nằm giữa màn hình */
+.security-modal-v63 {
+  width: min(560px, calc(100vw - 30px)) !important;
+  max-height: calc(100vh - 44px) !important;
+  margin: auto !important;
+}
+
+.security-modal-v63 .modal-card__header {
+  position: sticky;
+  top: 0;
+}
+
+.security-modal-v63,
+.security-modal-v63 .modal-card__body,
+.profile-edit-modal-v63,
+.profile-edit-modal-v63 .modal-card__body {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.security-modal-v63::-webkit-scrollbar,
+.security-modal-v63 .modal-card__body::-webkit-scrollbar,
+.profile-edit-modal-v63::-webkit-scrollbar,
+.profile-edit-modal-v63 .modal-card__body::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+}
+
+@media (max-width: 620px) {
+  .modal-backdrop--portal-v64 {
+    padding: 9px !important;
+  }
+
+  .modal-backdrop--portal-v64 > .modal-card {
+    max-height: calc(100vh - 18px) !important;
+  }
+
+  .security-modal-v63 {
+    width: calc(100vw - 18px) !important;
+    max-height: calc(100vh - 18px) !important;
+  }
+}

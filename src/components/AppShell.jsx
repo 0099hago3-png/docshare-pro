@@ -10,6 +10,7 @@ import { UnreadProvider } from '../context/UnreadContext.jsx';
 import '../v61-hotfix.css';
 import '../v62-admin-notifications.css';
 import '../v63-premium-notifications.css';
+import '../v64-premium-security-modal-fix.css';
 
 export default function AppShell() {
   return (

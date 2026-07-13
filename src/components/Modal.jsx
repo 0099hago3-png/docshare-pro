@@ -1,4 +1,5 @@
 import { X } from 'lucide-react';
+import { createPortal } from 'react-dom';
 
 export default function Modal({
   open,
@@ -11,8 +12,11 @@ export default function Modal({
 }) {
   if (!open) return null;
 
-  return (
-    <div className="modal-backdrop" onMouseDown={onClose}>
+  const content = (
+    <div
+      className="modal-backdrop modal-backdrop--portal-v64"
+      onMouseDown={onClose}
+    >
       <section
         className={`modal-card botanical-card ${className}`.trim()}
         style={{ maxWidth: width }}
@@ -40,4 +44,6 @@ export default function Modal({
       </section>
     </div>
   );
+
+  return createPortal(content, document.body);
 }

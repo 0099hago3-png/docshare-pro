@@ -126,7 +126,7 @@ export default function SecurityModal({
     <Modal
       open={open}
       onClose={close}
-      title="Bảo mật tài khoản"
+      title="Bảo mật"
       width={560}
       className="security-modal-v63 modal-card--no-scrollbar"
     >
@@ -137,9 +137,9 @@ export default function SecurityModal({
           </span>
 
           <div>
-            <strong>Đổi mật khẩu an toàn</strong>
+            <strong>Bảo vệ tài khoản</strong>
             <p>
-              Nhập mật khẩu hiện tại để xác minh trước khi tạo mật khẩu mới.
+              Mật khẩu mới nên có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.
             </p>
           </div>
         </div>
@@ -171,7 +171,7 @@ export default function SecurityModal({
             ...current,
             next: !current.next,
           }))}
-          placeholder="Ít nhất 8 ký tự"
+          placeholder="Ví dụ: HocTap@2026"
         />
 
         <PasswordField
@@ -191,7 +191,7 @@ export default function SecurityModal({
 
         <div className="security-form-v63__note">
           <KeyRound size={16} />
-          Không chia sẻ mật khẩu hoặc mã đăng nhập cho người khác.
+          Gợi ý: dùng mật khẩu riêng cho DocShare, không dùng lại mật khẩu email.
         </div>
 
         <div className="form-actions form-actions--end">
@@ -215,7 +215,7 @@ export default function SecurityModal({
             }
           >
             <ShieldCheck size={16} />
-            {busy ? 'Đang đổi...' : 'Đổi mật khẩu'}
+            {busy ? 'Đang lưu...' : 'Cập nhật'}
           </button>
         </div>
       </form>
