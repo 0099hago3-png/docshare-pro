@@ -1,0 +1,234 @@
+/*
+  DOCSHARE PRO V69
+  ẢNH BÌA TỰ CĂN ĐÚNG TỶ LỆ
+  - Desktop: 16:5
+  - Tablet: 16:6
+  - Điện thoại: 16:9
+  - Ảnh ngang, dọc hay vuông đều tự cắt giữa bằng object-fit: cover.
+*/
+
+/* =========================================================
+   KHUNG ẢNH BÌA HỒ SƠ
+   ========================================================= */
+
+.profile-hero-v67 {
+  position: relative !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 300px !important;
+  aspect-ratio: 16 / 5 !important;
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) auto !important;
+  grid-template-areas: "profile-avatar profile-main profile-actions" !important;
+  align-items: end !important;
+  gap: 18px !important;
+  overflow: hidden !important;
+  padding: 22px 24px 24px !important;
+  border-radius: 18px !important;
+  isolation: isolate;
+}
+
+/* Ảnh bìa luôn phủ kín toàn bộ khung */
+.profile-hero-v67 .profile-cover-media-v67 {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important;
+  border-radius: inherit !important;
+  background:
+    radial-gradient(circle at 75% 20%, rgba(102, 170, 111, .18), transparent 36%),
+    linear-gradient(145deg, #f8f7ef, #eaf5e8) !important;
+}
+
+.profile-hero-v67 .profile-cover-media-v67 img {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: none !important;
+  height: 100% !important;
+  min-height: 100% !important;
+  display: block !important;
+  object-fit: cover !important;
+  object-position: center center !important;
+  transform: none !important;
+}
+
+/* Lớp phủ giúp chữ luôn đọc được trên mọi ảnh */
+.profile-hero-v67 .profile-cover-media-v67::after {
+  content: '' !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 1 !important;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(248, 249, 241, .12) 0%,
+      rgba(248, 249, 241, .24) 40%,
+      rgba(248, 249, 241, .88) 100%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(248, 249, 241, .82) 0%,
+      rgba(248, 249, 241, .48) 48%,
+      rgba(248, 249, 241, .62) 100%
+    ) !important;
+}
+
+/* Các phần thông tin nằm đúng hàng dưới ảnh bìa */
+.profile-hero-v67 .profile-avatar-wrap-v67 {
+  grid-area: profile-avatar !important;
+  position: relative !important;
+  z-index: 3 !important;
+  justify-self: start !important;
+  align-self: end !important;
+  margin: 0 !important;
+  transform: none !important;
+}
+
+.profile-hero-v67 .profile-hero__main {
+  grid-area: profile-main !important;
+  position: relative !important;
+  z-index: 3 !important;
+  min-width: 0 !important;
+  align-self: end !important;
+  justify-self: stretch !important;
+  text-align: left !important;
+}
+
+.profile-hero-v67 .profile-actions {
+  grid-area: profile-actions !important;
+  position: relative !important;
+  z-index: 3 !important;
+  align-self: end !important;
+  justify-self: end !important;
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+  margin: 0 !important;
+}
+
+.profile-hero-v67 .profile-meta {
+  justify-content: flex-start !important;
+  flex-wrap: wrap !important;
+}
+
+.profile-hero-v67 .profile-cover-edit-v67 {
+  top: 14px !important;
+  right: 14px !important;
+  z-index: 8 !important;
+}
+
+/* Bỏ các kích thước cũ có thể làm ảnh bìa tràn hoặc tụt xuống */
+.profile-hero-v67.has-cover-v67 {
+  height: auto !important;
+  max-height: none !important;
+}
+
+.profile-hero-v67 .profile-hero__leaf {
+  z-index: 2 !important;
+  opacity: .13 !important;
+}
+
+/* =========================================================
+   KHUNG XEM TRƯỚC KHI ĐỔI ẢNH
+   ========================================================= */
+
+.profile-image-editor__preview.is-cover {
+  width: 100% !important;
+  min-height: 0 !important;
+  aspect-ratio: 16 / 5 !important;
+  border-radius: 13px !important;
+  overflow: hidden !important;
+}
+
+.profile-image-editor__preview.is-cover img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center center !important;
+}
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media screen and (min-width: 721px) and (max-width: 1050px) {
+  .profile-hero-v67 {
+    min-height: 320px !important;
+    aspect-ratio: 16 / 6 !important;
+    grid-template-columns: auto minmax(0, 1fr) !important;
+    grid-template-areas:
+      "profile-avatar profile-main"
+      "profile-actions profile-actions" !important;
+    padding: 20px !important;
+  }
+
+  .profile-hero-v67 .profile-actions {
+    justify-self: stretch !important;
+    justify-content: flex-start !important;
+  }
+
+  .profile-image-editor__preview.is-cover {
+    aspect-ratio: 16 / 6 !important;
+  }
+}
+
+/* =========================================================
+   ĐIỆN THOẠI
+   ========================================================= */
+
+@media screen and (max-width: 720px) {
+  .profile-hero-v67 {
+    min-height: 430px !important;
+    aspect-ratio: auto !important;
+    grid-template-columns: 1fr !important;
+    grid-template-areas:
+      "profile-avatar"
+      "profile-main"
+      "profile-actions" !important;
+    align-content: end !important;
+    justify-items: center !important;
+    gap: 12px !important;
+    padding: 58px 16px 18px !important;
+    text-align: center !important;
+  }
+
+  .profile-hero-v67 .profile-avatar-wrap-v67,
+  .profile-hero-v67 .profile-hero__main,
+  .profile-hero-v67 .profile-actions {
+    justify-self: center !important;
+  }
+
+  .profile-hero-v67 .profile-hero__main {
+    text-align: center !important;
+  }
+
+  .profile-hero-v67 .profile-name-row,
+  .profile-hero-v67 .profile-meta {
+    justify-content: center !important;
+  }
+
+  .profile-hero-v67 .profile-actions {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .profile-cover-media-v67::after {
+    background:
+      linear-gradient(
+        180deg,
+        rgba(248, 249, 241, .08) 0%,
+        rgba(248, 249, 241, .46) 48%,
+        rgba(248, 249, 241, .96) 100%
+      ) !important;
+  }
+
+  .profile-image-editor__preview.is-cover {
+    aspect-ratio: 16 / 9 !important;
+  }
+}
