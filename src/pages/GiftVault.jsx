@@ -1,12 +1,15 @@
-import { Gift, Search, Send, Trophy } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { Gift, Search, Send, Sparkles, Trophy, WalletCards } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Avatar from '../components/Avatar.jsx';
 import BotanicalHero from '../components/BotanicalHero.jsx';
 import EmptyState from '../components/EmptyState.jsx';
+import GiftBurst from '../components/GiftBurst.jsx';
 import Loading from '../components/Loading.jsx';
 import { useApp } from '../context/AppContext.jsx';
+import { GIFT_TIERS, getGiftTier } from '../lib/giftTiers.js';
 import { formatDateTime, formatNumber, getProfileName, normalizeError } from '../lib/helpers.js';
 import { supabase } from '../lib/supabase.js';
+import '../comment-gift-system.css';
 
 export default function GiftVault() {
   const { currentUser, refreshProfile, toast } = useApp();
@@ -18,48 +21,340 @@ export default function GiftVault() {
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [effectGift, setEffectGift] = useState(null);
 
   const load = useCallback(async () => {
     try {
       setLoading(true);
-      const [{ data: giftRows, error }, { data: logs }] = await Promise.all([
-        supabase.from('gifts').select('*').eq('active', true).order('sort_order'),
-        supabase.from('gift_transactions').select('*,gifts(name,icon),sender:sender_id(id,full_name,username,avatar_path),receiver:receiver_id(id,full_name,username,avatar_path)').or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`).order('created_at', { ascending: false }).limit(50),
+
+      const [giftResult, transactionResult] = await Promise.all([
+        supabase
+          .from('gifts')
+          .select('*')
+          .eq('active', true)
+          .order('sort_order'),
+        supabase
+          .from('gift_transactions')
+          .select(`
+            *,
+            gifts(name,icon,credit_price),
+            sender:sender_id(id,full_name,username,avatar_path),
+            receiver:receiver_id(id,full_name,username,avatar_path)
+          `)
+          .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
+          .order('created_at', { ascending: false })
+          .limit(80),
       ]);
-      if (error) throw error;
-      setGifts(giftRows || []);
-      setSelected((current) => current || giftRows?.[0] || null);
-      setTransactions(logs || []);
+
+      if (giftResult.error) throw giftResult.error;
+      if (transactionResult.error) throw transactionResult.error;
+
+      setGifts(giftResult.data || []);
+      setSelected((current) => {
+        if (current && giftResult.data?.some((gift) => gift.id === current.id)) return current;
+        return giftResult.data?.[0] || null;
+      });
+      setTransactions(transactionResult.data || []);
     } catch (error) {
       toast(normalizeError(error), 'error');
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   }, [currentUser.id, toast]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   useEffect(() => {
-    const timer = setTimeout(async () => {
-      if (!query.trim()) return setPeople([]);
-      const { data } = await supabase.from('profiles').select('id,full_name,username,email,avatar_path').neq('id', currentUser.id).or(`full_name.ilike.%${query.trim()}%,username.ilike.%${query.trim()}%,email.ilike.%${query.trim()}%`).limit(8);
+    const timer = window.setTimeout(async () => {
+      const keyword = query.trim();
+
+      if (!keyword || receiver) {
+        setPeople([]);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id,full_name,username,email,avatar_path,premium,verified')
+        .neq('id', currentUser.id)
+        .or(`full_name.ilike.%${keyword}%,username.ilike.%${keyword}%,email.ilike.%${keyword}%`)
+        .limit(8);
+
+      if (error) {
+        toast(normalizeError(error), 'error');
+        return;
+      }
+
       setPeople(data || []);
-    }, 250);
-    return () => clearTimeout(timer);
-  }, [query, currentUser.id]);
+    }, 280);
+
+    return () => window.clearTimeout(timer);
+  }, [currentUser.id, query, receiver, toast]);
+
+  const summary = useMemo(() => {
+    return transactions.reduce((result, item) => {
+      if (item.sender_id === currentUser.id) {
+        result.sentCount += 1;
+        result.sentCredit += Number(item.cost_credit || 0);
+      }
+
+      if (item.receiver_id === currentUser.id) {
+        result.receivedCount += 1;
+        result.receivedCredit += Number(item.receiver_credit || 0);
+      }
+
+      return result;
+    }, {
+      sentCount: 0,
+      sentCredit: 0,
+      receivedCount: 0,
+      receivedCredit: 0,
+    });
+  }, [currentUser.id, transactions]);
 
   async function send() {
-    if (!receiver || !selected) return toast('Hãy chọn người nhận và món quà.', 'error');
+    if (!receiver || !selected) {
+      toast('Hãy chọn người nhận và món quà.', 'error');
+      return;
+    }
+
     try {
       setBusy(true);
-      const { data, error } = await supabase.rpc('send_gift', { p_gift_id: selected.id, p_receiver_id: receiver.id, p_target_type: 'profile', p_target_id: receiver.id });
+
+      const { data, error } = await supabase.rpc('send_gift', {
+        p_gift_id: selected.id,
+        p_receiver_id: receiver.id,
+        p_target_type: 'profile',
+        p_target_id: receiver.id,
+      });
+
       if (error) throw error;
-      if (!data?.ok) throw new Error(data?.code === 'INSUFFICIENT_CREDIT' ? 'Bạn không đủ credit để gửi quà.' : 'Không thể gửi quà.');
+
+      if (!data?.ok) {
+        if (data?.code === 'INSUFFICIENT_CREDIT') {
+          throw new Error(`Không đủ credit. Bạn cần ${formatNumber(data?.price || selected.credit_price)} credit.`);
+        }
+
+        throw new Error('Không thể gửi quà.');
+      }
+
       toast(`Đã gửi ${selected.name} tới ${getProfileName(receiver)}.`);
-      setReceiver(null); setQuery(''); setPeople([]);
-      await refreshProfile(); await load();
-    } catch (error) { toast(normalizeError(error), 'error'); } finally { setBusy(false); }
+      setEffectGift({
+        gift: selected,
+        receiverName: getProfileName(receiver),
+      });
+      setReceiver(null);
+      setQuery('');
+      setPeople([]);
+      await refreshProfile();
+      await load();
+    } catch (error) {
+      toast(normalizeError(error), 'error');
+    } finally {
+      setBusy(false);
+    }
   }
 
   if (loading) return <Loading label="Đang tải kho quà..." />;
 
-  return <div className="page"><BotanicalHero compact eyebrow="TRI ÂN CỘNG ĐỒNG" title="Kho quà DocShare" description="Chọn quà, tìm người nhận và gửi lời cảm ơn bằng credit của bạn." /><div className="gift-page-layout"><section className="gift-send-card botanical-card"><h2><Gift size={23} /> Gửi quà</h2><label>Tìm người nhận<div className="input-icon"><Search size={17} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tên, username hoặc email..." /></div></label>{people.length > 0 && <div className="people-search-results">{people.map((person) => <button key={person.id} type="button" onClick={() => { setReceiver(person); setPeople([]); setQuery(getProfileName(person)); }}><Avatar profile={person} size={34} /><span><strong>{getProfileName(person)}</strong><small>@{person.username}</small></span></button>)}</div>}{receiver && <div className="selected-person"><Avatar profile={receiver} size={42} /><div><small>Người nhận</small><strong>{getProfileName(receiver)}</strong></div></div>}<div className="gift-grid">{gifts.map((gift) => <button key={gift.id} className={selected?.id === gift.id ? 'gift-option is-active' : 'gift-option'} type="button" onClick={() => setSelected(gift)}><span>{gift.icon}</span><strong>{gift.name}</strong><small>{formatNumber(gift.credit_price)} credit</small></button>)}</div><button className="button button--wide button--large" type="button" onClick={send} disabled={busy || !selected || !receiver}><Send size={18} /> {busy ? 'Đang gửi...' : 'Gửi quà'}</button></section><section className="gift-history botanical-card"><h2><Trophy size={23} /> Lịch sử quà tặng</h2>{transactions.length ? <div className="gift-log-list">{transactions.map((item) => { const sent = item.sender_id === currentUser.id; const person = sent ? item.receiver : item.sender; return <article key={item.id}><span className="gift-log-icon">{item.gifts?.icon || '🎁'}</span><div><strong>{sent ? `Bạn đã gửi ${item.gifts?.name}` : `Bạn nhận được ${item.gifts?.name}`}</strong><p>{sent ? `Tới ${getProfileName(person)}` : `Từ ${getProfileName(person)}`}</p><small>{formatDateTime(item.created_at)}</small></div><b className={sent ? 'negative' : 'positive'}>{sent ? '-' : '+'}{formatNumber(sent ? item.cost_credit : item.receiver_credit)} credit</b></article>; })}</div> : <EmptyState title="Chưa có lịch sử quà" />}</section></div></div>;
+  return (
+    <div className="page gift-vault-page">
+      <BotanicalHero
+        compact
+        eyebrow="TRI ÂN CỘNG ĐỒNG"
+        title="Kho quà DocShare"
+        description="Mỗi cấp bậc quà có hiệu ứng riêng. Quà càng cao cấp, hiệu ứng càng nổi bật."
+      />
+
+      <div className="gift-vault-summary">
+        <article className="botanical-card">
+          <span><Gift size={18} /></span>
+          <div>
+            <small>Quà đã gửi</small>
+            <strong>{formatNumber(summary.sentCount)}</strong>
+            <p>{formatNumber(summary.sentCredit)} credit</p>
+          </div>
+        </article>
+
+        <article className="botanical-card">
+          <span><Sparkles size={18} /></span>
+          <div>
+            <small>Quà đã nhận</small>
+            <strong>{formatNumber(summary.receivedCount)}</strong>
+            <p>+{formatNumber(summary.receivedCredit)} credit</p>
+          </div>
+        </article>
+
+        <article className="botanical-card">
+          <span><WalletCards size={18} /></span>
+          <div>
+            <small>Số dư hiện tại</small>
+            <strong>{formatNumber(currentUser?.wallet?.credit_balance ?? currentUser?.credit_balance ?? 0)}</strong>
+            <p>credit</p>
+          </div>
+        </article>
+      </div>
+
+      <section className="gift-tier-guide botanical-card">
+        <div className="gift-tier-guide__heading">
+          <div>
+            <span className="gift-tier-guide__eyebrow">CẤP BẬC HIỆU ỨNG</span>
+            <h2>Quà càng quý, hiệu ứng càng nổi bật</h2>
+          </div>
+        </div>
+
+        <div className="gift-tier-guide__grid">
+          {GIFT_TIERS.map((tier) => (
+            <article key={tier.key} className={`gift-tier-guide__item gift-tier-guide__item--${tier.key}`}>
+              <span>{tier.label}</span>
+              <strong>
+                {Number.isFinite(tier.max)
+                  ? `${formatNumber(tier.min)} - ${formatNumber(tier.max)} credit`
+                  : `Từ ${formatNumber(tier.min)} credit`}
+              </strong>
+              <p>{tier.description}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <div className="gift-page-layout gift-page-layout--enhanced">
+        <section className="gift-send-card botanical-card">
+          <h2><Gift size={23} /> Chọn quà và người nhận</h2>
+
+          <label>
+            Tìm người nhận
+            <div className="input-icon">
+              <Search size={17} />
+              <input
+                value={query}
+                onChange={(event) => {
+                  setReceiver(null);
+                  setQuery(event.target.value);
+                }}
+                placeholder="Tên, username hoặc email..."
+              />
+            </div>
+          </label>
+
+          {people.length > 0 && (
+            <div className="people-search-results">
+              {people.map((person) => (
+                <button
+                  key={person.id}
+                  type="button"
+                  onClick={() => {
+                    setReceiver(person);
+                    setPeople([]);
+                    setQuery(getProfileName(person));
+                  }}
+                >
+                  <Avatar profile={person} size={34} />
+                  <span>
+                    <strong>{getProfileName(person)}</strong>
+                    <small>@{person.username}</small>
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {receiver && (
+            <div className="selected-person">
+              <Avatar profile={receiver} size={42} />
+              <div>
+                <small>Người nhận</small>
+                <strong>{getProfileName(receiver)}</strong>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setReceiver(null);
+                  setQuery('');
+                }}
+              >
+                Đổi người
+              </button>
+            </div>
+          )}
+
+          <div className="gift-grid gift-grid--vault">
+            {gifts.map((gift) => {
+              const tier = getGiftTier(gift);
+
+              return (
+                <button
+                  key={gift.id}
+                  className={selected?.id === gift.id ? `gift-option gift-option--${tier.key} is-active` : `gift-option gift-option--${tier.key}`}
+                  type="button"
+                  onClick={() => setSelected(gift)}
+                >
+                  <span className="gift-option__shine" aria-hidden="true" />
+                  <span className="gift-option__icon">{gift.icon}</span>
+                  <strong>{gift.name}</strong>
+                  <small>{formatNumber(gift.credit_price)} credit</small>
+                  <em>{tier.label}</em>
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            className={`button button--wide button--large gift-send-button gift-send-button--${getGiftTier(selected).key}`}
+            type="button"
+            onClick={send}
+            disabled={busy || !selected || !receiver}
+          >
+            <Send size={18} /> {busy ? 'Đang gửi...' : `Gửi ${selected?.name || 'quà'}`}
+          </button>
+        </section>
+
+        <section className="gift-history botanical-card">
+          <h2><Trophy size={23} /> Lịch sử quà tặng</h2>
+
+          {transactions.length ? (
+            <div className="gift-log-list">
+              {transactions.map((item) => {
+                const sent = item.sender_id === currentUser.id;
+                const person = sent ? item.receiver : item.sender;
+                const tier = getGiftTier(item.gifts || item.cost_credit);
+
+                return (
+                  <article key={item.id} className={`gift-log-item gift-log-item--${tier.key}`}>
+                    <span className="gift-log-icon">{item.gifts?.icon || '🎁'}</span>
+                    <div>
+                      <strong>
+                        {sent
+                          ? `Bạn đã gửi ${item.gifts?.name}`
+                          : `Bạn nhận được ${item.gifts?.name}`}
+                      </strong>
+                      <p>{sent ? `Tới ${getProfileName(person)}` : `Từ ${getProfileName(person)}`}</p>
+                      <small>{formatDateTime(item.created_at)}</small>
+                    </div>
+                    <b className={sent ? 'negative' : 'positive'}>
+                      {sent ? '-' : '+'}
+                      {formatNumber(sent ? item.cost_credit : item.receiver_credit)} credit
+                    </b>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <EmptyState title="Chưa có lịch sử quà" />
+          )}
+        </section>
+      </div>
+
+      {effectGift && (
+        <GiftBurst
+          gift={effectGift.gift}
+          senderName={getProfileName(currentUser)}
+          receiverName={effectGift.receiverName}
+          onDone={() => setEffectGift(null)}
+        />
+      )}
+    </div>
+  );
 }
