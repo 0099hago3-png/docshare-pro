@@ -1,346 +1,173 @@
-import { useMemo, useState } from 'react';
-import { CloudUpload } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Save, UploadCloud } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import BotanicalHero from '../components/BotanicalHero.jsx';
+import Loading from '../components/Loading.jsx';
+import UploadDropzone from '../components/UploadDropzone.jsx';
 import { useApp } from '../context/AppContext.jsx';
-import { PageHeader } from '../components/LiveUI.jsx';
-import CategoryIcon from '../components/CategoryIcon.jsx';
+import { ACADEMIC_YEARS, DOCUMENT_LANGUAGES } from '../lib/constants.js';
+import { normalizeError, safeFileName, toTags } from '../lib/helpers.js';
+import { supabase } from '../lib/supabase.js';
 
-const initialForm = {
-  title: '',
-  description: '',
-  subject: '',
-  categoryId: '',
-  schoolId: '',
-  faculty: '',
-  major: '',
-  isbn: '',
-  academicYear: '',
-  tags: '',
-  language: 'vi',
-  price: 0,
-  visibility: 'public',
+const emptyForm = {
+  title: '', description: '', categoryId: '', subject: '', schoolName: '', faculty: '', major: '', isbn: '', academicYear: new Date().getFullYear(), language: 'vi', priceCredit: 0, tags: '',
 };
 
-function UploadCloud({ selected }) {
-  return (
-    <span className={selected ? 'live-upload-cloud-v42 selected' : 'live-upload-cloud-v42'}>
-      <CloudUpload size={42} strokeWidth={1.7} />
-    </span>
-  );
-}
-
-export default function UploadPage() {
+export default function UploadPage({ mode = 'create' }) {
+  const { id } = useParams();
+  const editing = mode === 'edit' || Boolean(id);
+  const { currentUser, toast } = useApp();
   const navigate = useNavigate();
-  const { state, uploadDocument } = useApp();
-
-  const [form, setForm] = useState(initialForm);
+  const [form, setForm] = useState(emptyForm);
+  const [categories, setCategories] = useState([]);
   const [coverFile, setCoverFile] = useState(null);
   const [demoFile, setDemoFile] = useState(null);
-  const [fullFiles, setFullFiles] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [fullFile, setFullFile] = useState(null);
+  const [existingFiles, setExistingFiles] = useState([]);
+  const [loading, setLoading] = useState(editing);
+  const [busy, setBusy] = useState(false);
 
-  const coverPreview = useMemo(() => (
-    coverFile ? URL.createObjectURL(coverFile) : ''
-  ), [coverFile]);
+  const canSubmit = useMemo(() => form.title.trim() && form.description.trim() && form.categoryId && (editing || fullFile), [form, editing, fullFile]);
+  const set = (key) => (event) => setForm((value) => ({ ...value, [key]: event.target.value }));
 
-  const selectedCategory = useMemo(
-    () => state.categories.find((category) => category.id === form.categoryId) || null,
-    [form.categoryId, state.categories],
-  );
+  useEffect(() => {
+    supabase.from('categories').select('*').order('sort_order').then(({ data }) => setCategories(data || []));
+  }, []);
 
-  function updateField(key, value) {
-    setForm((previous) => ({ ...previous, [key]: value }));
+  useEffect(() => {
+    if (!editing || !id) return;
+    (async () => {
+      try {
+        const { data, error } = await supabase.from('documents').select('*,document_files(*)').eq('id', id).single();
+        if (error) throw error;
+        if (data.author_id !== currentUser.id && currentUser.role !== 'admin') throw new Error('Bạn không có quyền sửa tài liệu này.');
+        setForm({
+          title: data.title || '', description: data.description || '', categoryId: data.category_id || '', subject: data.subject || '', schoolName: data.school_name || '', faculty: data.faculty || '', major: data.major || '', isbn: data.isbn || '', academicYear: data.academic_year || new Date().getFullYear(), language: data.language || 'vi', priceCredit: data.price_credit || 0, tags: (data.tags || []).join(', '),
+        });
+        setExistingFiles(data.document_files || []);
+      } catch (error) {
+        toast(normalizeError(error), 'error');
+        navigate('/documents');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [editing, id, currentUser, navigate, toast]);
+
+  async function uploadFile(documentId, file, kind, bucket) {
+    if (!file) return null;
+    const path = `${currentUser.id}/${documentId}/${safeFileName(file.name)}`;
+    const { error: uploadError } = await supabase.storage.from(bucket).upload(path, file, { upsert: false, contentType: file.type || undefined });
+    if (uploadError) throw uploadError;
+    const { data, error } = await supabase.from('document_files').insert({ document_id: documentId, owner_id: currentUser.id, file_kind: kind, storage_bucket: bucket, storage_path: path, original_name: file.name, mime_type: file.type, size_bytes: file.size }).select().single();
+    if (error) throw error;
+    return data;
   }
 
-  async function handleSubmit(event) {
-    event.preventDefault();
-
-    if (!form.categoryId) {
-      window.alert('Bạn cần chọn một danh mục có sẵn.');
-      return;
+  async function replaceFile(documentId, file, kind, bucket) {
+    if (!file) return;
+    const oldRows = existingFiles.filter((item) => item.file_kind === kind);
+    for (const row of oldRows) {
+      await supabase.storage.from(row.storage_bucket).remove([row.storage_path]);
+      await supabase.from('document_files').delete().eq('id', row.id);
     }
+    await uploadFile(documentId, file, kind, bucket);
+  }
 
-    if (!fullFiles.length) {
-      window.alert('Bạn cần chọn ít nhất một file tài liệu đầy đủ.');
-      return;
-    }
+  async function submit(event, draft = false) {
+    event?.preventDefault();
+    if (!canSubmit && !draft) return toast('Hãy điền đủ thông tin và chọn file tài liệu đầy đủ.', 'error');
+    try {
+      setBusy(true);
+      const payload = {
+        author_id: currentUser.id,
+        category_id: form.categoryId || null,
+        title: form.title.trim(),
+        description: form.description.trim(),
+        subject: form.subject.trim() || null,
+        school_name: form.schoolName.trim() || null,
+        faculty: form.faculty.trim() || null,
+        major: form.major.trim() || null,
+        isbn: form.isbn.trim() || null,
+        academic_year: Number(form.academicYear) || null,
+        language: form.language,
+        price_credit: Math.max(0, Number(form.priceCredit) || 0),
+        tags: toTags(form.tags),
+        status: draft ? 'draft' : 'published',
+        published_at: draft ? null : new Date().toISOString(),
+      };
 
-    setLoading(true);
+      let documentId = id;
+      if (editing) {
+        const { error } = await supabase.from('documents').update(payload).eq('id', id);
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase.from('documents').insert(payload).select('id').single();
+        if (error) throw error;
+        documentId = data.id;
+      }
 
-    const documentId = await uploadDocument({
-      ...form,
-      coverFile,
-      demoFile,
-      fullFiles,
-    });
+      if (editing) {
+        await replaceFile(documentId, coverFile, 'cover', 'document-covers');
+        await replaceFile(documentId, demoFile, 'demo', 'document-demos');
+        await replaceFile(documentId, fullFile, 'full', 'documents-private');
+      } else {
+        await uploadFile(documentId, coverFile, 'cover', 'document-covers');
+        await uploadFile(documentId, demoFile, 'demo', 'document-demos');
+        await uploadFile(documentId, fullFile, 'full', 'documents-private');
+      }
 
-    setLoading(false);
-
-    if (documentId) {
+      toast(draft ? 'Đã lưu bản nháp.' : editing ? 'Đã cập nhật tài liệu.' : 'Đăng tài liệu thành công.');
       navigate(`/documents/${documentId}`);
+    } catch (error) {
+      toast(normalizeError(error), 'error');
+    } finally {
+      setBusy(false);
     }
   }
+
+  if (loading) return <Loading label="Đang tải tài liệu..." />;
 
   return (
-    <div className="live-page">
-      <PageHeader
-        eyebrow="ĐĂNG DỮ LIỆU THẬT"
-        title="Đăng tài liệu lên Supabase"
-        text="Thông tin lưu vào PostgreSQL; ảnh bìa, file demo và file đầy đủ lưu vào Supabase Storage."
-      />
+    <div className="page">
+      <BotanicalHero compact eyebrow={editing ? 'CHỈNH SỬA TÀI LIỆU' : 'LAN TỎA TRI THỨC'} title={editing ? 'Cập nhật tài liệu' : 'Đăng tải tài liệu'} description="Điền thông tin rõ ràng, chọn danh mục có sẵn và tải tệp lên bằng khu vực đám mây." />
+      <form className="upload-layout" onSubmit={submit}>
+        <section className="upload-form botanical-card">
+          <div className="form-section-title"><span>01</span><div><h2>Thông tin tài liệu</h2><p>Thông tin chính giúp người đọc tìm thấy tài liệu dễ hơn.</p></div></div>
+          <div className="form-grid">
+            <label>Tiêu đề tài liệu *<input value={form.title} onChange={set('title')} required /></label>
+            <label>Danh mục *<select value={form.categoryId} onChange={set('categoryId')} required><option value="">Chọn danh mục</option>{categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+            <label className="span-2">Mô tả tài liệu *<textarea rows="5" value={form.description} onChange={set('description')} required /></label>
+            <label>Chủ đề / môn học<input value={form.subject} onChange={set('subject')} /></label>
+            <label>Trường / đơn vị<input value={form.schoolName} onChange={set('schoolName')} /></label>
+            <label>Khoa<input value={form.faculty} onChange={set('faculty')} /></label>
+            <label>Ngành<input value={form.major} onChange={set('major')} /></label>
+            <label>ISBN<input value={form.isbn} onChange={set('isbn')} placeholder="Không bắt buộc" /></label>
+            <label>Năm học / xuất bản<select value={form.academicYear} onChange={set('academicYear')}>{ACADEMIC_YEARS.map((year) => <option key={year} value={year}>{year}</option>)}</select></label>
+            <label>Ngôn ngữ<select value={form.language} onChange={set('language')}>{DOCUMENT_LANGUAGES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
+            <label>Giá credit<input type="number" min="0" value={form.priceCredit} onChange={set('priceCredit')} /></label>
+            <label className="span-2">Tag, cách nhau bằng dấu phẩy<input value={form.tags} onChange={set('tags')} placeholder="giải tích, react, cơ sở dữ liệu" /></label>
+          </div>
 
-      {!state.categories.length && (
-        <div className="live-alert error live-category-warning">
-          Chưa có danh mục để chọn. Hãy chạy file SQL danh mục trong Supabase trước khi đăng tài liệu.
-        </div>
-      )}
+          <div className="form-section-title form-section-title--files"><span>02</span><div><h2>Tệp tài liệu</h2><p>File đầy đủ được lưu riêng tư. Người có quyền mới truy cập được.</p></div></div>
+          <div className="upload-zone-grid">
+            <UploadDropzone kind="image" label="Ảnh bìa" hint="JPG, PNG hoặc WEBP" accept="image/jpeg,image/png,image/webp" file={coverFile} onChange={setCoverFile} />
+            <UploadDropzone label="File xem trước" hint="PDF, không bắt buộc" accept="application/pdf" file={demoFile} onChange={setDemoFile} />
+            <UploadDropzone label="File tài liệu đầy đủ" hint="PDF, Word, PowerPoint, Excel hoặc ZIP" file={fullFile} onChange={setFullFile} required={!editing} />
+          </div>
+          {editing && <p className="muted">Không chọn tệp mới thì hệ thống giữ nguyên tệp hiện tại.</p>}
+          <div className="form-actions form-actions--between">
+            <button className="button button--ghost" type="button" disabled={busy} onClick={(event) => submit(event, true)}><Save size={18} /> Lưu nháp</button>
+            <button className="button button--large" type="submit" disabled={busy || !canSubmit}><UploadCloud size={19} /> {busy ? 'Đang lưu...' : editing ? 'Lưu thay đổi' : 'Đăng tài liệu'}</button>
+          </div>
+        </section>
 
-      <form className="live-upload-layout" onSubmit={handleSubmit}>
-        <div className="live-upload-main">
-          <section className="live-panel">
-            <div className="live-panel-head">
-              <span>01</span>
-              <div>
-                <h2>Thông tin tài liệu</h2>
-                <p>Điền thông tin thật, không dùng dữ liệu mẫu.</p>
-              </div>
-            </div>
-
-            <label className="live-field">
-              <span>Tên tài liệu *</span>
-              <input
-                value={form.title}
-                onChange={(event) => updateField('title', event.target.value)}
-                placeholder="Ví dụ: Giáo trình React cơ bản"
-                required
-              />
-            </label>
-
-            <label className="live-field">
-              <span>Mô tả</span>
-              <textarea
-                value={form.description}
-                onChange={(event) => updateField('description', event.target.value)}
-                placeholder="Mô tả nội dung, đối tượng phù hợp và điểm nổi bật..."
-              />
-            </label>
-
-            <div className="live-form-grid two">
-              <label className="live-field">
-                <span>Môn học</span>
-                <input
-                  value={form.subject}
-                  onChange={(event) => updateField('subject', event.target.value)}
-                  placeholder="Cơ sở dữ liệu"
-                />
-              </label>
-
-              <label className="live-field">
-                <span>Danh mục *</span>
-                <select
-                  value={form.categoryId}
-                  onChange={(event) => updateField('categoryId', event.target.value)}
-                  required
-                  disabled={!state.categories.length}
-                >
-                  <option value="">
-                    {state.categories.length
-                      ? 'Chọn danh mục có sẵn'
-                      : 'Chưa có danh mục trong Supabase'}
-                  </option>
-                  {state.categories.map((category) => (
-                    <option key={category.id} value={category.id}>{category.name}</option>
-                  ))}
-                </select>
-                <small className="live-category-note">
-                  Người dùng chỉ được chọn. Danh mục mới chỉ do Admin thêm trong SQL.
-                </small>
-              </label>
-            </div>
-
-            <div className="live-form-grid two">
-              <label className="live-field">
-                <span>Trường / đơn vị</span>
-                <select
-                  value={form.schoolId}
-                  onChange={(event) => updateField('schoolId', event.target.value)}
-                >
-                  <option value="">Không chọn</option>
-                  {state.schools.map((school) => (
-                    <option key={school.id} value={school.id}>{school.name}</option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="live-field">
-                <span>Khoa</span>
-                <input
-                  value={form.faculty}
-                  onChange={(event) => updateField('faculty', event.target.value)}
-                  placeholder="Công nghệ thông tin"
-                />
-              </label>
-            </div>
-
-            <div className="live-form-grid two">
-              <label className="live-field">
-                <span>Ngành</span>
-                <input
-                  value={form.major}
-                  onChange={(event) => updateField('major', event.target.value)}
-                  placeholder="Lập trình ứng dụng"
-                />
-              </label>
-
-              <label className="live-field">
-                <span>ISBN</span>
-                <input
-                  value={form.isbn}
-                  onChange={(event) => updateField('isbn', event.target.value)}
-                  placeholder="Không bắt buộc"
-                />
-              </label>
-            </div>
-
-            <div className="live-form-grid three">
-              <label className="live-field">
-                <span>Năm học thuật</span>
-                <input
-                  type="number"
-                  value={form.academicYear}
-                  onChange={(event) => updateField('academicYear', event.target.value)}
-                  placeholder="2026"
-                  min="1900"
-                  max="2100"
-                />
-              </label>
-
-              <label className="live-field">
-                <span>Ngôn ngữ</span>
-                <select
-                  value={form.language}
-                  onChange={(event) => updateField('language', event.target.value)}
-                >
-                  <option value="vi">Tiếng Việt</option>
-                  <option value="en">English</option>
-                </select>
-              </label>
-
-              <label className="live-field">
-                <span>Giá credit</span>
-                <input
-                  type="number"
-                  min="0"
-                  value={form.price}
-                  onChange={(event) => updateField('price', event.target.value)}
-                />
-              </label>
-            </div>
-
-            <label className="live-field">
-              <span>Tag, cách nhau bằng dấu phẩy</span>
-              <input
-                value={form.tags}
-                onChange={(event) => updateField('tags', event.target.value)}
-                placeholder="react, vite, javascript"
-              />
-            </label>
-          </section>
-
-          <section className="live-panel">
-            <div className="live-panel-head">
-              <span>02</span>
-              <div>
-                <h2>Tệp tài liệu</h2>
-                <p>Bấm vào từng vùng có biểu tượng đám mây để chọn file.</p>
-              </div>
-            </div>
-
-            <div className="live-file-grid live-file-grid-v42">
-              <label className="live-file-box live-file-box-v42">
-                <UploadCloud selected={Boolean(coverFile)} />
-                <b>Ảnh bìa</b>
-                <small>JPG, PNG hoặc WEBP</small>
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  onChange={(event) => setCoverFile(event.target.files?.[0] || null)}
-                />
-                <span className="live-file-name">
-                  {coverFile?.name || 'Bấm để tải ảnh bìa lên'}
-                </span>
-              </label>
-
-              <label className="live-file-box live-file-box-v42">
-                <UploadCloud selected={Boolean(demoFile)} />
-                <b>File xem trước</b>
-                <small>PDF, không bắt buộc</small>
-                <input
-                  type="file"
-                  accept="application/pdf"
-                  onChange={(event) => setDemoFile(event.target.files?.[0] || null)}
-                />
-                <span className="live-file-name">
-                  {demoFile?.name || 'Bấm để tải file xem trước lên'}
-                </span>
-              </label>
-
-              <label className="live-file-box live-file-box-v42 full">
-                <UploadCloud selected={fullFiles.length > 0} />
-                <b>File tài liệu đầy đủ *</b>
-                <small>PDF, Word, PowerPoint, Excel hoặc ZIP</small>
-                <input
-                  type="file"
-                  multiple
-                  onChange={(event) => setFullFiles(Array.from(event.target.files || []))}
-                />
-                <span className="live-file-name">
-                  {fullFiles.length
-                    ? `${fullFiles.length} file đã chọn`
-                    : 'Bấm để tải file tài liệu đầy đủ lên'}
-                </span>
-              </label>
-            </div>
-          </section>
-        </div>
-
-        <aside className="live-upload-side">
-          <section className="live-panel sticky">
-            <h2>Bản xem trước</h2>
-
-            <div className="live-upload-preview-cover">
-              {coverPreview ? (
-                <img src={coverPreview} alt="Ảnh bìa xem trước" />
-              ) : (
-                <span>📘</span>
-              )}
-            </div>
-
-            <h3>{form.title || 'Tên tài liệu sẽ hiện ở đây'}</h3>
-            <p>{form.description || 'Mô tả ngắn sẽ hiện ở đây.'}</p>
-            <div className="live-selected-category live-selected-category-v42">
-              <span className="live-selected-category-icon-v42">
-                <CategoryIcon category={selectedCategory} size={22} />
-              </span>
-              <span>Danh mục</span>
-              <b>{selectedCategory?.name || 'Chưa chọn'}</b>
-            </div>
-
-            <ul className="live-check-list">
-              <li className={form.title ? 'done' : ''}>Thông tin tài liệu</li>
-              <li className={fullFiles.length ? 'done' : ''}>File đầy đủ</li>
-              <li className={coverFile ? 'done' : ''}>Ảnh bìa</li>
-              <li className={demoFile ? 'done' : ''}>File demo</li>
-            </ul>
-
-            <button className="live-primary-button live-upload-submit-button" type="submit" disabled={loading || !state.categories.length}>
-              {loading ? 'Đang tải lên Supabase...' : 'Đăng tài liệu'}
-            </button>
-
-            <p className="live-note">
-              Không có dữ liệu giả. Tài liệu chỉ xuất hiện sau khi tải lên thành công.
-            </p>
-          </section>
+        <aside className="upload-preview botanical-card">
+          <h3>Xem trước bài đăng</h3>
+          <div className="upload-preview__cover">{coverFile ? <img src={URL.createObjectURL(coverFile)} alt="Xem trước" /> : <img src="/assets/default-cover.svg" alt="Bìa mặc định" />}</div>
+          <h4>{form.title || 'Tiêu đề tài liệu'}</h4>
+          <p>{form.description || 'Mô tả tài liệu sẽ xuất hiện tại đây.'}</p>
+          <ul><li>Thông tin tài liệu</li><li>{editing || fullFile ? 'Đã có file đầy đủ' : 'Chưa có file đầy đủ'}</li><li>{coverFile ? 'Đã chọn ảnh bìa' : 'Ảnh bìa không bắt buộc'}</li><li>{demoFile ? 'Đã chọn file demo' : 'File demo không bắt buộc'}</li></ul>
         </aside>
       </form>
     </div>

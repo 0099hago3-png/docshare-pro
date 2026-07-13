@@ -1,76 +1,32 @@
+import { Award, Crown, Medal, Trophy } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import Avatar from '../components/Avatar.jsx';
+import BotanicalHero from '../components/BotanicalHero.jsx';
+import EmptyState from '../components/EmptyState.jsx';
+import Loading from '../components/Loading.jsx';
 import { useApp } from '../context/AppContext.jsx';
-import {
-  EmptyState,
-  PageHeader,
-  formatNumber,
-} from '../components/LiveUI.jsx';
+import { getProfileName, normalizeError } from '../lib/helpers.js';
+import { supabase } from '../lib/supabase.js';
 
 export default function Leaderboard() {
-  const { state, getUser } = useApp();
+  const { toast } = useApp();
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const rankedDocuments = [...state.documents]
-    .filter((document) => document.status === 'published')
-    .sort((first, second) => (
-      second.likes * 3 + second.views + second.rating * 10
-    ) - (
-      first.likes * 3 + first.views + first.rating * 10
-    ));
+  useEffect(() => {
+    (async () => {
+      try {
+        const [{ data: profiles, error }, { data: docs }, { data: gifts }] = await Promise.all([
+          supabase.from('profiles').select('id,full_name,username,avatar_path,premium,level,school_name').eq('status', 'active'),
+          supabase.from('documents').select('author_id').eq('status', 'published'),
+          supabase.from('gift_transactions').select('receiver_id,receiver_credit'),
+        ]);
+        if (error) throw error;
+        setItems((profiles || []).map((profile) => ({ ...profile, document_count: (docs || []).filter((item) => item.author_id === profile.id).length, gift_credit: (gifts || []).filter((item) => item.receiver_id === profile.id).reduce((sum, item) => sum + Number(item.receiver_credit || 0), 0) })).sort((a, b) => (b.document_count * 100 + b.gift_credit) - (a.document_count * 100 + a.gift_credit)).slice(0, 20));
+      } catch (error) { toast(normalizeError(error), 'error'); } finally { setLoading(false); }
+    })();
+  }, [toast]);
 
-  return (
-    <div className="live-page">
-      <PageHeader
-        eyebrow="XẾP HẠNG TÀI LIỆU"
-        title="Tài liệu được quan tâm nhất"
-        text="Xếp hạng từ trên xuống dưới bằng lượt xem, tim và đánh giá thật."
-      />
-
-      {rankedDocuments.length ? (
-        <div className="live-ranking-list">
-          {rankedDocuments.map((document, index) => {
-            const author = getUser(document.authorId);
-
-            return (
-              <Link
-                className="live-ranking-row"
-                key={document.id}
-                to={`/documents/${document.id}`}
-              >
-                <strong className={`live-rank-number rank-${index + 1}`}>
-                  {index + 1}
-                </strong>
-
-                <div className="live-ranking-cover">
-                  {document.coverPreview ? (
-                    <img src={document.coverPreview} alt={document.title} />
-                  ) : (
-                    <span>📘</span>
-                  )}
-                </div>
-
-                <div className="live-ranking-main">
-                  <h3>{document.title}</h3>
-                  <p>{author.name} · {document.subject || 'Tài liệu học tập'}</p>
-                </div>
-
-                <div className="live-ranking-stats">
-                  <span>👁 {formatNumber(document.views)}</span>
-                  <span>♥ {formatNumber(document.likes)}</span>
-                  <span>★ {Number(document.rating || 0).toFixed(1)}</span>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      ) : (
-        <EmptyState
-          icon="🏆"
-          title="Chưa có bảng xếp hạng"
-          text="Khi có tài liệu và hoạt động thật, thứ hạng sẽ tự xuất hiện."
-          actionTo="/upload"
-          actionLabel="Đăng tài liệu đầu tiên"
-        />
-      )}
-    </div>
-  );
+  return <div className="page"><BotanicalHero compact eyebrow="VINH DANH CỘNG ĐỒNG" title="Bảng xếp hạng" description="Ghi nhận những thành viên tích cực chia sẻ tài liệu và đóng góp cho cộng đồng." />{loading ? <Loading /> : items.length ? <div className="leaderboard-layout"><section className="leaderboard-podium">{items.slice(0, 3).map((item, index) => <Link key={item.id} className={`podium-card podium-card--${index + 1} botanical-card`} to={`/profile/${item.id}`}><span className="podium-rank">{index === 0 ? <Crown /> : index === 1 ? <Medal /> : <Award />}</span><Avatar profile={item} size={82} /><strong>{getProfileName(item)}</strong><small>{item.school_name || 'DocShare Pro'}</small><b>{item.document_count} tài liệu · {item.gift_credit} credit tri ân</b></Link>)}</section><section className="ranking-list botanical-card">{items.slice(3).map((item, index) => <Link key={item.id} to={`/profile/${item.id}`}><span>{index + 4}</span><Avatar profile={item} size={42} /><div><strong>{getProfileName(item)}</strong><small>{item.document_count} tài liệu · Lv.{item.level || 1}</small></div><Trophy size={18} /></Link>)}</section></div> : <EmptyState title="Chưa có dữ liệu xếp hạng" />}</div>;
 }

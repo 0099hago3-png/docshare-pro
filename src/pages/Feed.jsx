@@ -1,256 +1,78 @@
-import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { PenLine, Send } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import Avatar from '../components/Avatar.jsx';
+import BotanicalHero from '../components/BotanicalHero.jsx';
+import DonateModal from '../components/DonateModal.jsx';
+import EmptyState from '../components/EmptyState.jsx';
+import Loading from '../components/Loading.jsx';
+import PostCard from '../components/PostCard.jsx';
 import { useApp } from '../context/AppContext.jsx';
-import {
-  EmptyState,
-  PageHeader,
-  UserAvatar,
-  formatNumber,
-} from '../components/LiveUI.jsx';
-
-function PostCard({ post }) {
-  const {
-    state,
-    currentUser,
-    getUser,
-    toggleLikePost,
-    toggleSavePost,
-    addComment,
-    replyComment,
-  } = useApp();
-
-  const [commentText, setCommentText] = useState('');
-  const [replyText, setReplyText] = useState({});
-
-  const author = getUser(post.authorId);
-  const document = state.documents.find((item) => item.id === post.documentId);
-  const liked = state.likes.posts.includes(post.id);
-  const saved = state.savedPosts.includes(post.id);
-
-  return (
-    <article className="live-post-card">
-      <header className="live-post-head">
-        <Link to={`/users/${author.id}`}>
-          <UserAvatar user={author} size="lg" />
-        </Link>
-
-        <div className="live-post-author">
-          <div>
-            <Link to={`/users/${author.id}`}><b>{author.name}</b></Link>
-            {author.verified && <span className="live-verified">✓</span>}
-            {author.premium && <span className="live-premium">Premium</span>}
-          </div>
-          <small>@{author.username || author.id.slice(0, 8)} · {post.createdAt}</small>
-        </div>
-
-        <button
-          className={saved ? 'live-icon-button active' : 'live-icon-button'}
-          type="button"
-          onClick={() => toggleSavePost(post.id)}
-          title={saved ? 'Bỏ lưu' : 'Lưu bài viết'}
-        >
-          🔖
-        </button>
-      </header>
-
-      {post.title && <h2>{post.title}</h2>}
-      <p className="live-post-copy">{post.content}</p>
-
-      {document && (
-        <Link className="live-shared-document" to={`/documents/${document.id}`}>
-          <div>
-            {document.coverPreview ? (
-              <img src={document.coverPreview} alt={document.title} />
-            ) : (
-              <span>📘</span>
-            )}
-          </div>
-          <span>
-            <b>{document.title}</b>
-            <small>{document.subject || 'Tài liệu học tập'}</small>
-          </span>
-          <em>→</em>
-        </Link>
-      )}
-
-      <div className="live-post-actions">
-        <button
-          type="button"
-          className={liked ? 'active' : ''}
-          onClick={() => toggleLikePost(post.id)}
-        >
-          ♥ {formatNumber(post.likes)}
-        </button>
-        <span>💬 {post.comments.length}</span>
-      </div>
-
-      <section className="live-post-comments">
-        {post.comments.map((comment) => {
-          const user = getUser(comment.userId);
-
-          return (
-            <article className="live-feed-comment" key={comment.id}>
-              <UserAvatar user={user} size="sm" />
-              <div>
-                <b>{user.name}</b>
-                <p>{comment.text}</p>
-
-                {(comment.replies || []).map((reply) => {
-                  const replyUser = getUser(reply.userId);
-                  return (
-                    <div className="live-feed-reply" key={reply.id}>
-                      <b>{replyUser.name}</b>
-                      <span>{reply.text}</span>
-                    </div>
-                  );
-                })}
-
-                <div className="live-inline-reply">
-                  <input
-                    value={replyText[comment.id] || ''}
-                    onChange={(event) => setReplyText((previous) => ({
-                      ...previous,
-                      [comment.id]: event.target.value,
-                    }))}
-                    placeholder="Trả lời bình luận..."
-                  />
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      const value = (replyText[comment.id] || '').trim();
-                      if (!value) return;
-                      const ok = await replyComment(post.id, comment.id, value);
-                      if (ok) setReplyText((previous) => ({ ...previous, [comment.id]: '' }));
-                    }}
-                  >
-                    Gửi
-                  </button>
-                </div>
-              </div>
-            </article>
-          );
-        })}
-
-        <div className="live-comment-compose">
-          <UserAvatar user={currentUser} size="sm" />
-          <input
-            value={commentText}
-            onChange={(event) => setCommentText(event.target.value)}
-            placeholder="Viết bình luận thật..."
-          />
-          <button
-            type="button"
-            onClick={async () => {
-              const value = commentText.trim();
-              if (!value) return;
-              const ok = await addComment(post.id, value);
-              if (ok) setCommentText('');
-            }}
-          >
-            Gửi
-          </button>
-        </div>
-      </section>
-    </article>
-  );
-}
+import { normalizeError } from '../lib/helpers.js';
+import { supabase } from '../lib/supabase.js';
 
 export default function Feed() {
-  const { state, currentUser, addPost } = useApp();
-
+  const { currentUser, toast } = useApp();
+  const [posts, setPosts] = useState([]);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [filter, setFilter] = useState('all');
-  const [posting, setPosting] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [giftPost, setGiftPost] = useState(null);
 
-  const posts = useMemo(() => {
-    if (filter === 'following') {
-      return state.posts.filter((post) => state.follows.includes(post.authorId));
+  const load = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.from('posts').select('*,profiles:author_id(id,full_name,username,email,avatar_path,premium),post_comments(id,content,user_id,created_at,profiles:user_id(id,full_name,username,avatar_path)),post_likes(user_id)').eq('status', 'visible').order('created_at', { ascending: false });
+      if (error) throw error;
+      setPosts((data || []).map((post) => ({
+        ...post,
+        comments: post.post_comments || [],
+        like_count: post.post_likes?.length || 0,
+        comment_count: post.post_comments?.length || 0,
+        liked_by_me: post.post_likes?.some((item) => item.user_id === currentUser.id),
+      })));
+    } catch (error) {
+      toast(normalizeError(error), 'error');
+    } finally {
+      setLoading(false);
     }
+  }, [currentUser.id, toast]);
 
-    if (filter === 'saved') {
-      return state.posts.filter((post) => state.savedPosts.includes(post.id));
-    }
+  useEffect(() => { load(); }, [load]);
 
-    return state.posts;
-  }, [filter, state.follows, state.posts, state.savedPosts]);
-
-  async function submitPost(event) {
+  async function createPost(event) {
     event.preventDefault();
-    if (!content.trim()) return;
-
-    setPosting(true);
-    const ok = await addPost(content, null, title);
-    setPosting(false);
-
-    if (ok) {
+    if (!content.trim()) return toast('Hãy nhập nội dung bài viết.', 'error');
+    try {
+      setBusy(true);
+      const { error } = await supabase.from('posts').insert({ author_id: currentUser.id, title: title.trim() || null, content: content.trim(), visibility: 'public', status: 'visible' });
+      if (error) throw error;
       setTitle('');
       setContent('');
+      toast('Đăng bài thành công.');
+      await load();
+    } catch (error) {
+      toast(normalizeError(error), 'error');
+    } finally {
+      setBusy(false);
     }
   }
 
   return (
-    <div className="live-page live-feed-page">
-      <PageHeader
-        eyebrow="CỘNG ĐỒNG HỌC THUẬT"
-        title="Bảng tin dữ liệu thật"
-        text="Bài viết, tim và bình luận được lưu trực tiếp vào Supabase."
-      />
-
-      <div className="live-feed-layout">
-        <aside className="live-feed-side">
-          <button className={filter === 'all' ? 'active' : ''} onClick={() => setFilter('all')}>🏠 Tất cả bài viết</button>
-          <button className={filter === 'following' ? 'active' : ''} onClick={() => setFilter('following')}>👥 Đang theo dõi</button>
-          <button className={filter === 'saved' ? 'active' : ''} onClick={() => setFilter('saved')}>🔖 Bài đã lưu</button>
-        </aside>
-
-        <main className="live-feed-main">
-          <form className="live-composer" onSubmit={submitPost}>
-            <UserAvatar user={currentUser} size="lg" />
-            <div>
-              <input
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                placeholder="Tiêu đề bài viết"
-              />
-              <textarea
-                value={content}
-                onChange={(event) => setContent(event.target.value)}
-                placeholder="Chia sẻ câu hỏi, kiến thức hoặc kinh nghiệm học tập..."
-                required
-              />
-              <div className="live-composer-footer live-composer-footer-v42">
-                <button className="live-primary-button" type="submit" disabled={posting}>
-                  {posting ? 'Đang đăng...' : 'Đăng bài'}
-                </button>
-              </div>
-            </div>
+    <div className="page feed-page">
+      <BotanicalHero compact eyebrow="CỘNG ĐỒNG HỌC THUẬT" title="Bảng tin tri thức" description="Chia sẻ kiến thức, kinh nghiệm học tập và câu chuyện truyền cảm hứng mỗi ngày." />
+      <div className="feed-layout">
+        <aside className="feed-tabs botanical-card"><button className="is-active" type="button">Tất cả bài viết</button><button type="button">Đang theo dõi</button><button type="button">Bài đã lưu</button></aside>
+        <section className="feed-main">
+          <form className="post-composer botanical-card" onSubmit={createPost}>
+            <Avatar profile={currentUser} size={48} />
+            <div className="post-composer__fields"><input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Tiêu đề bài viết (không bắt buộc)" /><textarea rows="4" value={content} onChange={(event) => setContent(event.target.value)} placeholder="Bạn đang nghĩ gì? Chia sẻ kiến thức hoặc kinh nghiệm hữu ích với mọi người..." maxLength={2000} /><div><span>{content.length}/2000</span><button className="button" type="submit" disabled={busy}><PenLine size={17} /> {busy ? 'Đang đăng...' : 'Đăng bài'}</button></div></div>
           </form>
-
-          {posts.length ? (
-            posts.map((post) => <PostCard key={post.id} post={post} />)
-          ) : (
-            <EmptyState
-              icon="📝"
-              title="Chưa có bài viết"
-              text="Bảng tin bắt đầu từ số 0. Hãy đăng bài viết đầu tiên."
-            />
-          )}
-        </main>
-
-        <aside className="live-feed-right">
-          <section className="live-panel">
-            <h3>Thông báo</h3>
-            {state.notifications.slice(0, 6).map((notice) => (
-              <Link key={notice.id} to={notice.to || '/'}>
-                <b>{notice.title}</b>
-                <span>{notice.text}</span>
-              </Link>
-            ))}
-            {!state.notifications.length && <p>Chưa có thông báo.</p>}
-          </section>
-        </aside>
+          {loading ? <Loading /> : posts.length ? <div className="feed-list">{posts.map((post) => <PostCard key={post.id} post={post} onChanged={load} onGift={setGiftPost} />)}</div> : <EmptyState title="Chưa có bài viết" description="Hãy chia sẻ bài viết đầu tiên với cộng đồng." />}
+        </section>
+        <aside className="feed-aside botanical-card"><h3>Gợi ý viết bài</h3><p>Chia sẻ mẹo học tập, kiến thức chuyên ngành hoặc trải nghiệm sử dụng tài liệu.</p><ul><li>Viết tiêu đề ngắn gọn</li><li>Nội dung rõ ràng, tôn trọng cộng đồng</li><li>Không đăng thông tin cá nhân nhạy cảm</li></ul><button className="button button--wide" type="button" onClick={() => document.querySelector('.post-composer textarea')?.focus()}><Send size={17} /> Viết bài ngay</button></aside>
       </div>
+      <DonateModal open={Boolean(giftPost)} onClose={() => setGiftPost(null)} receiver={giftPost?.profiles} targetType="post" targetId={giftPost?.id} />
     </div>
   );
 }

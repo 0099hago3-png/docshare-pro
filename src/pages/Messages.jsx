@@ -1,295 +1,80 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { MessageCircle, Search, Send, UserRound } from 'lucide-react';
+import { Search, Send, UserRound } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Avatar from '../components/Avatar.jsx';
+import BotanicalHero from '../components/BotanicalHero.jsx';
+import EmptyState from '../components/EmptyState.jsx';
+import Loading from '../components/Loading.jsx';
 import { useApp } from '../context/AppContext.jsx';
-import {
-  EmptyState,
-  PageHeader,
-  UserAvatar,
-} from '../components/LiveUI.jsx';
-
-function displayName(user) {
-  return user?.name
-    || user?.fullName
-    || user?.username
-    || user?.email
-    || 'Người dùng DocShare';
-}
-
-function normalize(value) {
-  return String(value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase();
-}
+import { formatDateTime, getProfileName, normalizeError } from '../lib/helpers.js';
+import { supabase } from '../lib/supabase.js';
 
 export default function Messages() {
-  const {
-    state,
-    currentUser,
-    getUser,
-    createMailboxThread,
-    sendMailboxMessage,
-    markMailboxThreadRead,
-  } = useApp();
+  const { currentUser, toast } = useApp();
+  const [people, setPeople] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [query, setQuery] = useState('');
+  const [value, setValue] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const endRef = useRef(null);
 
-  const [selectedId, setSelectedId] = useState('');
-  const [pendingUserId, setPendingUserId] = useState('');
-  const [search, setSearch] = useState('');
-  const [message, setMessage] = useState('');
-  const [sending, setSending] = useState(false);
-  const scrollRef = useRef(null);
+  const loadPeople = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.from('profiles').select('id,full_name,username,email,avatar_path,school_name,faculty,major').neq('id', currentUser.id).order('full_name').limit(100);
+      if (error) throw error;
+      setPeople(data || []);
+    } catch (error) {
+      toast(normalizeError(error), 'error');
+    } finally { setLoading(false); }
+  }, [currentUser.id, toast]);
 
-  const visibleUsers = useMemo(() => {
-    const keyword = normalize(search.trim());
+  const loadMessages = useCallback(async (personId) => {
+    if (!personId) return setMessages([]);
+    const { data, error } = await supabase.from('direct_messages').select('*').or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${personId}),and(sender_id.eq.${personId},receiver_id.eq.${currentUser.id})`).order('created_at', { ascending: true });
+    if (error) return toast(normalizeError(error), 'error');
+    setMessages(data || []);
+    setTimeout(() => endRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+  }, [currentUser.id, toast]);
 
-    return state.users
-      .filter((user) => user.id !== currentUser?.id)
-      .filter((user) => {
-        if (!keyword) return false;
-        return normalize([
-          displayName(user),
-          user.username,
-          user.email,
-          user.school,
-          user.faculty,
-          user.major,
-        ].filter(Boolean).join(' ')).includes(keyword);
-      })
-      .slice(0, 12);
-  }, [currentUser?.id, search, state.users]);
-
-  const selected = useMemo(() => (
-    state.mailboxThreads.find((item) => item.id === selectedId) || null
-  ), [selectedId, state.mailboxThreads]);
-
-  const selectedOtherUser = useMemo(() => {
-    if (!selected) return null;
-    const otherId = selected.participants.find((id) => id !== currentUser?.id);
-    return getUser(otherId);
-  }, [currentUser?.id, getUser, selected]);
-
-  const pendingUser = useMemo(
-    () => state.users.find((user) => user.id === pendingUserId) || null,
-    [pendingUserId, state.users],
-  );
-
-  const activeUser = pendingUser || selectedOtherUser;
-
+  useEffect(() => { loadPeople(); }, [loadPeople]);
+  useEffect(() => { if (selected) loadMessages(selected.id); }, [selected, loadMessages]);
   useEffect(() => {
-    if (!selectedId && !pendingUserId && state.mailboxThreads.length) {
-      const first = state.mailboxThreads[0];
-      setSelectedId(first.id);
-      markMailboxThreadRead(first.id);
-    }
-  }, [markMailboxThreadRead, pendingUserId, selectedId, state.mailboxThreads]);
+    if (!selected) return undefined;
+    const channel = supabase.channel(`dm-${currentUser.id}-${selected.id}`).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'direct_messages' }, (payload) => {
+      const item = payload.new;
+      const belongs = (item.sender_id === currentUser.id && item.receiver_id === selected.id) || (item.sender_id === selected.id && item.receiver_id === currentUser.id);
+      if (belongs) setMessages((items) => [...items, item]);
+    }).subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [currentUser.id, selected]);
 
-  useEffect(() => {
-    window.setTimeout(() => {
-      scrollRef.current?.scrollTo({
-        top: scrollRef.current.scrollHeight,
-        behavior: 'smooth',
-      });
-    }, 30);
-  }, [selected?.messages?.length, selectedId]);
+  const filtered = useMemo(() => {
+    const text = query.trim().toLowerCase();
+    if (!text) return people;
+    return people.filter((person) => [person.full_name, person.username, person.email, person.school_name, person.faculty, person.major].some((value) => value?.toLowerCase().includes(text)));
+  }, [people, query]);
 
-  function openThread(thread) {
-    setPendingUserId('');
-    setSelectedId(thread.id);
-    setSearch('');
-    markMailboxThreadRead(thread.id);
-  }
-
-  function openUser(user) {
-    const existing = state.mailboxThreads.find((thread) => (
-      thread.participants.includes(currentUser?.id)
-      && thread.participants.includes(user.id)
-    ));
-
-    setSearch('');
-
-    if (existing) {
-      openThread(existing);
-      return;
-    }
-
-    setSelectedId('');
-    setPendingUserId(user.id);
-    setMessage('');
-  }
-
-  async function submitMessage(event) {
+  async function send(event) {
     event.preventDefault();
-    const value = message.trim();
-    if (!value || !activeUser || sending) return;
-
-    setSending(true);
-
-    let ok = false;
-
-    if (selected) {
-      ok = await sendMailboxMessage(selected.id, value);
-    } else if (pendingUser) {
-      const newThreadId = await createMailboxThread(
-        pendingUser.id,
-        `Trò chuyện với ${displayName(pendingUser)}`,
-        value,
-        'user',
-      );
-
-      if (newThreadId) {
-        setPendingUserId('');
-        setSelectedId(newThreadId);
-        ok = true;
-      }
-    }
-
-    setSending(false);
-
-    if (ok) {
-      setMessage('');
-    }
+    if (!selected || !value.trim()) return;
+    try {
+      setBusy(true);
+      const { error } = await supabase.from('direct_messages').insert({ sender_id: currentUser.id, receiver_id: selected.id, content: value.trim() });
+      if (error) throw error;
+      setValue('');
+      await loadMessages(selected.id);
+    } catch (error) { toast(normalizeError(error), 'error'); } finally { setBusy(false); }
   }
+
+  if (loading) return <Loading label="Đang tải danh sách người dùng..." />;
 
   return (
-    <div className="live-page live-messages-page-v42">
-      <PageHeader
-        eyebrow="TIN NHẮN SUPABASE"
-        title="Tin nhắn"
-        text="Tìm người dùng, mở cuộc trò chuyện và nhắn trực tiếp như ứng dụng Zalo."
-      />
-
-      <div className="zalo-message-layout-v42">
-        <aside className="zalo-message-sidebar-v42">
-          <div className="zalo-message-sidebar-head-v42">
-            <h2>Tin nhắn</h2>
-            <span>{state.mailboxThreads.length} cuộc trò chuyện</span>
-          </div>
-
-          <label className="zalo-user-search-v42">
-            <Search size={18} />
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Tìm tên, email hoặc ngành học..."
-            />
-          </label>
-
-          {search.trim() && (
-            <section className="zalo-search-results-v42">
-              <div className="zalo-section-label-v42">Kết quả tìm người</div>
-
-              {visibleUsers.map((user) => (
-                <button type="button" key={user.id} onClick={() => openUser(user)}>
-                  <UserAvatar user={user} size="sm" />
-                  <span>
-                    <b>{displayName(user)}</b>
-                    <small>{user.email || `@${user.username || user.id.slice(0, 8)}`}</small>
-                  </span>
-                  <MessageCircle size={17} />
-                </button>
-              ))}
-
-              {!visibleUsers.length && (
-                <p>Không tìm thấy người dùng phù hợp.</p>
-              )}
-            </section>
-          )}
-
-          <div className="zalo-section-label-v42">Cuộc trò chuyện gần đây</div>
-
-          <div className="zalo-thread-list-v42">
-            {state.mailboxThreads.map((thread) => {
-              const otherId = thread.participants.find((id) => id !== currentUser?.id);
-              const otherUser = getUser(otherId);
-              const lastMessage = thread.messages[thread.messages.length - 1];
-              const unread = (thread.unreadBy || []).includes(currentUser?.id);
-
-              return (
-                <button
-                  className={selectedId === thread.id ? 'active' : ''}
-                  key={thread.id}
-                  type="button"
-                  onClick={() => openThread(thread)}
-                >
-                  <UserAvatar user={otherUser} size="sm" />
-                  <span>
-                    <strong>{displayName(otherUser)}</strong>
-                    <small>{lastMessage?.text || 'Chưa có tin nhắn'}</small>
-                  </span>
-                  <em>
-                    {unread && <i />}
-                    {thread.updatedAt}
-                  </em>
-                </button>
-              );
-            })}
-
-            {!state.mailboxThreads.length && !search.trim() && (
-              <div className="zalo-no-thread-v42">
-                <UserRound size={28} />
-                <b>Chưa có cuộc trò chuyện</b>
-                <p>Dùng ô tìm kiếm phía trên để tìm người và bắt đầu nhắn tin.</p>
-              </div>
-            )}
-          </div>
-        </aside>
-
-        <main className="zalo-conversation-v42">
-          {activeUser ? (
-            <>
-              <header className="zalo-conversation-head-v42">
-                <UserAvatar user={activeUser} size="sm" />
-                <div>
-                  <h2>{displayName(activeUser)}</h2>
-                  <small>{activeUser.email || `@${activeUser.username || activeUser.id.slice(0, 8)}`}</small>
-                </div>
-                <span><i /> Đang hoạt động</span>
-              </header>
-
-              <div className="zalo-message-scroll-v42" ref={scrollRef}>
-                {selected?.messages?.length ? selected.messages.map((item) => {
-                  const sender = getUser(item.senderId);
-                  const mine = item.senderId === currentUser?.id;
-
-                  return (
-                    <div className={mine ? 'zalo-message-row-v42 mine' : 'zalo-message-row-v42'} key={item.id}>
-                      {!mine && <UserAvatar user={sender} size="xs" />}
-                      <div className="zalo-message-bubble-v42">
-                        {!mine && <b>{displayName(sender)}</b>}
-                        <p>{item.text}</p>
-                        <small>{item.time}</small>
-                      </div>
-                    </div>
-                  );
-                }) : (
-                  <div className="zalo-start-chat-v42">
-                    <MessageCircle size={36} />
-                    <h3>Bắt đầu trò chuyện với {displayName(activeUser)}</h3>
-                    <p>Nhập tin nhắn ở bên dưới. Cuộc trò chuyện sẽ được lưu thật vào Supabase.</p>
-                  </div>
-                )}
-              </div>
-
-              <form className="zalo-message-compose-v42" onSubmit={submitMessage}>
-                <input
-                  value={message}
-                  onChange={(event) => setMessage(event.target.value)}
-                  placeholder={`Nhắn tin cho ${displayName(activeUser)}...`}
-                  autoComplete="off"
-                />
-                <button type="submit" disabled={sending || !message.trim()} aria-label="Gửi tin nhắn">
-                  <Send size={20} />
-                </button>
-              </form>
-            </>
-          ) : (
-            <EmptyState
-              icon="💬"
-              title="Chọn một cuộc trò chuyện"
-              text="Tìm người dùng ở thanh bên trái hoặc chọn một cuộc trò chuyện gần đây."
-            />
-          )}
-        </main>
+    <div className="page messages-page">
+      <BotanicalHero compact eyebrow="KẾT NỐI CỘNG ĐỒNG" title="Tin nhắn" description="Tìm người dùng và trò chuyện trực tiếp như một ứng dụng nhắn tin hiện đại." />
+      <div className="messenger-layout botanical-card">
+        <aside className="messenger-people"><div className="input-icon"><Search size={17} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm người để nhắn tin..." /></div><div className="messenger-people__list">{filtered.map((person) => <button key={person.id} className={selected?.id === person.id ? 'is-active' : ''} type="button" onClick={() => setSelected(person)}><Avatar profile={person} size={44} /><span><strong>{getProfileName(person)}</strong><small>{person.major || person.school_name || `@${person.username}`}</small></span></button>)}</div></aside>
+        <section className="messenger-chat">{selected ? <><header><Avatar profile={selected} size={45} /><div><strong>{getProfileName(selected)}</strong><small>@{selected.username} · {selected.school_name || 'DocShare Pro'}</small></div></header><div className="messenger-chat__messages">{messages.length ? messages.map((item) => <div key={item.id} className={item.sender_id === currentUser.id ? 'message-bubble is-me' : 'message-bubble'}><p>{item.content}</p><small>{formatDateTime(item.created_at)}</small></div>) : <EmptyState title="Chưa có tin nhắn" description={`Hãy gửi lời chào tới ${getProfileName(selected)}.`} />}<div ref={endRef} /></div><form onSubmit={send}><input value={value} onChange={(event) => setValue(event.target.value)} placeholder="Nhập tin nhắn..." /><button className="button" type="submit" disabled={busy || !value.trim()}><Send size={18} /></button></form></> : <div className="messenger-empty"><UserRound size={48} /><h2>Chọn người để bắt đầu</h2><p>Dùng thanh tìm kiếm bên trái và bấm vào một người dùng.</p></div>}</section>
       </div>
     </div>
   );

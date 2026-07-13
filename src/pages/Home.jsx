@@ -1,120 +1,84 @@
-import { Link } from 'react-router-dom';
+import { ArrowRight, BookHeart, BookOpen, GraduationCap, Search, ShieldCheck, Users } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import BotanicalHero from '../components/BotanicalHero.jsx';
+import DocumentCard from '../components/DocumentCard.jsx';
+import EmptyState from '../components/EmptyState.jsx';
+import Loading from '../components/Loading.jsx';
 import { useApp } from '../context/AppContext.jsx';
-import {
-  DocumentCard,
-  EmptyState,
-  PageHeader,
-  formatNumber,
-} from '../components/LiveUI.jsx';
+import { supabase } from '../lib/supabase.js';
+import { normalizeError } from '../lib/helpers.js';
+
+function mergeStats(documents, stats) {
+  const map = new Map((stats || []).map((item) => [item.document_id, item]));
+  return (documents || []).map((item) => ({ ...item, document_stats: map.get(item.id) || {} }));
+}
 
 export default function Home() {
-  const { state, currentUser, getUser, dataLoading } = useApp();
+  const { toast } = useApp();
+  const [documents, setDocuments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [keyword, setKeyword] = useState('');
+  const navigate = useNavigate();
 
-  const topDocuments = [...state.documents]
-    .filter((item) => item.status === 'published')
-    .sort((first, second) => (
-      (second.likes * 3 + second.views + second.rating * 10)
-      - (first.likes * 3 + first.views + first.rating * 10)
-    ))
-    .slice(0, 4);
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const [{ data: docs, error }, { data: stats }] = await Promise.all([
+          supabase.from('documents').select('*,profiles:author_id(id,full_name,username,avatar_path),categories(id,name,slug,icon_key),document_files(file_kind,storage_bucket,storage_path)').eq('status', 'published').order('created_at', { ascending: false }).limit(12),
+          supabase.from('document_stats').select('*'),
+        ]);
+        if (error) throw error;
+        const normalized = (docs || []).map((item) => ({
+          ...item,
+          cover_path: item.document_files?.find((file) => file.file_kind === 'cover')?.storage_path || null,
+        }));
+        if (mounted) setDocuments(mergeStats(normalized, stats));
+      } catch (error) {
+        toast(normalizeError(error), 'error');
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => { mounted = false; };
+  }, [toast]);
 
-  const newestDocuments = [...state.documents]
-    .filter((item) => item.status === 'published')
-    .sort((first, second) => (
-      new Date(second.createdAt || 0) - new Date(first.createdAt || 0)
-    ))
-    .slice(0, 4);
+  const loved = useMemo(() => [...documents].sort((a, b) => (b.document_stats?.like_count || 0) - (a.document_stats?.like_count || 0)).slice(0, 4), [documents]);
+  const recommended = useMemo(() => documents.slice(4, 8), [documents]);
+
+  function search(event) {
+    event.preventDefault();
+    navigate(keyword.trim() ? `/documents?search=${encodeURIComponent(keyword.trim())}` : '/documents');
+  }
 
   return (
-    <div className="live-page live-home-page">
-      <section className="live-hero">
-        <div className="live-hero-copy">
-          <span className="live-eyebrow">THƯ VIỆN HỌC THUẬT DỮ LIỆU THẬT</span>
-          <h1>Chào {currentUser?.name || 'bạn'}, bắt đầu thư viện từ số 0.</h1>
-          <p>
-            Không còn tài khoản, tài liệu, lượt xem, tim, bình luận hay đánh giá giả.
-            Mọi hoạt động mới sẽ được lưu trực tiếp vào Supabase.
-          </p>
+    <div className="page home-page">
+      <BotanicalHero eyebrow="DOCSHARE PRO" title={<>Thư viện học thuật hiện đại<br /><span>Chia sẻ & kết nối tri thức</span></>} description="Kho tài liệu chất lượng, cộng đồng học tập văn minh và hành trình phát triển tri thức của riêng bạn.">
+        <form className="hero-search" onSubmit={search}><Search size={20} /><input value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="Tìm kiếm tài liệu, môn học, tác giả, trường học..." /><button className="button" type="submit">Tìm kiếm</button></form>
+        <div className="hero-tags"><span>Tìm kiếm phổ biến:</span>{['Giải tích', 'Cấu trúc dữ liệu', 'Marketing', 'Kinh tế vi mô', 'Luật dân sự', 'Trí tuệ nhân tạo'].map((item) => <button key={item} type="button" onClick={() => navigate(`/documents?search=${encodeURIComponent(item)}`)}>{item}</button>)}</div>
+      </BotanicalHero>
 
-          <div className="live-hero-actions">
-            <Link className="live-primary-link" to="/upload">Đăng tài liệu đầu tiên</Link>
-            <Link className="live-secondary-link" to="/documents">Xem thư viện</Link>
-          </div>
-        </div>
+      {loading ? <Loading /> : (
+        <>
+          <section className="home-section">
+            <div className="section-heading"><div><BookHeart size={24} /><h2>Tài liệu được yêu thích nhất</h2></div><Link to="/documents">Xem tất cả <ArrowRight size={17} /></Link></div>
+            {loved.length ? <div className="document-grid document-grid--4">{loved.map((item) => <DocumentCard key={item.id} document={item} />)}</div> : <EmptyState title="Chưa có tài liệu" description="Tài liệu do người dùng đăng sẽ xuất hiện tại đây." action={<Link className="button" to="/upload">Đăng tài liệu đầu tiên</Link>} />}
+          </section>
 
-        <div className="live-hero-stats">
-          <article>
-            <strong>{formatNumber(state.documents.length)}</strong>
-            <span>Tài liệu thật</span>
-          </article>
-          <article>
-            <strong>{formatNumber(state.users.length)}</strong>
-            <span>Tài khoản thật</span>
-          </article>
-          <article>
-            <strong>{formatNumber(state.posts.length)}</strong>
-            <span>Bài viết thật</span>
-          </article>
-          <article>
-            <strong>{formatNumber(state.history.length)}</strong>
-            <span>Lịch sử của bạn</span>
-          </article>
-        </div>
+          <section className="home-section">
+            <div className="section-heading"><div><BookOpen size={24} /><h2>Gợi ý cho bạn</h2></div><Link to="/documents">Khám phá thêm <ArrowRight size={17} /></Link></div>
+            {recommended.length ? <div className="document-grid document-grid--4">{recommended.map((item) => <DocumentCard key={item.id} document={item} />)}</div> : <EmptyState title="Chưa có gợi ý" description="Hãy đăng hoặc tương tác với tài liệu để xây dựng hành trình học tập." />}
+          </section>
+        </>
+      )}
+
+      <section className="impact-strip botanical-card">
+        <div><span><BookOpen /></span><strong>{documents.length}+</strong><small>Tài liệu học thuật</small></div>
+        <div><span><Users /></span><strong>Cộng đồng</strong><small>Học tập văn minh</small></div>
+        <div><span><GraduationCap /></span><strong>Đa ngành</strong><small>Kết nối tri thức</small></div>
+        <div><span><ShieldCheck /></span><strong>Minh bạch</strong><small>Dữ liệu được bảo vệ</small></div>
       </section>
-
-      <PageHeader
-        eyebrow="ĐƯỢC CỘNG ĐỒNG QUAN TÂM"
-        title="Tài liệu nổi bật"
-        text="Xếp hạng theo lượt xem, lượt thích và đánh giá thật."
-      >
-        <Link className="live-text-link" to="/leaderboard">Xem xếp hạng →</Link>
-      </PageHeader>
-
-      {dataLoading && !state.documents.length ? (
-        <div className="live-inline-loading">Đang tải dữ liệu từ Supabase...</div>
-      ) : topDocuments.length ? (
-        <div className="live-document-grid">
-          {topDocuments.map((document) => (
-            <DocumentCard
-              key={document.id}
-              document={document}
-              author={getUser(document.authorId)}
-            />
-          ))}
-        </div>
-      ) : (
-        <EmptyState
-          icon="📚"
-          title="Thư viện đang trống"
-          text="Chưa có tài liệu mẫu. Hãy tự đăng tài liệu đầu tiên để bắt đầu dữ liệu thật."
-          actionTo="/upload"
-          actionLabel="Đăng tài liệu"
-        />
-      )}
-
-      <PageHeader
-        eyebrow="MỚI ĐƯỢC ĐĂNG"
-        title="Tài liệu mới nhất"
-        text="Chỉ hiển thị tài liệu do người dùng thật đăng lên."
-      />
-
-      {newestDocuments.length ? (
-        <div className="live-document-grid">
-          {newestDocuments.map((document) => (
-            <DocumentCard
-              key={document.id}
-              document={document}
-              author={getUser(document.authorId)}
-            />
-          ))}
-        </div>
-      ) : (
-        <EmptyState
-          icon="🌱"
-          title="Chưa có nội dung mới"
-          text="Dữ liệu sẽ xuất hiện tại đây sau khi người dùng đăng tài liệu."
-        />
-      )}
     </div>
   );
 }

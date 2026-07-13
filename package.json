@@ -1,26 +1,22 @@
 {
-  "name": "docshare-pro-v38-approved-gift-mailbox",
-  "version": "38.0.0",
+  "name": "docshare-pro-complete-v50",
   "private": true,
+  "version": "50.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
-    "preview": "vite preview",
-    "backend:dev": "npm --prefix backend run dev",
-    "backend:start": "npm --prefix backend start",
-    "backend:install": "npm --prefix backend install"
+    "preview": "vite preview --host 0.0.0.0"
   },
   "dependencies": {
-    "lucide-react": "^1.23.0",
-    "react": "19.2.7",
-    "react-dom": "19.2.7",
-    "react-router-dom": "7.18.1",
-    "xlsx": "^0.18.5",
-    "@supabase/supabase-js": "^2.57.4"
+    "@supabase/supabase-js": "^2.57.4",
+    "lucide-react": "^0.468.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-router-dom": "^7.9.4"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "6.0.3",
-    "vite": "8.1.4"
+    "@vitejs/plugin-react": "^5.2.0",
+    "vite": "^8.1.4"
   }
 }

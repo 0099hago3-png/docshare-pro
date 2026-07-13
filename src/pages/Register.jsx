@@ -1,186 +1,66 @@
+import { Leaf, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext.jsx';
+import { normalizeError } from '../lib/helpers.js';
 
-const initialForm = {
-  name: '',
-  username: '',
-  email: '',
-  password: '',
-  confirmPassword: '',
-  phone: '',
-  school: '',
-  faculty: '',
-  major: '',
-};
+const initial = { fullName: '', username: '', email: '', password: '', confirmPassword: '', phone: '', schoolName: '', faculty: '', major: '' };
 
 export default function Register() {
+  const { register, toast } = useApp();
+  const [form, setForm] = useState(initial);
+  const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
-  const { register } = useApp();
+  const set = (key) => (event) => setForm((value) => ({ ...value, [key]: event.target.value }));
 
-  const [form, setForm] = useState(initialForm);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  function updateField(key, value) {
-    setForm((previous) => ({ ...previous, [key]: value }));
-  }
-
-  async function handleSubmit(event) {
+  async function submit(event) {
     event.preventDefault();
-    setError('');
-    setSuccess('');
-
-    if (form.password !== form.confirmPassword) {
-      setError('Mật khẩu xác nhận không khớp.');
-      return;
+    if (form.password.length < 6) return toast('Mật khẩu cần ít nhất 6 ký tự.', 'error');
+    if (form.password !== form.confirmPassword) return toast('Mật khẩu xác nhận chưa khớp.', 'error');
+    try {
+      setBusy(true);
+      const data = await register(form);
+      if (data.session) {
+        toast('Tạo tài khoản thành công.');
+        navigate('/', { replace: true });
+      } else {
+        toast('Tài khoản đã được tạo. Hãy kiểm tra email xác nhận.', 'info');
+        navigate('/login', { replace: true });
+      }
+    } catch (error) {
+      toast(normalizeError(error), 'error');
+    } finally {
+      setBusy(false);
     }
-
-    setLoading(true);
-    const result = await register(form);
-    setLoading(false);
-
-    if (!result.ok) {
-      setError(result.message || 'Không thể đăng ký.');
-      return;
-    }
-
-    if (result.needsEmailConfirmation) {
-      setSuccess('Đăng ký thành công. Hãy mở email và xác nhận tài khoản rồi đăng nhập.');
-      return;
-    }
-
-    navigate('/', { replace: true });
   }
 
   return (
-    <div className="live-auth-page">
-      <form className="live-auth-card live-register-card" onSubmit={handleSubmit}>
-        <Link className="live-auth-brand" to="/login">
-          <span>📖</span>
-          <div>
-            <strong>DocShare Pro</strong>
-            <small>Green Academic Library</small>
-          </div>
-        </Link>
-
-        <div className="live-auth-heading">
-          <span className="live-eyebrow">TẠO TÀI KHOẢN MỚI</span>
-          <h1>Đăng ký</h1>
-          <p>Thông tin sẽ được lưu trực tiếp vào Supabase.</p>
-        </div>
-
-        {error && <div className="live-alert error">{error}</div>}
-        {success && <div className="live-alert success">{success}</div>}
-
-        <div className="live-form-grid two">
-          <label className="live-field">
-            <span>Họ và tên *</span>
-            <input
-              value={form.name}
-              onChange={(event) => updateField('name', event.target.value)}
-              placeholder="Nguyễn Văn A"
-              required
-            />
-          </label>
-
-          <label className="live-field">
-            <span>Tên người dùng</span>
-            <input
-              value={form.username}
-              onChange={(event) => updateField('username', event.target.value)}
-              placeholder="nguyenvana"
-            />
-          </label>
-        </div>
-
-        <label className="live-field">
-          <span>Email *</span>
-          <input
-            type="email"
-            value={form.email}
-            onChange={(event) => updateField('email', event.target.value)}
-            placeholder="tenban@email.com"
-            autoComplete="email"
-            required
-          />
-        </label>
-
-        <div className="live-form-grid two">
-          <label className="live-field">
-            <span>Mật khẩu *</span>
-            <input
-              type="password"
-              value={form.password}
-              onChange={(event) => updateField('password', event.target.value)}
-              minLength={6}
-              autoComplete="new-password"
-              required
-            />
-          </label>
-
-          <label className="live-field">
-            <span>Xác nhận mật khẩu *</span>
-            <input
-              type="password"
-              value={form.confirmPassword}
-              onChange={(event) => updateField('confirmPassword', event.target.value)}
-              minLength={6}
-              autoComplete="new-password"
-              required
-            />
-          </label>
-        </div>
-
-        <div className="live-form-grid two">
-          <label className="live-field">
-            <span>Số điện thoại</span>
-            <input
-              value={form.phone}
-              onChange={(event) => updateField('phone', event.target.value)}
-              placeholder="09..."
-            />
-          </label>
-
-          <label className="live-field">
-            <span>Trường</span>
-            <input
-              value={form.school}
-              onChange={(event) => updateField('school', event.target.value)}
-              placeholder="Cao đẳng Đông An"
-            />
-          </label>
-        </div>
-
-        <div className="live-form-grid two">
-          <label className="live-field">
-            <span>Khoa</span>
-            <input
-              value={form.faculty}
-              onChange={(event) => updateField('faculty', event.target.value)}
-              placeholder="Công nghệ thông tin"
-            />
-          </label>
-
-          <label className="live-field">
-            <span>Ngành</span>
-            <input
-              value={form.major}
-              onChange={(event) => updateField('major', event.target.value)}
-              placeholder="Lập trình ứng dụng"
-            />
-          </label>
-        </div>
-
-        <button className="live-primary-button" type="submit" disabled={loading}>
-          {loading ? 'Đang tạo tài khoản...' : 'Tạo tài khoản'}
-        </button>
-
-        <p className="live-auth-switch">
-          Đã có tài khoản? <Link to="/login">Đăng nhập</Link>
-        </p>
-      </form>
-    </div>
+    <main className="auth-page auth-page--register">
+      <section className="auth-visual">
+        <img src="/assets/logo-mark.svg" alt="" />
+        <span className="eyebrow"><Leaf size={14} /> BẮT ĐẦU HÀNH TRÌNH</span>
+        <h1>Tạo hồ sơ học thuật<br />của riêng bạn</h1>
+        <p>Đăng tài liệu, xây dựng cộng đồng và lưu lại mọi dấu mốc học tập bằng dữ liệu thật.</p>
+      </section>
+      <section className="auth-card auth-card--wide botanical-card">
+        <div className="auth-brand"><img src="/assets/logo-mark.svg" alt="" /><span><strong>DocShare Pro</strong><small>GREEN ACADEMIC LIBRARY</small></span></div>
+        <span className="eyebrow">TẠO TÀI KHOẢN MỚI</span>
+        <h2>Đăng ký</h2>
+        <p>Thông tin sẽ được lưu trực tiếp vào Supabase.</p>
+        <form className="form-grid" onSubmit={submit}>
+          <label>Họ và tên *<input value={form.fullName} onChange={set('fullName')} required /></label>
+          <label>Tên người dùng *<input value={form.username} onChange={set('username')} required /></label>
+          <label className="span-2">Email *<input type="email" value={form.email} onChange={set('email')} required /></label>
+          <label>Mật khẩu *<input type="password" value={form.password} onChange={set('password')} required /></label>
+          <label>Xác nhận mật khẩu *<input type="password" value={form.confirmPassword} onChange={set('confirmPassword')} required /></label>
+          <label>Số điện thoại<input value={form.phone} onChange={set('phone')} /></label>
+          <label>Trường / đơn vị<input value={form.schoolName} onChange={set('schoolName')} /></label>
+          <label>Khoa<input value={form.faculty} onChange={set('faculty')} /></label>
+          <label>Ngành<input value={form.major} onChange={set('major')} /></label>
+          <div className="span-2"><button className="button button--wide button--large" type="submit" disabled={busy}><UserPlus size={18} /> {busy ? 'Đang tạo tài khoản...' : 'Tạo tài khoản'}</button></div>
+        </form>
+        <p className="auth-switch">Đã có tài khoản? <Link to="/login">Đăng nhập</Link></p>
+      </section>
+    </main>
   );
 }

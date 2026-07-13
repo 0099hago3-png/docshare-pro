@@ -1,147 +1,58 @@
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
-
-import { useApp } from './context/AppContext.jsx';
-
-import Navbar from './components/Navbar.jsx';
-import LeftRail from './components/LeftRail.jsx';
-import ChatBot from './components/ChatBot.jsx';
-import MiniMessenger from './components/MiniMessenger.jsx';
-import Toast from './components/Toast.jsx';
-import GiftEffect from './components/GiftEffect.jsx';
-
-import Home from './pages/Home.jsx';
-import Documents from './pages/Documents.jsx';
+import { Route, Routes } from 'react-router-dom';
+import AppShell from './components/AppShell.jsx';
+import { GuestOnly, RequireAdmin, RequireAuth } from './components/ProtectedRoute.jsx';
+import Toasts from './components/Toasts.jsx';
+import AdminDashboard from './pages/AdminDashboard.jsx';
 import Categories from './pages/Categories.jsx';
 import DocumentDetail from './pages/DocumentDetail.jsx';
-import UploadPage from './pages/UploadPage.jsx';
+import Documents from './pages/Documents.jsx';
 import Feed from './pages/Feed.jsx';
-import Profile from './pages/Profile.jsx';
-import Login from './pages/Login.jsx';
-import Register from './pages/Register.jsx';
-import AdminDashboard from './pages/AdminDashboard.jsx';
-import Leaderboard from './pages/Leaderboard.jsx';
-import Wallet from './pages/Wallet.jsx';
-import Messages from './pages/Messages.jsx';
-import Support from './pages/Support.jsx';
-import History from './pages/History.jsx';
 import GiftVault from './pages/GiftVault.jsx';
-
-import './supabase-live.css';
-
-function LoadingScreen() {
-  return (
-    <div className="live-loading-screen">
-      <div className="live-loading-card">
-        <div className="live-loading-logo">📖</div>
-        <h2>DocShare Pro</h2>
-        <p>Đang kết nối dữ liệu thật từ Supabase...</p>
-        <span className="live-spinner" />
-      </div>
-    </div>
-  );
-}
-
-function RequireLogin({ children }) {
-  const { currentUser, authLoading } = useApp();
-
-  if (authLoading) return <LoadingScreen />;
-  if (!currentUser) return <Navigate to="/login" replace />;
-
-  return children;
-}
-
-function RequireAdmin({ children }) {
-  const { currentUser, authLoading } = useApp();
-
-  if (authLoading) return <LoadingScreen />;
-  if (!currentUser) return <Navigate to="/login" replace />;
-  if (currentUser.role !== 'admin') return <Navigate to="/" replace />;
-
-  return children;
-}
-
-function GuestOnly({ children }) {
-  const { currentUser, authLoading } = useApp();
-
-  if (authLoading) return <LoadingScreen />;
-  if (currentUser) return <Navigate to="/" replace />;
-
-  return children;
-}
-
-function AppLayout({ children }) {
-  const { currentUser } = useApp();
-  const location = useLocation();
-
-  const isAuthPage =
-    location.pathname === '/login'
-    || location.pathname === '/register';
-
-  const showWebsiteLayout = Boolean(currentUser) && !isAuthPage;
-
-  return (
-    <>
-      {showWebsiteLayout && <Navbar />}
-      {showWebsiteLayout && <LeftRail />}
-
-      <main className={showWebsiteLayout ? 'app-main' : 'auth-main'}>
-        {children}
-      </main>
-
-      {showWebsiteLayout && <MiniMessenger />}
-      {showWebsiteLayout && <ChatBot />}
-      {showWebsiteLayout && <GiftEffect />}
-
-      <Toast />
-    </>
-  );
-}
+import History from './pages/History.jsx';
+import Home from './pages/Home.jsx';
+import Leaderboard from './pages/Leaderboard.jsx';
+import Login from './pages/Login.jsx';
+import Messages from './pages/Messages.jsx';
+import NotFound from './pages/NotFound.jsx';
+import Profile from './pages/Profile.jsx';
+import Register from './pages/Register.jsx';
+import Support from './pages/Support.jsx';
+import UploadPage from './pages/UploadPage.jsx';
+import Wallet from './pages/Wallet.jsx';
 
 export default function App() {
-  const { currentUser } = useApp();
-
   return (
-    <AppLayout>
+    <>
       <Routes>
-        <Route
-          path="/login"
-          element={(
-            <GuestOnly>
-              <Login />
-            </GuestOnly>
-          )}
-        />
+        <Route element={<GuestOnly />}>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+        </Route>
 
-        <Route
-          path="/register"
-          element={(
-            <GuestOnly>
-              <Register />
-            </GuestOnly>
-          )}
-        />
-
-        <Route path="/" element={<RequireLogin><Home /></RequireLogin>} />
-        <Route path="/documents" element={<RequireLogin><Documents /></RequireLogin>} />
-        <Route path="/documents/:id" element={<RequireLogin><DocumentDetail /></RequireLogin>} />
-        <Route path="/categories" element={<RequireLogin><Categories /></RequireLogin>} />
-        <Route path="/feed" element={<RequireLogin><Feed /></RequireLogin>} />
-        <Route path="/leaderboard" element={<RequireLogin><Leaderboard /></RequireLogin>} />
-        <Route path="/support" element={<RequireLogin><Support /></RequireLogin>} />
-        <Route path="/upload" element={<RequireLogin><UploadPage /></RequireLogin>} />
-        <Route path="/profile" element={<RequireLogin><Profile /></RequireLogin>} />
-        <Route path="/users/:id" element={<RequireLogin><Profile /></RequireLogin>} />
-        <Route path="/wallet" element={<RequireLogin><Wallet /></RequireLogin>} />
-        <Route path="/messages" element={<RequireLogin><Messages /></RequireLogin>} />
-        <Route path="/history" element={<RequireLogin><History /></RequireLogin>} />
-        <Route path="/gifts" element={<RequireLogin><GiftVault /></RequireLogin>} />
-        <Route path="/admin" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
-
-        <Route
-          path="*"
-          element={<Navigate to={currentUser ? '/' : '/login'} replace />}
-        />
+        <Route element={<RequireAuth />}>
+          <Route element={<AppShell />}>
+            <Route index element={<Home />} />
+            <Route path="documents" element={<Documents />} />
+            <Route path="documents/:id" element={<DocumentDetail />} />
+            <Route path="documents/:id/edit" element={<UploadPage mode="edit" />} />
+            <Route path="categories" element={<Categories />} />
+            <Route path="upload" element={<UploadPage />} />
+            <Route path="feed" element={<Feed />} />
+            <Route path="profile/:id" element={<Profile />} />
+            <Route path="leaderboard" element={<Leaderboard />} />
+            <Route path="wallet" element={<Wallet />} />
+            <Route path="gifts" element={<GiftVault />} />
+            <Route path="messages" element={<Messages />} />
+            <Route path="history" element={<History />} />
+            <Route path="support" element={<Support />} />
+            <Route element={<RequireAdmin />}>
+              <Route path="admin" element={<AdminDashboard />} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Route>
+        </Route>
       </Routes>
-    </AppLayout>
+      <Toasts />
+    </>
   );
 }

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0c4936"/><stop offset="1" stop-color="#1a6f4f"/></linearGradient></defs>
+  <rect width="600" height="800" rx="34" fill="url(#g)"/>
+  <rect x="38" y="38" width="524" height="724" rx="24" fill="none" stroke="#d6ad58" stroke-width="4" opacity=".75"/>
+  <path d="M84 693c102-45 168-133 214-266" stroke="#d6ad58" stroke-width="5" fill="none" opacity=".7"/>
+  <g fill="#86a975" opacity=".85">
+    <ellipse cx="125" cy="635" rx="52" ry="18" transform="rotate(-28 125 635)"/>
+    <ellipse cx="183" cy="588" rx="48" ry="17" transform="rotate(24 183 588)"/>
+    <ellipse cx="220" cy="528" rx="45" ry="16" transform="rotate(-30 220 528)"/>
+    <ellipse cx="262" cy="468" rx="40" ry="14" transform="rotate(23 262 468)"/>
+  </g>
+  <text x="300" y="250" text-anchor="middle" fill="#f4e6bd" font-family="Georgia,serif" font-size="56" font-weight="700">DOCSHARE</text>
+  <text x="300" y="318" text-anchor="middle" fill="#fff" font-family="Arial,sans-serif" font-size="34" font-weight="700">TÀI LIỆU HỌC THUẬT</text>
+  <text x="300" y="372" text-anchor="middle" fill="#d7e7da" font-family="Arial,sans-serif" font-size="22">Chia sẻ tri thức • Kết nối cộng đồng</text>
+</svg>

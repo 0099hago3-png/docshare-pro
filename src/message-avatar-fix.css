@@ -1,0 +1,270 @@
+/*
+  DOCSHARE PRO - FIX AVATAR TIN NHẮN
+  Sửa lỗi avatar bị kéo thành hình bầu dục / thanh ngang.
+*/
+
+.ds-avatar {
+  --ds-avatar-size: 40px;
+
+  position: relative !important;
+  width: var(--ds-avatar-size) !important;
+  min-width: var(--ds-avatar-size) !important;
+  max-width: var(--ds-avatar-size) !important;
+  height: var(--ds-avatar-size) !important;
+  min-height: var(--ds-avatar-size) !important;
+  max-height: var(--ds-avatar-size) !important;
+  flex: 0 0 var(--ds-avatar-size) !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  aspect-ratio: 1 / 1 !important;
+  overflow: visible !important;
+  border: 2px solid #ffffff !important;
+  border-radius: 50% !important;
+  background:
+    linear-gradient(145deg, #2f8b61, #135e41) !important;
+  color: #ffffff !important;
+  box-shadow:
+    0 0 0 1px rgba(40, 105, 72, 0.22),
+    0 5px 14px rgba(31, 83, 58, 0.14) !important;
+  line-height: 1 !important;
+  vertical-align: middle !important;
+  isolation: isolate;
+}
+
+.ds-avatar > img {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
+  height: 100% !important;
+  min-height: 100% !important;
+  max-height: 100% !important;
+  display: block !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  background: #eef5ee !important;
+}
+
+.ds-avatar__fallback {
+  width: 100% !important;
+  height: 100% !important;
+  display: grid !important;
+  place-items: center !important;
+  overflow: hidden !important;
+  border-radius: 50% !important;
+  color: #ffffff !important;
+  font-size: max(10px, calc(var(--ds-avatar-size) * 0.34)) !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.02em !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+}
+
+.ds-avatar.is-premium {
+  box-shadow:
+    0 0 0 2px #d3a243,
+    0 0 0 5px rgba(211, 162, 67, 0.18),
+    0 7px 18px rgba(31, 83, 58, 0.15) !important;
+}
+
+.ds-avatar.has-frame::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  z-index: -1;
+  border: 2px solid rgba(59, 127, 79, 0.38);
+  border-radius: 50%;
+}
+
+.ds-avatar__verified {
+  position: absolute !important;
+  right: -2px !important;
+  bottom: -1px !important;
+  z-index: 3 !important;
+  width: 15px !important;
+  height: 15px !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 2px solid #ffffff !important;
+  border-radius: 50% !important;
+  background: #17784f !important;
+  color: #ffffff !important;
+  font-size: 8px !important;
+  font-weight: 900 !important;
+}
+
+.ds-avatar.is-clickable {
+  cursor: pointer !important;
+}
+
+.ds-avatar.is-clickable:hover {
+  transform: translateY(-1px) !important;
+}
+
+/*
+  Sửa trực tiếp các avatar tùy chỉnh trong trang Tin nhắn.
+  Các selector được giới hạn trong khu vực nhắn tin để không ảnh hưởng ảnh bìa.
+*/
+
+:where(
+  .messages-page,
+  .message-page,
+  .messenger-page,
+  .mail-page,
+  .chat-page,
+  .messages-shell,
+  .message-shell,
+  .messenger-shell,
+  .mail-shell,
+  .chat-shell
+) :where(
+  .message-avatar,
+  .messenger-avatar,
+  .mail-avatar,
+  .chat-avatar,
+  .conversation-avatar,
+  .thread-avatar,
+  .contact-avatar,
+  .recipient-avatar,
+  .user-avatar,
+  .message-user-avatar,
+  .message-contact-avatar,
+  [class*="contact-avatar"],
+  [class*="thread-avatar"],
+  [class*="message-avatar"],
+  [class*="conversation-avatar"]
+) {
+  width: 42px !important;
+  min-width: 42px !important;
+  max-width: 42px !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  max-height: 42px !important;
+  flex: 0 0 42px !important;
+  aspect-ratio: 1 / 1 !important;
+  align-self: center !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  overflow: hidden !important;
+  border: 2px solid #ffffff !important;
+  border-radius: 50% !important;
+  background:
+    linear-gradient(145deg, #2f8b61, #135e41) !important;
+  color: #ffffff !important;
+  box-shadow:
+    0 0 0 1px rgba(40, 105, 72, 0.22),
+    0 4px 12px rgba(31, 83, 58, 0.13) !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+}
+
+:where(
+  .messages-page,
+  .message-page,
+  .messenger-page,
+  .mail-page,
+  .chat-page,
+  .messages-shell,
+  .message-shell,
+  .messenger-shell,
+  .mail-shell,
+  .chat-shell
+) :where(
+  .message-avatar,
+  .messenger-avatar,
+  .mail-avatar,
+  .chat-avatar,
+  .conversation-avatar,
+  .thread-avatar,
+  .contact-avatar,
+  .recipient-avatar,
+  .user-avatar,
+  .message-user-avatar,
+  .message-contact-avatar,
+  [class*="contact-avatar"],
+  [class*="thread-avatar"],
+  [class*="message-avatar"],
+  [class*="conversation-avatar"]
+) img {
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
+  height: 100% !important;
+  min-height: 100% !important;
+  max-height: 100% !important;
+  display: block !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  object-position: center !important;
+}
+
+/* Không cho phần tử avatar bị kéo đầy chiều ngang bởi flex/grid */
+:where(
+  .messages-page,
+  .message-page,
+  .messenger-page,
+  .mail-page,
+  .chat-page,
+  .messages-shell,
+  .message-shell,
+  .messenger-shell,
+  .mail-shell,
+  .chat-shell
+) :where(
+  .message-user,
+  .message-contact,
+  .conversation-item,
+  .thread-item,
+  .contact-item,
+  .recipient-item,
+  [class*="contact-item"],
+  [class*="conversation-item"],
+  [class*="thread-item"]
+) {
+  align-items: center !important;
+}
+
+@media (max-width: 720px) {
+  :where(
+    .messages-page,
+    .message-page,
+    .messenger-page,
+    .mail-page,
+    .chat-page,
+    .messages-shell,
+    .message-shell,
+    .messenger-shell,
+    .mail-shell,
+    .chat-shell
+  ) :where(
+    .message-avatar,
+    .messenger-avatar,
+    .mail-avatar,
+    .chat-avatar,
+    .conversation-avatar,
+    .thread-avatar,
+    .contact-avatar,
+    .recipient-avatar,
+    .user-avatar,
+    .message-user-avatar,
+    .message-contact-avatar,
+    [class*="contact-avatar"],
+    [class*="thread-avatar"],
+    [class*="message-avatar"],
+    [class*="conversation-avatar"]
+  ) {
+    width: 38px !important;
+    min-width: 38px !important;
+    max-width: 38px !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    max-height: 38px !important;
+    flex-basis: 38px !important;
+  }
+}
