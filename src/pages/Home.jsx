@@ -1,18 +1,21 @@
-import { ArrowRight, BookHeart, BookOpen, GraduationCap, ShieldCheck, Users } from 'lucide-react';
+import { BookHeart, BookOpen, Clock3, GraduationCap, ShieldCheck, Users } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import BotanicalHero from '../components/BotanicalHero.jsx';
-import DocumentCard from '../components/DocumentCard.jsx';
 import EmptyState from '../components/EmptyState.jsx';
+import HomeDocumentRail from '../components/DocumentRail.jsx';
 import Loading from '../components/Loading.jsx';
 import { SmartSearchForm } from '../components/SmartSearch.jsx';
 import { useApp } from '../context/AppContext.jsx';
-import { supabase } from '../lib/supabase.js';
 import { normalizeError } from '../lib/helpers.js';
+import { supabase } from '../lib/supabase.js';
 
 function mergeStats(documents, stats) {
   const map = new Map((stats || []).map((item) => [item.document_id, item]));
-  return (documents || []).map((item) => ({ ...item, document_stats: map.get(item.id) || {} }));
+  return (documents || []).map((item) => ({
+    ...item,
+    document_stats: map.get(item.id) || {},
+  }));
 }
 
 export default function Home() {
@@ -24,20 +27,33 @@ export default function Home() {
 
   useEffect(() => {
     let mounted = true;
+
     (async () => {
       try {
+        const purchaseQuery = currentUser?.id
+          ? supabase.from('document_purchases').select('document_id').eq('buyer_id', currentUser.id)
+          : Promise.resolve({ data: [] });
+
         const [{ data: docs, error }, { data: stats }, purchaseResult] = await Promise.all([
-          supabase.from('documents').select('*,profiles:author_id(id,full_name,username,avatar_path,role,premium,premium_expires_at),categories(id,name,slug,icon_key),document_files(file_kind,storage_bucket,storage_path)').eq('status', 'published').order('created_at', { ascending: false }).limit(12),
+          supabase
+            .from('documents')
+            .select('*,profiles:author_id(id,full_name,username,avatar_path,role,premium,premium_expires_at),categories(id,name,slug,icon_key),document_files(file_kind,storage_bucket,storage_path)')
+            .eq('status', 'published')
+            .order('created_at', { ascending: false })
+            .limit(40),
           supabase.from('document_stats').select('*'),
-          supabase.from('document_purchases').select('document_id').eq('buyer_id', currentUser.id),
+          purchaseQuery,
         ]);
+
         if (error) throw error;
-        const purchasedIds = new Set((purchaseResult.data || []).map((item) => item.document_id));
+
+        const purchasedIds = new Set((purchaseResult?.data || []).map((item) => item.document_id));
         const normalized = (docs || []).map((item) => ({
           ...item,
           cover_path: item.document_files?.find((file) => file.file_kind === 'cover')?.storage_path || null,
           is_purchased: purchasedIds.has(item.id),
         }));
+
         if (mounted) setDocuments(mergeStats(normalized, stats));
       } catch (error) {
         toast(normalizeError(error), 'error');
@@ -45,8 +61,11 @@ export default function Home() {
         if (mounted) setLoading(false);
       }
     })();
-    return () => { mounted = false; };
-  }, [currentUser.id, toast]);
+
+    return () => {
+      mounted = false;
+    };
+  }, [currentUser?.id, toast]);
 
   useEffect(() => {
     const markPurchased = (event) => {
@@ -66,8 +85,27 @@ export default function Home() {
     return () => window.removeEventListener('docshare:purchases-refresh', markPurchased);
   }, []);
 
-  const loved = useMemo(() => [...documents].sort((a, b) => (b.document_stats?.like_count || 0) - (a.document_stats?.like_count || 0)).slice(0, 4), [documents]);
-  const recommended = useMemo(() => documents.slice(4, 8), [documents]);
+  const latest = useMemo(() => documents.slice(0, 18), [documents]);
+
+  const loved = useMemo(() => (
+    [...documents]
+      .sort((a, b) => (b.document_stats?.like_count || 0) - (a.document_stats?.like_count || 0))
+      .slice(0, 18)
+  ), [documents]);
+
+  const recommended = useMemo(() => (
+    [...documents]
+      .sort((a, b) => {
+        const scoreA = (a.document_stats?.view_count || 0)
+          + ((a.document_stats?.like_count || 0) * 4)
+          + ((a.document_stats?.average_rating || 0) * 5);
+        const scoreB = (b.document_stats?.view_count || 0)
+          + ((b.document_stats?.like_count || 0) * 4)
+          + ((b.document_stats?.average_rating || 0) * 5);
+        return scoreB - scoreA;
+      })
+      .slice(0, 18)
+  ), [documents]);
 
   function submitSearch(value, suggestion) {
     if (suggestion?.to) {
@@ -80,8 +118,12 @@ export default function Home() {
   }
 
   return (
-    <div className="page home-page">
-      <BotanicalHero eyebrow="DOCSHARE PRO" title={<>Thư viện học thuật hiện đại<br /><span>Chia sẻ & kết nối tri thức</span></>} description="Kho tài liệu chất lượng, cộng đồng học tập văn minh và hành trình phát triển tri thức của riêng bạn.">
+    <div className="page home-page home-page-v70-3">
+      <BotanicalHero
+        description="Kho tài liệu chất lượng, cộng đồng học tập văn minh và hành trình phát triển tri thức của riêng bạn."
+        eyebrow="DOCSHARE PRO"
+        title={<>Thư viện học thuật hiện đại<br /><span>Chia sẻ & kết nối tri thức</span></>}
+      >
         <SmartSearchForm
           buttonClassName="button"
           buttonLabel="Tìm kiếm"
@@ -91,21 +133,48 @@ export default function Home() {
           placeholder="Tìm kiếm tài liệu, môn học, tác giả, trường học..."
           value={keyword}
         />
-        <div className="hero-tags"><span>Tìm kiếm phổ biến:</span>{['Giải tích', 'Cấu trúc dữ liệu', 'Marketing', 'Kinh tế vi mô', 'Luật dân sự', 'Trí tuệ nhân tạo'].map((item) => <button key={item} type="button" onClick={() => navigate(`/documents?search=${encodeURIComponent(item)}`)}>{item}</button>)}</div>
+        <div className="hero-tags">
+          <span>Tìm kiếm phổ biến:</span>
+          {['Giải tích', 'Cấu trúc dữ liệu', 'Marketing', 'Kinh tế vi mô', 'Luật dân sự', 'Trí tuệ nhân tạo'].map((item) => (
+            <button
+              key={item}
+              onClick={() => navigate(`/documents?search=${encodeURIComponent(item)}`)}
+              type="button"
+            >
+              {item}
+            </button>
+          ))}
+        </div>
       </BotanicalHero>
 
-      {loading ? <Loading /> : (
+      {loading ? <Loading /> : documents.length ? (
         <>
-          <section className="home-section">
-            <div className="section-heading"><div><BookHeart size={24} /><h2>Tài liệu được yêu thích nhất</h2></div><Link to="/documents">Xem tất cả <ArrowRight size={17} /></Link></div>
-            {loved.length ? <div className="document-grid document-grid--4">{loved.map((item) => <DocumentCard key={item.id} document={item} />)}</div> : <EmptyState title="Chưa có tài liệu" description="Tài liệu do người dùng đăng sẽ xuất hiện tại đây." action={<Link className="button" to="/upload">Đăng tài liệu đầu tiên</Link>} />}
-          </section>
+          <HomeDocumentRail
+            documents={latest}
+            icon={<Clock3 size={22} />}
+            linkLabel="Xem tài liệu mới"
+            title="Tài liệu mới nhất"
+          />
 
-          <section className="home-section">
-            <div className="section-heading"><div><BookOpen size={24} /><h2>Gợi ý cho bạn</h2></div><Link to="/documents">Khám phá thêm <ArrowRight size={17} /></Link></div>
-            {recommended.length ? <div className="document-grid document-grid--4">{recommended.map((item) => <DocumentCard key={item.id} document={item} />)}</div> : <EmptyState title="Chưa có gợi ý" description="Hãy đăng hoặc tương tác với tài liệu để xây dựng hành trình học tập." />}
-          </section>
+          <HomeDocumentRail
+            documents={loved}
+            icon={<BookHeart size={22} />}
+            title="Tài liệu được yêu thích nhất"
+          />
+
+          <HomeDocumentRail
+            documents={recommended}
+            icon={<BookOpen size={22} />}
+            linkLabel="Khám phá thêm"
+            title="Gợi ý cho bạn"
+          />
         </>
+      ) : (
+        <EmptyState
+          action={<Link className="button" to="/upload">Đăng tài liệu đầu tiên</Link>}
+          description="Tài liệu do người dùng đăng sẽ xuất hiện tại đây."
+          title="Chưa có tài liệu"
+        />
       )}
 
       <section className="impact-strip botanical-card">

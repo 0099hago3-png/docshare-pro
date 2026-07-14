@@ -36,8 +36,21 @@ export default function UploadPage({ mode = 'create' }) {
   const [loading, setLoading] = useState(editing);
   const [busy, setBusy] = useState(false);
   const premiumActive = isPremiumActive(currentUser);
+  const paidDocument = Number(form.priceCredit || 0) > 0;
+  const existingDemoFile = useMemo(
+    () => existingFiles.some((item) => item.file_kind === 'demo'),
+    [existingFiles],
+  );
+  const hasRequiredDemo = !paidDocument || Boolean(demoFile) || existingDemoFile;
 
-  const canSubmit = useMemo(() => form.title.trim() && form.description.trim() && form.categoryId && (editing || fullFile), [form, editing, fullFile]);
+  const canSubmit = useMemo(
+    () => form.title.trim()
+      && form.description.trim()
+      && form.categoryId
+      && (editing || fullFile)
+      && hasRequiredDemo,
+    [form, editing, fullFile, hasRequiredDemo],
+  );
   const set = (key) => (event) => setForm((value) => ({ ...value, [key]: event.target.value }));
 
   useEffect(() => {
@@ -86,7 +99,14 @@ export default function UploadPage({ mode = 'create' }) {
 
   async function submit(event, draft = false) {
     event?.preventDefault();
-    if (!canSubmit && !draft) return toast('Hãy điền đủ thông tin và chọn file tài liệu đầy đủ.', 'error');
+    if (!draft && paidDocument && !demoFile && !existingDemoFile) {
+      return toast('Tài liệu có phí bắt buộc phải tải lên file demo.', 'error');
+    }
+
+    if (!canSubmit && !draft) {
+      return toast('Hãy điền đủ thông tin, chọn file đầy đủ và bổ sung file demo khi tài liệu có phí.', 'error');
+    }
+
     try {
       setBusy(true);
       const payload = {
@@ -180,7 +200,18 @@ export default function UploadPage({ mode = 'create' }) {
           <div className="form-section-title form-section-title--files"><span>02</span><div><h2>Tệp tài liệu</h2><p>File đầy đủ được lưu riêng tư. Người có quyền mới truy cập được.</p></div></div>
           <div className="upload-zone-grid">
             <UploadDropzone kind="image" label="Ảnh bìa" hint="JPG, PNG hoặc WEBP" accept="image/jpeg,image/png,image/webp" file={coverFile} onChange={setCoverFile} />
-            <UploadDropzone label="File xem trước" hint="PDF, không bắt buộc" accept="application/pdf" file={demoFile} onChange={setDemoFile} />
+            <div className={`paid-demo-zone-v70-3${paidDocument ? ' is-required-v70-3' : ''}`}>
+              <UploadDropzone
+                label={paidDocument ? 'File xem thử (Demo) *' : 'File xem thử (Demo)'}
+                hint={paidDocument ? 'Bắt buộc đối với tài liệu có phí' : 'PDF, không bắt buộc đối với tài liệu miễn phí'}
+                accept="application/pdf"
+                file={demoFile}
+                onChange={setDemoFile}
+              />
+              {paidDocument && !demoFile && !existingDemoFile && (
+                <small className="paid-demo-warning-v70-3">Tài liệu có phí phải có file demo để người dùng xem thử trước khi mua.</small>
+              )}
+            </div>
             <UploadDropzone label="File tài liệu đầy đủ" hint="PDF, Word, PowerPoint, Excel hoặc ZIP" file={fullFile} onChange={setFullFile} required={!editing} />
           </div>
           {editing && <p className="muted">Không chọn tệp mới thì hệ thống giữ nguyên tệp hiện tại.</p>}
@@ -195,7 +226,7 @@ export default function UploadPage({ mode = 'create' }) {
           <div className={`upload-preview__cover document-card--frame-${premiumActive ? form.coverFrame : 'none'}`}><span className="document-card__premium-frame-v70" aria-hidden="true" />{coverFile ? <img src={URL.createObjectURL(coverFile)} alt="Xem trước" /> : <img src="/assets/default-cover.svg" alt="Bìa mặc định" />}</div>
           <h4>{form.title || 'Tiêu đề tài liệu'}</h4>
           <p>{form.description || 'Mô tả tài liệu sẽ xuất hiện tại đây.'}</p>
-          <ul><li>Thông tin tài liệu</li><li>{editing || fullFile ? 'Đã có file đầy đủ' : 'Chưa có file đầy đủ'}</li><li>{coverFile ? 'Đã chọn ảnh bìa' : 'Ảnh bìa không bắt buộc'}</li><li>{demoFile ? 'Đã chọn file demo' : 'File demo không bắt buộc'}</li></ul>
+          <ul><li>Thông tin tài liệu</li><li>{editing || fullFile ? 'Đã có file đầy đủ' : 'Chưa có file đầy đủ'}</li><li>{coverFile ? 'Đã chọn ảnh bìa' : 'Ảnh bìa không bắt buộc'}</li><li>{demoFile || existingDemoFile ? 'Đã có file demo' : paidDocument ? 'Thiếu file demo bắt buộc' : 'File demo không bắt buộc'}</li></ul>
         </aside>
       </form>
     </div>

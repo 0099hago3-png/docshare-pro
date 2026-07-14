@@ -1,0 +1,286 @@
+
+/* =========================================================
+   DOCSHARE PRO V70.3
+   Trang chủ 8 thẻ / hàng kéo ngang + tài liệu mới nhất
+   Tài liệu có phí bắt buộc có file demo
+   ========================================================= */
+
+.home-page-v70-3 {
+  overflow: hidden;
+}
+
+.home-section-v70-3 {
+  min-width: 0;
+  margin-top: 18px;
+}
+
+.home-section-heading-v70-3 {
+  margin-bottom: 10px;
+}
+
+.home-section-heading-v70-3 > div:first-child {
+  gap: 8px;
+}
+
+.home-section-heading-v70-3 h2 {
+  font-size: clamp(18px, 1.45vw, 25px);
+}
+
+.home-rail-tools-v70-3 {
+  display: flex !important;
+  align-items: center;
+  gap: 7px;
+}
+
+.home-rail-tools-v70-3 > a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 8px;
+  white-space: nowrap;
+}
+
+.home-rail-arrow-v70-3 {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid rgba(24, 110, 70, 0.22);
+  border-radius: 10px;
+  background: #fffef9;
+  color: #126c43;
+  cursor: pointer;
+  transition: transform .16s ease, background .16s ease, color .16s ease;
+}
+
+.home-rail-arrow-v70-3:hover {
+  background: #167a4a;
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.home-document-rail-v70-3 {
+  --home-rail-visible: 8;
+  --home-rail-gap: 10px;
+  display: flex;
+  gap: var(--home-rail-gap);
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 2px 12px;
+  scroll-behavior: smooth;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(20, 114, 70, .44) rgba(226, 239, 228, .72);
+  overscroll-behavior-inline: contain;
+}
+
+.home-document-rail-v70-3::-webkit-scrollbar {
+  height: 7px;
+}
+
+.home-document-rail-v70-3::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: rgba(226, 239, 228, .72);
+}
+
+.home-document-rail-v70-3::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(20, 114, 70, .44);
+}
+
+.home-document-rail-v70-3 > .document-card {
+  flex: 0 0 calc(
+    (100% - ((var(--home-rail-visible) - 1) * var(--home-rail-gap)))
+    / var(--home-rail-visible)
+  );
+  min-width: 0;
+  scroll-snap-align: start;
+  border-radius: 13px;
+  box-shadow: 0 8px 20px rgba(24, 86, 58, .08);
+}
+
+.home-document-rail-v70-3 .document-card__cover {
+  aspect-ratio: 3 / 4;
+  min-height: 0;
+  border-radius: 11px 11px 0 0;
+}
+
+.home-document-rail-v70-3 .document-card__cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.home-document-rail-v70-3 .document-card__badge,
+.home-document-rail-v70-3 .document-card__purchased-v70-2 {
+  min-height: 22px;
+  padding: 3px 6px;
+  font-size: 9px;
+}
+
+.home-document-rail-v70-3 .document-card__purchased-v70-2 svg {
+  width: 12px;
+  height: 12px;
+}
+
+.home-document-rail-v70-3 .document-card__body {
+  display: grid;
+  gap: 5px;
+  padding: 9px 8px 8px;
+}
+
+.home-document-rail-v70-3 .document-card__category {
+  overflow: hidden;
+  color: #168052;
+  font-size: 8.5px;
+  font-weight: 900;
+  letter-spacing: .04em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.home-document-rail-v70-3 .document-card h3 {
+  display: -webkit-box;
+  min-height: 32px;
+  margin: 0;
+  overflow: hidden;
+  color: #0e4a31;
+  font-size: 11.5px;
+  line-height: 1.38;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.home-document-rail-v70-3 .document-card__author {
+  gap: 3px;
+  min-width: 0;
+  font-size: 9.5px;
+}
+
+.home-document-rail-v70-3 .document-card__author > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-document-rail-v70-3 .premium-badge,
+.home-document-rail-v70-3 .teacher-badge-v70 {
+  transform: scale(.78);
+  transform-origin: left center;
+}
+
+.home-document-rail-v70-3 .document-card__stats {
+  gap: 5px;
+  padding-top: 5px;
+  font-size: 9px;
+}
+
+.home-document-rail-v70-3 .document-card__stats span {
+  gap: 2px;
+}
+
+.home-document-rail-v70-3 .document-card__stats svg {
+  width: 11px;
+  height: 11px;
+}
+
+.home-document-rail-v70-3 .document-card__actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 5px;
+  padding-top: 2px;
+}
+
+.home-document-rail-v70-3 .document-card__actions .button {
+  min-width: 0;
+  min-height: 30px;
+  padding: 0 5px;
+  border-radius: 8px;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.home-document-rail-v70-3 .document-card__actions .cart-add-button-v70,
+.home-document-rail-v70-3 .document-card__actions .icon-button {
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 8px;
+}
+
+.home-rail-empty-v70-3 {
+  display: grid;
+  place-items: center;
+  min-height: 150px;
+  padding: 20px;
+  border: 1px dashed rgba(31, 107, 70, .24);
+  border-radius: 16px;
+  background: rgba(249, 252, 247, .78);
+  color: #607568;
+}
+
+/* Tài liệu có phí bắt buộc có demo */
+.paid-demo-zone-v70-3 {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.paid-demo-zone-v70-3.is-required-v70-3 {
+  padding: 7px;
+  border: 1px solid rgba(202, 58, 62, .28);
+  border-radius: 14px;
+  background: rgba(255, 244, 243, .74);
+}
+
+.paid-demo-warning-v70-3 {
+  display: block;
+  padding: 0 5px 3px;
+  color: #bc3035;
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+@media (max-width: 1440px) {
+  .home-document-rail-v70-3 {
+    --home-rail-visible: 7;
+  }
+}
+
+@media (max-width: 1180px) {
+  .home-document-rail-v70-3 {
+    --home-rail-visible: 6;
+  }
+}
+
+@media (max-width: 960px) {
+  .home-document-rail-v70-3 {
+    --home-rail-visible: 4;
+  }
+}
+
+@media (max-width: 680px) {
+  .home-section-heading-v70-3 {
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .home-rail-tools-v70-3 > a {
+    display: none;
+  }
+
+  .home-document-rail-v70-3 {
+    --home-rail-visible: 2.25;
+    --home-rail-gap: 8px;
+  }
+
+  .home-document-rail-v70-3 .document-card h3 {
+    font-size: 11px;
+  }
+}
