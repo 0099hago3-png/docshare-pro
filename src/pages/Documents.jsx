@@ -27,7 +27,7 @@ export default function Documents() {
   const load = useCallback(async () => {
     try {
       setLoading(true);
-      let query = supabase.from('documents').select('*,profiles:author_id(id,full_name,username,avatar_path,school_name),categories(id,name,slug,icon_key),document_files(file_kind,storage_path)').eq('status', 'published');
+      let query = supabase.from('documents').select('*,profiles:author_id(id,full_name,username,avatar_path,school_name,role,premium,premium_expires_at),categories(id,name,slug,icon_key),document_files(file_kind,storage_path)').eq('status', 'published');
       if (filters.search.trim()) query = query.or(`title.ilike.%${filters.search.trim()}%,description.ilike.%${filters.search.trim()}%,subject.ilike.%${filters.search.trim()}%`);
       if (filters.category) query = query.eq('category_id', filters.category);
       if (filters.price === 'free') query = query.eq('price_credit', 0);

@@ -16,6 +16,7 @@ import '../v66-layout-avatar-fix.css';
 import '../v67-profile-images.css';
 import '../v68-profile-avatar-left.css';
 import '../v69-auto-cover-ratio.css';
+import '../v70-premium-cart-email.css';
 
 export default function AppShell() {
   return (

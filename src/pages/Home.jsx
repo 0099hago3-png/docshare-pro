@@ -26,7 +26,7 @@ export default function Home() {
     (async () => {
       try {
         const [{ data: docs, error }, { data: stats }] = await Promise.all([
-          supabase.from('documents').select('*,profiles:author_id(id,full_name,username,avatar_path),categories(id,name,slug,icon_key),document_files(file_kind,storage_bucket,storage_path)').eq('status', 'published').order('created_at', { ascending: false }).limit(12),
+          supabase.from('documents').select('*,profiles:author_id(id,full_name,username,avatar_path,role,premium,premium_expires_at),categories(id,name,slug,icon_key),document_files(file_kind,storage_bucket,storage_path)').eq('status', 'published').order('created_at', { ascending: false }).limit(12),
           supabase.from('document_stats').select('*'),
         ]);
         if (error) throw error;

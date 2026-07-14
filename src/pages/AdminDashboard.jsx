@@ -17,6 +17,7 @@ import {
   Gift,
   HandCoins,
   Heart,
+  Mail,
   MessageCircle,
   RefreshCw,
   Repeat2,
@@ -730,6 +731,32 @@ export default function AdminDashboard() {
     }
   }
 
+  async function sendPaymentReceipt(requestId) {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData?.session?.access_token;
+
+    if (!token) {
+      throw new Error('Không tìm thấy phiên đăng nhập Admin để gửi email.');
+    }
+
+    const response = await fetch('/api/send-payment-receipt', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ requestId }),
+    });
+
+    const payload = await response.json().catch(() => ({}));
+
+    if (!response.ok || !payload?.ok) {
+      throw new Error(payload?.message || 'Không thể gửi email biên nhận.');
+    }
+
+    return payload;
+  }
+
   async function processRequest(request, action) {
     try {
       setBusy(true);
@@ -740,7 +767,26 @@ export default function AdminDashboard() {
       });
       if (error) throw error;
       if (!result?.ok) throw new Error(result?.message || 'Không thể xử lý yêu cầu.');
-      toast(action === 'approve' ? 'Đã duyệt yêu cầu.' : 'Đã từ chối yêu cầu.');
+      let emailSent = false;
+      let emailMessage = '';
+
+      if (request.receipt_email) {
+        try {
+          await sendPaymentReceipt(request.id);
+          emailSent = true;
+        } catch (mailError) {
+          emailMessage = normalizeError(mailError);
+        }
+      }
+
+      if (emailSent) {
+        toast(`${action === 'approve' ? 'Đã duyệt' : 'Đã từ chối'} yêu cầu và đã gửi biên nhận tới ${request.receipt_email}.`);
+      } else if (request.receipt_email && emailMessage) {
+        toast(`${action === 'approve' ? 'Đã duyệt' : 'Đã từ chối'} yêu cầu nhưng gửi email chưa thành công: ${emailMessage}`, 'error');
+      } else {
+        toast(action === 'approve' ? 'Đã duyệt yêu cầu.' : 'Đã từ chối yêu cầu.');
+      }
+
       await load();
       await refreshUnread();
     } catch (error) {
@@ -1112,7 +1158,76 @@ export default function AdminDashboard() {
 
       {tab === 'posts' && <AdminTable headings={['Bài viết', 'Tác giả', 'Trạng thái', 'Ngày đăng', 'Thao tác']}>{data.posts.map((item) => <tr key={item.id}><td><strong>{item.title || item.content.slice(0, 60)}</strong></td><td>{getProfileName(item.profiles)}</td><td><span className={`status status--${item.status}`}>{item.status}</span></td><td>{formatDateTime(item.created_at)}</td><td><button className="button button--small button--danger-soft" type="button" onClick={() => setDeleteTarget({ type: 'post', id: item.id })}><Trash2 size={15} /> Xóa</button></td></tr>)}</AdminTable>}
 
-      {tab === 'payments' && <AdminTable headings={['Người dùng', 'Loại', 'Số tiền', 'Nội dung', 'Trạng thái', 'Ngày tạo', 'Thao tác']}>{data.requests.map((item) => <tr id={`payment-request-${item.id}`} key={item.id}><td><strong>{getProfileName(item.profiles)}</strong><small>{item.profiles?.public_id}</small></td><td>{item.type === 'topup' ? 'Nạp tiền' : item.type === 'withdraw' ? 'Rút tiền' : isRenewalRequest(item) ? 'Gia hạn Premium' : 'Mua Premium'}</td><td>{formatNumber(item.amount_vnd)}đ</td><td><code>{item.transfer_note}</code></td><td><span className={`status status--${item.status}`}>{item.status}</span></td><td>{formatDateTime(item.created_at)}</td><td>{item.status === 'pending' ? <div className="inline-actions"><button className="button button--small" type="button" onClick={() => processRequest(item, 'approve')}><CheckCircle2 size={15} /> Duyệt</button><button className="button button--small button--danger-soft" type="button" onClick={() => processRequest(item, 'reject')}><XCircle size={15} /> Từ chối</button></div> : '-'}</td></tr>)}</AdminTable>}
+      {tab === 'payments' && (
+        <AdminTable headings={['Người dùng', 'Loại', 'Số tiền', 'Email hóa đơn', 'Nội dung', 'Trạng thái', 'Ngày tạo', 'Thao tác']}>
+          {data.requests.map((item) => (
+            <tr id={`payment-request-${item.id}`} key={item.id}>
+              <td>
+                <strong>{getProfileName(item.profiles)}</strong>
+                <small>{item.profiles?.public_id}</small>
+              </td>
+              <td>
+                {item.type === 'topup'
+                  ? 'Nạp tiền'
+                  : item.type === 'withdraw'
+                    ? 'Rút tiền'
+                    : isRenewalRequest(item)
+                      ? 'Gia hạn Premium'
+                      : 'Mua Premium'}
+                {item.type === 'withdraw' && (
+                  <small>
+                    Phí 5%: {formatNumber(item.fee_vnd || Number(item.amount_vnd || 0) * 0.05)}đ
+                    {' · '}Thực nhận: {formatNumber(item.net_amount_vnd || Number(item.amount_vnd || 0) * 0.95)}đ
+                  </small>
+                )}
+              </td>
+              <td>{formatNumber(item.amount_vnd)}đ</td>
+              <td>
+                <span className="admin-receipt-email-v70">
+                  <Mail size={14} />
+                  {item.receipt_email || item.profiles?.email || '-'}
+                </span>
+                {item.receipt_sent_at && <small>Đã gửi biên nhận</small>}
+              </td>
+              <td><code>{item.transfer_note}</code></td>
+              <td><span className={`status status--${item.status}`}>{item.status}</span></td>
+              <td>{formatDateTime(item.created_at)}</td>
+              <td>
+                {item.status === 'pending' ? (
+                  <div className="inline-actions">
+                    <button className="button button--small" type="button" onClick={() => processRequest(item, 'approve')} disabled={busy}>
+                      <CheckCircle2 size={15} /> Duyệt
+                    </button>
+                    <button className="button button--small button--danger-soft" type="button" onClick={() => processRequest(item, 'reject')} disabled={busy}>
+                      <XCircle size={15} /> Từ chối
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    className="button button--small button--outline"
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        setBusy(true);
+                        await sendPaymentReceipt(item.id);
+                        toast(`Đã gửi lại biên nhận tới ${item.receipt_email || item.profiles?.email}.`);
+                        await load();
+                      } catch (error) {
+                        toast(normalizeError(error), 'error');
+                      } finally {
+                        setBusy(false);
+                      }
+                    }}
+                    disabled={busy || !(item.receipt_email || item.profiles?.email)}
+                  >
+                    <Mail size={14} /> Gửi lại email
+                  </button>
+                )}
+              </td>
+            </tr>
+          ))}
+        </AdminTable>
+      )}
 
       {tab === 'reports' && (
         <AdminTable headings={['Người báo cáo', 'Nội dung bị báo cáo', 'Lý do', 'Trạng thái', 'Ngày gửi', 'Thao tác']}>

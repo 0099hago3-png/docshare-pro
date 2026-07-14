@@ -40,6 +40,7 @@ export default function Feed() {
             avatar_path,
             premium,
             premium_expires_at,
+            role,
             verified
           ),
           post_likes(user_id)
@@ -65,6 +66,8 @@ export default function Feed() {
               email,
               avatar_path,
               premium,
+              premium_expires_at,
+              role,
               verified
             ),
             post_comment_reactions(

@@ -24,10 +24,10 @@ export const DOCUMENT_LANGUAGES = [
 export const ACADEMIC_YEARS = Array.from({ length: 16 }, (_, index) => new Date().getFullYear() - index);
 
 export const PREMIUM_PACKAGES = [
-  { code: 'premium_1m', name: 'Premium 1 tháng', months: 1, amount: 29000 },
-  { code: 'premium_3m', name: 'Premium 3 tháng', months: 3, amount: 79000 },
-  { code: 'premium_6m', name: 'Premium 6 tháng', months: 6, amount: 149000 },
-  { code: 'premium_12m', name: 'Premium 12 tháng', months: 12, amount: 269000 },
+  { code: 'premium_1m', name: 'Premium 1 tháng', months: 1, amount: 29000, bonusCredit: 20, highlight: 'Trải nghiệm Premium' },
+  { code: 'premium_3m', name: 'Premium 3 tháng', months: 3, amount: 79000, bonusCredit: 80, highlight: 'Tiết kiệm hơn' },
+  { code: 'premium_6m', name: 'Premium 6 tháng', months: 6, amount: 149000, bonusCredit: 180, highlight: 'Phổ biến' },
+  { code: 'premium_12m', name: 'Premium 12 tháng', months: 12, amount: 269000, bonusCredit: 400, highlight: 'Giá trị tốt nhất' },
 ];
 
 export const CREDIT_PACKAGES = [

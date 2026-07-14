@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext.jsx';
 import { supabase } from '../lib/supabase.js';
 import { formatRelativeTime, getProfileName, normalizeError } from '../lib/helpers.js';
@@ -22,6 +23,7 @@ import DonateModal from './DonateModal.jsx';
 import GiftBurst from './GiftBurst.jsx';
 import Modal from './Modal.jsx';
 import PremiumBadge from './PremiumBadge.jsx';
+import TeacherBadge from './TeacherBadge.jsx';
 
 const DEFAULT_VISIBLE_COMMENTS = 2;
 
@@ -101,7 +103,8 @@ function CommentItem({
   const author = comment.profiles || {};
   const authorName = getProfileName(author);
   const childReplies = sortReplies(repliesByParent.get(comment.id) || []);
-  const canManage = currentUser?.id === comment.user_id || currentUser?.role === 'admin';
+  const isGiftComment = comment.comment_type === 'gift';
+  const canManage = !isGiftComment && (currentUser?.id === comment.user_id || currentUser?.role === 'admin');
   const canReport = currentUser?.id !== comment.user_id;
 
   function startReply() {
@@ -246,14 +249,25 @@ function CommentItem({
   }
 
   return (
-    <article id={`comment-${comment.id}`} className={`feed-comment feed-comment--depth-${Math.min(depth, 3)}`}>
-      <Avatar profile={author} size={depth > 0 ? 30 : 34} />
+    <article
+      id={`comment-${comment.id}`}
+      className={`feed-comment feed-comment--depth-${Math.min(depth, 3)}${isGiftComment ? ' is-gift-comment-v70' : ''}`}
+    >
+      <Link className="profile-avatar-link-v70" to={`/profile/${comment.user_id}`}>
+        <Avatar profile={author} size={depth > 0 ? 30 : 34} />
+      </Link>
 
       <div className="feed-comment__body">
-        <div className="feed-comment__bubble">
+        <div className={`feed-comment__bubble${isGiftComment ? ' feed-comment__bubble--gift-v70' : ''}`}>
           <div className="feed-comment__head">
             <div>
-              <span className="feed-comment__name-row-v63"><strong>{authorName}</strong><PremiumBadge profile={author} compact /></span>
+              <span className="feed-comment__name-row-v63">
+                <Link className="profile-name-link-v70" to={`/profile/${comment.user_id}`}>
+                  <strong>{authorName}</strong>
+                </Link>
+                <PremiumBadge profile={author} compact />
+                <TeacherBadge profile={author} compact />
+              </span>
               <span>{formatRelativeTime(comment.created_at)}</span>
             </div>
 
@@ -330,6 +344,17 @@ function CommentItem({
                 </button>
               </div>
             </form>
+          ) : isGiftComment ? (
+            <p className="gift-comment-message-v70">
+              <span>đã gửi</span>
+              <b>
+                <i>{comment.gift_icon || '🎁'}</i>
+                {comment.gift_name || 'một món quà'}
+              </b>
+              {Number(comment.gift_credit || 0) > 0 && (
+                <em>{comment.gift_credit} credit</em>
+              )}
+            </p>
           ) : (
             <p>{comment.content}</p>
           )}

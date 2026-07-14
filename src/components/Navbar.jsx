@@ -4,6 +4,7 @@ import {
   CreditCard,
   LogOut,
   Search,
+  ShoppingCart,
   ShieldCheck,
   Upload,
   UserRound,
@@ -26,11 +27,13 @@ import { useUnread } from '../context/UnreadContext.jsx';
 import { formatNumber } from '../lib/helpers.js';
 import { supabase } from '../lib/supabase.js';
 import Avatar from './Avatar.jsx';
+import CartPanel from './CartPanel.jsx';
 import NotificationPanel from './NotificationPanel.jsx';
 import PremiumBadge, {
   isPremiumActive,
 } from './PremiumBadge.jsx';
 import SecurityModal from './SecurityModal.jsx';
+import TeacherBadge from './TeacherBadge.jsx';
 
 const links = [
   ['/', 'Trang chủ'],
@@ -68,6 +71,8 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [securityOpen, setSecurityOpen] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
   const [accountSummary, setAccountSummary] = useState({
     credit: 0,
     cash: 0,
@@ -134,6 +139,30 @@ export default function Navbar() {
       window.removeEventListener('docshare:wallet-refresh', refresh);
     };
   }, [loadAccountSummary]);
+
+
+  const loadCartCount = useCallback(async () => {
+    if (!currentUser?.id) {
+      setCartCount(0);
+      return;
+    }
+
+    const { count, error } = await supabase
+      .from('document_cart_items')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', currentUser.id);
+
+    if (!error) setCartCount(Number(count || 0));
+  }, [currentUser?.id]);
+
+  useEffect(() => {
+    loadCartCount();
+
+    const refresh = () => loadCartCount();
+    window.addEventListener('docshare:cart-refresh', refresh);
+
+    return () => window.removeEventListener('docshare:cart-refresh', refresh);
+  }, [loadCartCount]);
 
   function search(event) {
     event.preventDefault();
@@ -214,12 +243,36 @@ export default function Navbar() {
       </nav>
 
       <div className="navbar-actions">
+        <div className="navbar-cart-wrap-v70">
+          <button
+            className="icon-button notification-icon-button"
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              setNotificationsOpen(false);
+              setCartOpen((value) => !value);
+            }}
+            title="Giỏ hàng tài liệu"
+            aria-label="Giỏ hàng tài liệu"
+          >
+            <ShoppingCart size={19} />
+            <CountBadge value={cartCount} title="Tài liệu trong giỏ hàng" />
+          </button>
+
+          <CartPanel
+            open={cartOpen}
+            onClose={() => setCartOpen(false)}
+            onCountChange={setCartCount}
+          />
+        </div>
+
         <div className="navbar-notification-wrap-v63">
           <button
             className="icon-button notification-icon-button"
             type="button"
             onClick={() => {
               setOpen(false);
+              setCartOpen(false);
               setNotificationsOpen((value) => !value);
             }}
             title={
@@ -249,6 +302,7 @@ export default function Navbar() {
             type="button"
             onClick={() => {
               setNotificationsOpen(false);
+              setCartOpen(false);
               setOpen((value) => !value);
             }}
           >
@@ -262,6 +316,7 @@ export default function Navbar() {
                   compact
                   showText={false}
                 />
+                <TeacherBadge profile={currentUser} compact />
               </span>
 
               <small>
@@ -296,6 +351,7 @@ export default function Navbar() {
                         profile={currentUser}
                         compact
                       />
+                      <TeacherBadge profile={currentUser} compact />
                     </div>
                   </div>
 

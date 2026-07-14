@@ -3,11 +3,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import Avatar from '../components/Avatar.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
+import CartButton from '../components/CartButton.jsx';
 import DonateModal from '../components/DonateModal.jsx';
+import GiftBurst from '../components/GiftBurst.jsx';
+import InsufficientCreditModal from '../components/InsufficientCreditModal.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import Loading from '../components/Loading.jsx';
 import Modal from '../components/Modal.jsx';
 import PremiumBadge, { isPremiumActive } from '../components/PremiumBadge.jsx';
+import TeacherBadge from '../components/TeacherBadge.jsx';
 import { useApp } from '../context/AppContext.jsx';
 import { formatDate, formatNumber, getProfileName, normalizeError, publicAssetUrl } from '../lib/helpers.js';
 import { safeFileName } from '../lib/analytics.js';
@@ -37,6 +41,8 @@ export default function DocumentDetail() {
   const [deleteDocumentOpen, setDeleteDocumentOpen] = useState(false);
   const [deleteCommentId, setDeleteCommentId] = useState(null);
   const [giftOpen, setGiftOpen] = useState(false);
+  const [giftEffect, setGiftEffect] = useState(null);
+  const [insufficient, setInsufficient] = useState(null);
   const [purchaseOpen, setPurchaseOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState('Nội dung sai lệch');
@@ -72,7 +78,7 @@ export default function DocumentDetail() {
 
         supabase
           .from('document_comments')
-          .select('*,profiles:user_id(id,full_name,username,email,avatar_path,premium,premium_expires_at)')
+          .select('*,profiles:user_id(id,full_name,username,email,avatar_path,role,premium,premium_expires_at)')
           .eq('document_id', id)
           .order('created_at', { ascending: true }),
 
@@ -477,8 +483,15 @@ export default function DocumentDetail() {
       const { data, error } = await supabase.rpc('purchase_document', { p_document_id: id });
       if (error) throw error;
       if (!data?.ok) {
-        if (data?.code === 'INSUFFICIENT_CREDIT') throw new Error(`Không đủ credit. Bạn có ${data.balance || 0} credit, tài liệu cần ${data.price || 0} credit.`);
-        throw new Error('Không thể mua tài liệu.');
+        if (data?.code === 'INSUFFICIENT_CREDIT') {
+          setPurchaseOpen(false);
+          setInsufficient({
+            balance: Number(data.balance || 0),
+            required: Number(data.price || premiumPrice || 0),
+          });
+          return;
+        }
+        throw new Error(data?.message || 'Không thể mua tài liệu.');
       }
       toast(data.code === 'PURCHASED' ? (data.premium_discount_percent ? `Mua thành công với ưu đãi Premium ${data.premium_discount_percent}%.` : 'Mua tài liệu thành công.') : 'Bạn đã có quyền truy cập tài liệu.');
       setPurchaseOpen(false);
@@ -499,15 +512,15 @@ export default function DocumentDetail() {
   return (
     <div className="page document-detail-page">
       <div className="document-detail-layout">
-        <aside className="document-detail-cover"><img src={coverPath ? publicAssetUrl('document-covers', coverPath) : '/assets/default-cover.svg'} alt={document.title} /></aside>
+        <aside className={`document-detail-cover document-detail-cover--frame-${document.cover_frame || 'none'}`}><span className="document-cover-frame-effect-v70" aria-hidden="true" /><img src={coverPath ? publicAssetUrl('document-covers', coverPath) : '/assets/default-cover.svg'} alt={document.title} /></aside>
         <section className="document-detail-main botanical-card">
           <div className="detail-topline"><span>{document.categories?.name || 'Học thuật'}</span>{canManage && <div className="detail-owner-actions"><Link className="button button--small button--outline" to={`/documents/${id}/edit`}><Edit3 size={16} /> Sửa</Link><button className="button button--small button--danger-soft" type="button" onClick={() => setDeleteDocumentOpen(true)}><Trash2 size={16} /> Xóa</button></div>}</div>
           <h1>{document.title}</h1>
           <p className="document-detail-description">{document.description}</p>
-          <Link className="author-card" to={`/profile/${document.author_id}`}><Avatar profile={document.profiles} size={50} /><div><span className="author-card__name-v63"><strong>{getProfileName(document.profiles)}</strong><PremiumBadge profile={document.profiles} compact /></span><small>{document.profiles?.school_name || 'Thành viên DocShare'}</small></div></Link>
+          <Link className="author-card" to={`/profile/${document.author_id}`}><Avatar profile={document.profiles} size={50} /><div><span className="author-card__name-v63"><strong>{getProfileName(document.profiles)}</strong><PremiumBadge profile={document.profiles} compact /><TeacherBadge profile={document.profiles} compact /></span><small>{document.profiles?.school_name || 'Thành viên DocShare'}</small></div></Link>
           <div className="tag-row">{(document.tags || []).map((tag) => <span key={tag}>#{tag}</span>)}</div>
           <div className="document-detail-stats"><span><Eye size={15} /> {formatNumber(stats.view_count || 0)} lượt xem</span><span><Heart size={15} /> {formatNumber(stats.like_count || 0)} lượt thích</span><span><Star size={15} /> {Number(stats.average_rating || 0).toFixed(1)} / 5</span><span><MessageCircle size={15} /> {formatNumber(stats.comment_count || 0)} bình luận</span><span><Download size={15} /> {formatNumber(stats.download_count || 0)} lượt tải</span></div>
-          <div className="document-detail-actions"><button className={liked ? 'button is-liked' : 'button button--outline'} type="button" onClick={toggleLike}><Heart size={17} fill={liked ? 'currentColor' : 'none'} /> {liked ? 'Đã thích' : 'Thích'}</button><button className={bookmarked ? 'button' : 'button button--outline'} type="button" onClick={toggleBookmark}><Bookmark size={17} /> {bookmarked ? 'Đã lưu' : 'Lưu tài liệu'}</button><button className="button button--outline" type="button" onClick={() => setGiftOpen(true)}><Gift size={17} /> Tặng quà</button><button className="button button--outline document-report-button" type="button" onClick={() => setReportOpen(true)}><Flag size={17} /> Báo cáo tài liệu</button></div>
+          <div className="document-detail-actions"><button className={liked ? 'button is-liked' : 'button button--outline'} type="button" onClick={toggleLike}><Heart size={17} fill={liked ? 'currentColor' : 'none'} /> {liked ? 'Đã thích' : 'Thích'}</button><button className={bookmarked ? 'button' : 'button button--outline'} type="button" onClick={toggleBookmark}><Bookmark size={17} /> {bookmarked ? 'Đã lưu' : 'Lưu tài liệu'}</button><CartButton document={document} /><button className="button button--outline" type="button" onClick={() => setGiftOpen(true)}><Gift size={17} /> Tặng quà</button><button className="button button--outline document-report-button" type="button" onClick={() => setReportOpen(true)}><Flag size={17} /> Báo cáo tài liệu</button></div>
         </section>
         <aside className="access-card botanical-card">
           <span className="eyebrow">QUYỀN TRUY CẬP</span>
@@ -767,6 +780,11 @@ export default function DocumentDetail() {
               Tác giả: {getProfileName(document.profiles)}
             </span>
 
+            <div className="purchase-share-note-v70">
+              <span>Tác giả nhận 70% số credit thanh toán</span>
+              <small>30% được giữ lại cho chi phí vận hành và phát triển hệ thống.</small>
+            </div>
+
             {buyerPremium && originalPrice > 0 ? (
               <div className="purchase-premium-discount-v63">
                 <small>Giá gốc {originalPrice} credit</small>
@@ -809,6 +827,29 @@ export default function DocumentDetail() {
         receiver={document.profiles}
         targetType="document"
         targetId={document.id}
+        onSent={(gift) => {
+          setGiftEffect({
+            gift,
+            receiverName: getProfileName(document.profiles),
+          });
+          load({ silent: true });
+        }}
+      />
+
+      {giftEffect && (
+        <GiftBurst
+          gift={giftEffect.gift}
+          senderName={getProfileName(currentUser)}
+          receiverName={giftEffect.receiverName}
+          onDone={() => setGiftEffect(null)}
+        />
+      )}
+
+      <InsufficientCreditModal
+        open={Boolean(insufficient)}
+        onClose={() => setInsufficient(null)}
+        balance={insufficient?.balance || 0}
+        required={insufficient?.required || 0}
       />
     </div>
   );
@@ -816,10 +857,62 @@ export default function DocumentDetail() {
 
 function CommentItem({ comment, replies, currentUser, onReply, onEdit, onDelete, onHeart }) {
   const canManage = comment.user_id === currentUser.id || currentUser.role === 'admin';
+
   return (
     <div id={`comment-${comment.id}`} className="comment-item">
-      <Avatar profile={comment.profiles} size={38} />
-      <div className="comment-item__body"><div className="comment-item__bubble"><span className="comment-name-row-v63"><strong>{getProfileName(comment.profiles)}</strong><PremiumBadge profile={comment.profiles} compact /></span><p>{comment.content}</p></div><div className="comment-item__actions"><button type="button" onClick={() => onHeart(comment.id)}><Heart size={14} /> Thích</button><button type="button" onClick={() => onReply(comment)}><Reply size={14} /> Trả lời</button>{canManage && <><button type="button" onClick={() => onEdit(comment)}><Edit3 size={14} /> Sửa</button><button type="button" onClick={() => onDelete(comment.id)}><Trash2 size={14} /> Xóa</button></>}</div>{replies.map((reply) => <div id={`comment-${reply.id}`} className="comment-reply" key={reply.id}><Avatar profile={reply.profiles} size={32} /><div><span className="comment-name-row-v63"><strong>{getProfileName(reply.profiles)}</strong><PremiumBadge profile={reply.profiles} compact /></span><p>{reply.content}</p></div></div>)}</div>
+      <Link className="profile-avatar-link-v70" to={`/profile/${comment.user_id}`}>
+        <Avatar profile={comment.profiles} size={38} />
+      </Link>
+
+      <div className="comment-item__body">
+        <div className="comment-item__bubble">
+          <span className="comment-name-row-v63">
+            <Link className="profile-name-link-v70" to={`/profile/${comment.user_id}`}>
+              <strong>{getProfileName(comment.profiles)}</strong>
+            </Link>
+            <PremiumBadge profile={comment.profiles} compact />
+            <TeacherBadge profile={comment.profiles} compact />
+          </span>
+          <p>{comment.content}</p>
+        </div>
+
+        <div className="comment-item__actions">
+          <button type="button" onClick={() => onHeart(comment.id)}>
+            <Heart size={14} /> Thích
+          </button>
+          <button type="button" onClick={() => onReply(comment)}>
+            <Reply size={14} /> Trả lời
+          </button>
+          {canManage && (
+            <>
+              <button type="button" onClick={() => onEdit(comment)}>
+                <Edit3 size={14} /> Sửa
+              </button>
+              <button type="button" onClick={() => onDelete(comment.id)}>
+                <Trash2 size={14} /> Xóa
+              </button>
+            </>
+          )}
+        </div>
+
+        {replies.map((reply) => (
+          <div id={`comment-${reply.id}`} className="comment-reply" key={reply.id}>
+            <Link className="profile-avatar-link-v70" to={`/profile/${reply.user_id}`}>
+              <Avatar profile={reply.profiles} size={32} />
+            </Link>
+            <div>
+              <span className="comment-name-row-v63">
+                <Link className="profile-name-link-v70" to={`/profile/${reply.user_id}`}>
+                  <strong>{getProfileName(reply.profiles)}</strong>
+                </Link>
+                <PremiumBadge profile={reply.profiles} compact />
+                <TeacherBadge profile={reply.profiles} compact />
+              </span>
+              <p>{reply.content}</p>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

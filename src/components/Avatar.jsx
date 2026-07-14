@@ -49,6 +49,7 @@ export default function Avatar({
   }, [source]);
 
   const premium = isPremiumActive(profile);
+  const teacher = profile?.role === 'teacher';
   const showImage = Boolean(source) && !imageFailed;
 
   return (
@@ -56,6 +57,7 @@ export default function Avatar({
       className={[
         'avatar',
         premium ? 'avatar--premium-v63' : '',
+        teacher ? 'avatar--teacher-v70' : '',
         className,
       ].filter(Boolean).join(' ')}
       style={{
@@ -79,6 +81,16 @@ export default function Avatar({
         <span className="avatar__initials-v66" aria-hidden="true">
           {initials}
         </span>
+      )}
+
+      {teacher && (
+        <i
+          className="avatar__teacher-v70"
+          aria-label="Giảng viên"
+          title="Tài khoản giảng viên"
+        >
+          🎓
+        </i>
       )}
 
       {premium && (

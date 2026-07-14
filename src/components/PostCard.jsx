@@ -1,5 +1,6 @@
 import { Edit3, Gift, Heart, MessageCircle, MoreHorizontal, Send, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext.jsx';
 import { supabase } from '../lib/supabase.js';
 import { formatRelativeTime, getProfileName, normalizeError } from '../lib/helpers.js';
@@ -8,6 +9,7 @@ import CommentThread from './CommentThread.jsx';
 import ConfirmDialog from './ConfirmDialog.jsx';
 import Modal from './Modal.jsx';
 import PremiumBadge from './PremiumBadge.jsx';
+import TeacherBadge from './TeacherBadge.jsx';
 
 export default function PostCard({ post, onChanged, onGift }) {
   const { currentUser, toast } = useApp();
@@ -127,10 +129,18 @@ export default function PostCard({ post, onChanged, onGift }) {
   return (
     <article id={`post-${post.id}`} className="post-card botanical-card post-card--enhanced-comments">
       <header className="post-card__header">
-        <Avatar profile={author} size={46} />
+        <Link className="profile-avatar-link-v70" to={`/profile/${post.author_id}`}>
+          <Avatar profile={author} size={46} />
+        </Link>
 
         <div className="post-card__identity">
-          <div className="post-card__name-row-v63"><strong>{getProfileName(author)}</strong><PremiumBadge profile={author} compact /></div>
+          <div className="post-card__name-row-v63">
+            <Link className="profile-name-link-v70" to={`/profile/${post.author_id}`}>
+              <strong>{getProfileName(author)}</strong>
+            </Link>
+            <PremiumBadge profile={author} compact />
+            <TeacherBadge profile={author} compact />
+          </div>
           <span>@{author.username || 'user'} · {formatRelativeTime(post.created_at)}</span>
         </div>
 

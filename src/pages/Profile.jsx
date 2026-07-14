@@ -32,6 +32,7 @@ import PremiumBadge, {
 import PremiumBenefits from '../components/PremiumBenefits.jsx';
 import ProfileImageEditor from '../components/ProfileImageEditor.jsx';
 import SecurityModal from '../components/SecurityModal.jsx';
+import TeacherBadge from '../components/TeacherBadge.jsx';
 import { useApp } from '../context/AppContext.jsx';
 import {
   formatDate,
@@ -229,6 +230,7 @@ export default function Profile() {
             <h1>{getProfileName(profile)}</h1>
 
             <PremiumBadge profile={profile} />
+            <TeacherBadge profile={profile} />
           </div>
 
           <p>@{profile.username}</p>
