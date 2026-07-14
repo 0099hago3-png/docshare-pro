@@ -17,7 +17,12 @@ import '../v67-profile-images.css';
 import '../v68-profile-avatar-left.css';
 import '../v69-auto-cover-ratio.css';
 import '../v70-premium-cart-email.css';
-import '../v71-home-compact-sections.css';
+
+/*
+  Giữ bản sửa dropdown tìm kiếm V72.
+  Không import v71-home-compact-sections.css để bố cục tài liệu
+  quay về kiểu cũ của trang chủ.
+*/
 import '../v72-home-search-dropdown-fix.css';
 
 export default function AppShell() {
