@@ -16,7 +16,7 @@ function mergeStats(documents, stats) {
 }
 
 export default function Home() {
-  const { toast } = useApp();
+  const { currentUser, toast } = useApp();
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [keyword, setKeyword] = useState('');
@@ -26,14 +26,17 @@ export default function Home() {
     let mounted = true;
     (async () => {
       try {
-        const [{ data: docs, error }, { data: stats }] = await Promise.all([
+        const [{ data: docs, error }, { data: stats }, purchaseResult] = await Promise.all([
           supabase.from('documents').select('*,profiles:author_id(id,full_name,username,avatar_path,role,premium,premium_expires_at),categories(id,name,slug,icon_key),document_files(file_kind,storage_bucket,storage_path)').eq('status', 'published').order('created_at', { ascending: false }).limit(12),
           supabase.from('document_stats').select('*'),
+          supabase.from('document_purchases').select('document_id').eq('buyer_id', currentUser.id),
         ]);
         if (error) throw error;
+        const purchasedIds = new Set((purchaseResult.data || []).map((item) => item.document_id));
         const normalized = (docs || []).map((item) => ({
           ...item,
           cover_path: item.document_files?.find((file) => file.file_kind === 'cover')?.storage_path || null,
+          is_purchased: purchasedIds.has(item.id),
         }));
         if (mounted) setDocuments(mergeStats(normalized, stats));
       } catch (error) {
@@ -43,7 +46,25 @@ export default function Home() {
       }
     })();
     return () => { mounted = false; };
-  }, [toast]);
+  }, [currentUser.id, toast]);
+
+  useEffect(() => {
+    const markPurchased = (event) => {
+      const ids = new Set([
+        ...(event?.detail?.documentIds || []),
+        event?.detail?.documentId,
+      ].filter(Boolean));
+
+      if (!ids.size) return;
+
+      setDocuments((current) => current.map((item) => (
+        ids.has(item.id) ? { ...item, is_purchased: true } : item
+      )));
+    };
+
+    window.addEventListener('docshare:purchases-refresh', markPurchased);
+    return () => window.removeEventListener('docshare:purchases-refresh', markPurchased);
+  }, []);
 
   const loved = useMemo(() => [...documents].sort((a, b) => (b.document_stats?.like_count || 0) - (a.document_stats?.like_count || 0)).slice(0, 4), [documents]);
   const recommended = useMemo(() => documents.slice(4, 8), [documents]);

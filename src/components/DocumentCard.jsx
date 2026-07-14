@@ -1,4 +1,4 @@
-import { Bookmark, Eye, Heart, Star } from 'lucide-react';
+import { Bookmark, CheckCircle2, Eye, Heart, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatNumber, getProfileName, publicAssetUrl } from '../lib/helpers.js';
 import CartButton from './CartButton.jsx';
@@ -14,12 +14,20 @@ export default function DocumentCard({ document, onBookmark }) {
   const category = document?.categories?.name || 'Học thuật';
   const stats = document?.document_stats || document?.stats || {};
   const frame = document?.cover_frame || 'none';
+  const purchased = Boolean(document?.is_purchased);
 
   return (
-    <article className={`document-card botanical-card document-card--frame-${frame}`}>
+    <article className={`document-card botanical-card document-card--frame-${frame}${purchased ? ' is-purchased-v70-2' : ''}`}>
       <Link className="document-card__cover" to={`/documents/${document.id}`}>
         <span className="document-card__premium-frame-v70" aria-hidden="true" />
         <img src={cover} alt={document.title} />
+
+        {purchased && (
+          <span className="document-card__purchased-v70-2">
+            <CheckCircle2 size={15} /> Đã mua
+          </span>
+        )}
+
         <span className="document-card__badge">
           {document.price_credit > 0
             ? `${document.price_credit} credit`
@@ -55,7 +63,7 @@ export default function DocumentCard({ document, onBookmark }) {
             className="button button--small button--outline"
             to={`/documents/${document.id}`}
           >
-            Xem chi tiết
+            {purchased ? 'Mở tài liệu' : 'Xem chi tiết'}
           </Link>
 
           <CartButton document={document} compact />

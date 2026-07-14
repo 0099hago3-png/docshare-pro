@@ -20,41 +20,58 @@ import {
 } from '../lib/searchEngine.js';
 import { supabase } from '../lib/supabase.js';
 
-let cachedSearchDocuments = null;
-let searchDocumentsPromise = null;
+let cachedSearchIndex = null;
+let searchIndexPromise = null;
 
-async function fetchSearchDocuments() {
-  if (cachedSearchDocuments) return cachedSearchDocuments;
-  if (searchDocumentsPromise) return searchDocumentsPromise;
+async function fetchSearchIndex() {
+  if (cachedSearchIndex) return cachedSearchIndex;
+  if (searchIndexPromise) return searchIndexPromise;
 
-  searchDocumentsPromise = supabase
-    .from('documents')
-    .select('id,title,description,subject,created_at,profiles:author_id(id,full_name,username,email,school_name),categories(id,name)')
-    .eq('status', 'published')
-    .order('created_at', { ascending: false })
-    .limit(150)
-    .then(({ data, error }) => {
-      if (error) throw error;
-      cachedSearchDocuments = data || [];
-      return cachedSearchDocuments;
+  searchIndexPromise = Promise.all([
+    supabase
+      .from('documents')
+      .select('id,title,description,subject,tags,created_at,profiles:author_id(id,full_name,username,email,school_name,faculty,major),categories(id,name)')
+      .eq('status', 'published')
+      .order('created_at', { ascending: false })
+      .limit(250),
+    supabase
+      .from('profiles')
+      .select('id,full_name,username,email,school_name,faculty,major,role,status')
+      .neq('status', 'locked')
+      .order('full_name', { ascending: true })
+      .limit(250),
+  ])
+    .then(([documentResult, profileResult]) => {
+      if (documentResult.error) throw documentResult.error;
+      if (profileResult.error) throw profileResult.error;
+
+      cachedSearchIndex = {
+        documents: documentResult.data || [],
+        profiles: profileResult.data || [],
+      };
+
+      return cachedSearchIndex;
     })
     .finally(() => {
-      searchDocumentsPromise = null;
+      searchIndexPromise = null;
     });
 
-  return searchDocumentsPromise;
+  return searchIndexPromise;
 }
 
-function useSearchDocuments() {
-  const [documents, setDocuments] = useState(() => cachedSearchDocuments || []);
-  const [loading, setLoading] = useState(!cachedSearchDocuments);
+function useSearchIndex() {
+  const [index, setIndex] = useState(() => cachedSearchIndex || {
+    documents: [],
+    profiles: [],
+  });
+  const [loading, setLoading] = useState(!cachedSearchIndex);
 
   useEffect(() => {
     let mounted = true;
 
-    fetchSearchDocuments()
-      .then((items) => {
-        if (mounted) setDocuments(items);
+    fetchSearchIndex()
+      .then((value) => {
+        if (mounted) setIndex(value);
       })
       .catch((error) => {
         console.warn('Không tải được gợi ý tìm kiếm:', error?.message || error);
@@ -68,7 +85,7 @@ function useSearchDocuments() {
     };
   }, []);
 
-  return { documents, loading };
+  return { ...index, loading };
 }
 
 function SuggestionIcon({ type }) {
@@ -91,8 +108,8 @@ function SuggestionPanel({
   return (
     <div className="smart-search-panel-v70-1" id={listId} role="listbox">
       <div className="smart-search-panel-v70-1__head">
-        <strong>{normalizeSearchText(inputValue) ? 'Gợi ý phù hợp' : 'Tìm kiếm gần đây'}</strong>
-        <small>Tìm theo tài liệu, tác giả, môn học và trường</small>
+        <strong>{normalizeSearchText(inputValue) ? 'Gợi ý phù hợp' : 'Gợi ý tìm kiếm'}</strong>
+        <small>Tìm theo tài liệu, tác giả, username, môn học và trường</small>
       </div>
 
       {loading && !suggestions.length ? (
@@ -120,7 +137,7 @@ function SuggestionPanel({
                 <small>{item.meta}</small>
               </span>
               <span className="smart-search-type-v70-1">
-                {item.type === 'document' ? 'Mở' : 'Tìm'}
+                {item.type === 'author' ? 'Hồ sơ' : item.type === 'document' ? 'Mở' : 'Tìm'}
               </span>
             </button>
           ))}
@@ -138,15 +155,15 @@ function SuggestionPanel({
 }
 
 function useSmartSearch(value, limit = 8) {
-  const { documents, loading } = useSearchDocuments();
+  const { documents, profiles, loading } = useSearchIndex();
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const rootRef = useRef(null);
   const listId = useId();
 
   const suggestions = useMemo(
-    () => buildSearchSuggestions(documents, value, limit),
-    [documents, limit, value],
+    () => buildSearchSuggestions(documents, value, limit, profiles),
+    [documents, limit, profiles, value],
   );
 
   useEffect(() => {
@@ -218,7 +235,7 @@ export function SmartSearchForm({
   placeholder = 'Tìm tài liệu, môn học, tác giả...',
   value,
 }) {
-  const smart = useSmartSearch(value, compact ? 7 : 8);
+  const smart = useSmartSearch(value, compact ? 7 : 9);
 
   function choose(item) {
     onChange(item.value);
@@ -279,7 +296,7 @@ export function SmartSearchInput({
   placeholder = 'Tên tài liệu, tác giả, môn học, trường học...',
   value,
 }) {
-  const smart = useSmartSearch(value, 8);
+  const smart = useSmartSearch(value, 9);
 
   function choose(item) {
     onChange(item.value);

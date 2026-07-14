@@ -1,7 +1,7 @@
 /**
- * DOCSHARE PRO V70.1 - SMART SEARCH ENGINE
+ * DOCSHARE PRO V70.2 - SMART SEARCH ENGINE
  * Tìm kiếm không phân biệt dấu, chấm điểm theo độ liên quan,
- * hỗ trợ tên tài liệu, tác giả, username, môn học, danh mục và trường học.
+ * hỗ trợ tài liệu, tác giả, username, môn học, danh mục và trường học.
  */
 
 export function normalizeSearchText(value = '') {
@@ -49,6 +49,8 @@ function getDocumentFields(document) {
     subject: document?.subject || '',
     category: category.name || '',
     school: profile.school_name || document?.school_name || '',
+    faculty: profile.faculty || '',
+    major: profile.major || '',
     tags,
     description: document?.description || '',
   };
@@ -124,12 +126,14 @@ export function scoreDocument(document, keyword) {
   const fields = getDocumentFields(document);
   const weights = {
     title: 180,
-    author: 170,
-    username: 155,
+    author: 190,
+    username: 180,
     email: 70,
     subject: 125,
     category: 110,
     school: 95,
+    faculty: 90,
+    major: 90,
     tags: 90,
     description: 42,
   };
@@ -147,10 +151,10 @@ export function scoreDocument(document, keyword) {
   }
 
   if (normalizeSearchText(fields.author) === query || normalizeSearchText(fields.username) === query) {
-    score += 220;
+    score += 260;
   }
 
-  if (normalizeSearchText(fields.title) === query) score += 260;
+  if (normalizeSearchText(fields.title) === query) score += 280;
 
   return Math.round(score);
 }
@@ -180,17 +184,17 @@ function suggestionScore(value, query, base = 100) {
 
   if (!normalizedQuery) return base;
   if (!normalizedValue) return 0;
-  if (normalizedValue === normalizedQuery) return base + 600;
-  if (normalizedValue.startsWith(normalizedQuery)) return base + 440;
-  if (normalizedValue.includes(normalizedQuery)) return base + 300;
+  if (normalizedValue === normalizedQuery) return base + 700;
+  if (normalizedValue.startsWith(normalizedQuery)) return base + 470;
+  if (normalizedValue.includes(normalizedQuery)) return base + 320;
 
   const queryTokens = words(normalizedQuery);
   const valueTokens = words(normalizedValue);
   let score = 0;
 
   for (const token of queryTokens) {
-    if (valueTokens.includes(token)) score += 120;
-    else if (valueTokens.some((valueToken) => valueToken.startsWith(token))) score += 80;
+    if (valueTokens.includes(token)) score += 130;
+    else if (valueTokens.some((valueToken) => valueToken.startsWith(token))) score += 90;
     else if (fuzzyTokenMatch(token, valueTokens)) score += 35;
   }
 
@@ -198,17 +202,55 @@ function suggestionScore(value, query, base = 100) {
 }
 
 function pushUnique(target, seen, item) {
-  const key = `${item.type}:${normalizeSearchText(item.value)}`;
+  const key = item.id || `${item.type}:${normalizeSearchText(item.value)}`;
   if (!item.value || seen.has(key)) return;
   seen.add(key);
   target.push(item);
 }
 
-export function buildSearchSuggestions(documents = [], keyword = '', limit = 8) {
+function profileSearchValue(profile) {
+  return [
+    profile?.full_name,
+    profile?.username,
+    profile?.email,
+    profile?.school_name,
+    profile?.faculty,
+    profile?.major,
+  ].filter(Boolean).join(' ');
+}
+
+export function buildSearchSuggestions(
+  documents = [],
+  keyword = '',
+  limit = 8,
+  profiles = [],
+) {
   const list = Array.isArray(documents) ? documents : [];
+  const profileList = Array.isArray(profiles) ? profiles : [];
   const query = normalizeSearchText(keyword);
   const candidates = [];
   const seen = new Set();
+
+  profileList.forEach((profile, index) => {
+    const displayName = profile.full_name || profile.username || profile.email || '';
+    const score = suggestionScore(profileSearchValue(profile), query, 360) + Math.max(0, 100 - index);
+
+    if (displayName && (!query || score > 360)) {
+      pushUnique(candidates, seen, {
+        id: `author-profile-${profile.id}`,
+        type: 'author',
+        value: displayName,
+        label: displayName,
+        meta: [
+          'Tác giả',
+          profile.username ? `@${profile.username}` : null,
+          profile.school_name || profile.major || null,
+        ].filter(Boolean).join(' · '),
+        to: `/profile/${profile.id}`,
+        score: score + 220,
+      });
+    }
+  });
 
   list.forEach((document, index) => {
     const profile = getDocumentProfile(document);
@@ -233,15 +275,16 @@ export function buildSearchSuggestions(documents = [], keyword = '', limit = 8) 
     }
 
     const authorValue = profile.full_name || profile.username || '';
-    const authorScore = suggestionScore(authorValue, query, 210) + recentBonus;
-    if (authorValue && (!query || authorScore > 210)) {
+    const authorScore = suggestionScore(profileSearchValue(profile), query, 260) + recentBonus;
+    if (profile.id && authorValue && (!query || authorScore > 260)) {
       pushUnique(candidates, seen, {
-        id: `author-${profile.id || normalizeSearchText(authorValue)}`,
+        id: `author-profile-${profile.id}`,
         type: 'author',
         value: authorValue,
         label: authorValue,
         meta: profile.username ? `Tác giả · @${profile.username}` : 'Tác giả DocShare',
-        score: authorScore,
+        to: `/profile/${profile.id}`,
+        score: authorScore + 140,
       });
     }
 

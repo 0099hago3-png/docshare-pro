@@ -39,7 +39,7 @@ export default function Documents() {
     try {
       setLoading(true);
 
-      const [{ data, error }, { data: statRows, error: statError }] = await Promise.all([
+      const [{ data, error }, { data: statRows, error: statError }, purchaseResult] = await Promise.all([
         supabase
           .from('documents')
           .select('*,profiles:author_id(id,full_name,username,email,avatar_path,school_name,role,premium,premium_expires_at),categories(id,name,slug,icon_key),document_files(file_kind,storage_path)')
@@ -47,24 +47,27 @@ export default function Documents() {
           .order('created_at', { ascending: false })
           .limit(500),
         supabase.from('document_stats').select('*'),
+        supabase.from('document_purchases').select('document_id').eq('buyer_id', currentUser.id),
       ]);
 
       if (error) throw error;
       if (statError) throw statError;
 
       const statMap = new Map((statRows || []).map((item) => [item.document_id, item]));
+      const purchasedIds = new Set((purchaseResult.data || []).map((item) => item.document_id));
 
       setAllDocuments((data || []).map((item) => ({
         ...item,
         cover_path: item.document_files?.find((file) => file.file_kind === 'cover')?.storage_path || null,
         document_stats: statMap.get(item.id) || {},
+        is_purchased: purchasedIds.has(item.id),
       })));
     } catch (error) {
       toast(normalizeError(error), 'error');
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [currentUser.id, toast]);
 
   useEffect(() => {
     supabase
@@ -76,6 +79,11 @@ export default function Documents() {
 
   useEffect(() => {
     load();
+
+    const refreshPurchases = () => load();
+    window.addEventListener('docshare:purchases-refresh', refreshPurchases);
+
+    return () => window.removeEventListener('docshare:purchases-refresh', refreshPurchases);
   }, [load]);
 
   useEffect(() => {

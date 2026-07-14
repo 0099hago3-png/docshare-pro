@@ -1,4 +1,4 @@
-import { Bookmark, Download, Edit3, Eye, Flag, Gift, Heart, Medal, MessageCircle, MoreHorizontal, Reply, Send, Sparkles, Star, Trash2, Trophy } from 'lucide-react';
+import { Bookmark, CheckCircle2, Download, Edit3, Eye, Flag, Gift, Heart, Medal, MessageCircle, MoreHorizontal, Reply, Send, Sparkles, Star, Trash2, Trophy } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import Avatar from '../components/Avatar.jsx';
@@ -35,6 +35,7 @@ export default function DocumentDetail() {
   const [ratingValue, setRatingValue] = useState(5);
   const [review, setReview] = useState('');
   const [commentValue, setCommentValue] = useState('');
+  const [commentSort, setCommentSort] = useState('favorite');
   const [replyTo, setReplyTo] = useState(null);
   const [editingComment, setEditingComment] = useState(null);
   const [commentEditValue, setCommentEditValue] = useState('');
@@ -144,9 +145,34 @@ export default function DocumentDetail() {
           .limit(100),
       ]);
       if (docResult.error) throw docResult.error;
+
+      const commentRows = commentsResult.data || [];
+      let reactionRows = [];
+
+      if (commentRows.length) {
+        const reactionResult = await supabase
+          .from('document_comment_reactions')
+          .select('comment_id,user_id,reaction')
+          .in('comment_id', commentRows.map((item) => item.id));
+
+        if (!reactionResult.error) reactionRows = reactionResult.data || [];
+      }
+
+      const reactionCount = new Map();
+      const myReaction = new Set();
+
+      reactionRows.forEach((item) => {
+        reactionCount.set(item.comment_id, (reactionCount.get(item.comment_id) || 0) + 1);
+        if (item.user_id === currentUser.id) myReaction.add(item.comment_id);
+      });
+
       setDocument(docResult.data);
       setStats(statsResult.data || {});
-      setComments(commentsResult.data || []);
+      setComments(commentRows.map((item) => ({
+        ...item,
+        _heartCount: reactionCount.get(item.id) || 0,
+        _likedByMe: myReaction.has(item.id),
+      })));
       setLiked(Boolean(likeResult.data));
       setBookmarked(Boolean(bookmarkResult.data));
       setHasPurchased(Boolean(purchaseResult.data));
@@ -206,6 +232,7 @@ export default function DocumentDetail() {
   }, [id]);
 
   const coverPath = document?.document_files?.find((file) => file.file_kind === 'cover')?.storage_path;
+  const demoFile = document?.document_files?.find((file) => file.file_kind === 'demo');
   const fullFile = document?.document_files?.find((file) => file.file_kind === 'full');
   const canManage = document && (document.author_id === currentUser.id || currentUser.role === 'admin');
   const hasAccess = Boolean(document && (document.price_credit === 0 || canManage || hasPurchased));
@@ -215,10 +242,19 @@ export default function DocumentDetail() {
     ? Math.max(1, Math.ceil(originalPrice * 0.9))
     : originalPrice;
   const premiumSaved = Math.max(0, originalPrice - premiumPrice);
-  const topLevelComments = useMemo(
-    () => comments.filter((item) => !item.parent_id),
-    [comments],
-  );
+  const topLevelComments = useMemo(() => {
+    const rows = comments.filter((item) => !item.parent_id);
+
+    return [...rows].sort((left, right) => {
+      if (commentSort === 'newest') {
+        return new Date(right.created_at || 0) - new Date(left.created_at || 0);
+      }
+
+      const heartDifference = Number(right._heartCount || 0) - Number(left._heartCount || 0);
+      if (heartDifference !== 0) return heartDifference;
+      return new Date(right.created_at || 0) - new Date(left.created_at || 0);
+    });
+  }, [commentSort, comments]);
 
   const repliesFor = (commentId) => (
     comments.filter((item) => item.parent_id === commentId)
@@ -384,6 +420,7 @@ export default function DocumentDetail() {
       if (data) await supabase.from('document_comment_reactions').delete().eq('comment_id', commentId).eq('user_id', currentUser.id);
       else await supabase.from('document_comment_reactions').insert({ comment_id: commentId, user_id: currentUser.id, reaction: 'heart' });
       toast(data ? 'Đã bỏ thích bình luận.' : 'Đã thích bình luận.');
+      await load({ silent: true });
     } catch (error) {
       toast(normalizeError(error), 'error');
     }
@@ -434,6 +471,21 @@ export default function DocumentDetail() {
       toast(normalizeError(error), 'error');
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function openDemoFile() {
+    try {
+      if (!demoFile) throw new Error('Tác giả chưa tải lên file xem trước demo.');
+
+      const { data, error } = await supabase.storage
+        .from(demoFile.storage_bucket)
+        .createSignedUrl(demoFile.storage_path, 120);
+
+      if (error) throw error;
+      window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      toast(normalizeError(error), 'error');
     }
   }
 
@@ -498,7 +550,12 @@ export default function DocumentDetail() {
       await refreshProfile();
       window.dispatchEvent(new Event('docshare:wallet-refresh'));
       setHasPurchased(true);
-      await getFullFile('download', true);
+      window.dispatchEvent(new CustomEvent('docshare:purchases-refresh', {
+        detail: { documentId: id },
+      }));
+      window.dispatchEvent(new CustomEvent('docshare:cart-refresh', {
+        detail: { documentId: id },
+      }));
     } catch (error) {
       toast(normalizeError(error), 'error');
     } finally {
@@ -541,22 +598,44 @@ export default function DocumentDetail() {
           )}
 
           {!hasAccess ? (
-            <button
-              className="button button--wide"
-              type="button"
-              onClick={() => setPurchaseOpen(true)}
-            >
-              Mua tài liệu
-            </button>
+            <div className="document-file-actions document-file-actions--locked-v70-2">
+              <button
+                className="button button--wide button--outline"
+                type="button"
+                onClick={openDemoFile}
+                disabled={!demoFile}
+                title={demoFile ? 'Mở bản xem trước' : 'Tác giả chưa tải file demo'}
+              >
+                <Eye size={18} />
+                {demoFile ? 'Xem tài liệu demo' : 'Chưa có file demo'}
+              </button>
+
+              <button
+                className="button button--wide"
+                type="button"
+                onClick={() => setPurchaseOpen(true)}
+              >
+                Mua tài liệu
+              </button>
+
+              <CartButton document={document} className="button--wide" />
+            </div>
           ) : (
             <div className="document-file-actions">
+              {hasPurchased && originalPrice > 0 && (
+                <div className="document-purchased-status-v70-2">
+                  <CheckCircle2 size={18} />
+                  <span><strong>Đã mua tài liệu</strong><small>Bạn có quyền xem và tải file đầy đủ.</small></span>
+                </div>
+              )}
+
               <button
                 className="button button--wide button--outline"
                 type="button"
                 onClick={() => getFullFile('open')}
               >
                 <Eye size={18} />
-                Mở file
+                Xem tài liệu
               </button>
 
               <button
@@ -730,7 +809,16 @@ export default function DocumentDetail() {
       </section>
 
       <section className="reviews-section botanical-card">
-        <div className="section-heading"><div><Star size={23} /><h2>Bình luận và đánh giá</h2></div><span>{comments.length} bình luận</span></div>
+        <div className="section-heading comment-heading-v70-2">
+          <div><Star size={23} /><h2>Bình luận và đánh giá</h2></div>
+          <div className="comment-sort-v70-2">
+            <span>{comments.length} bình luận</span>
+            <select value={commentSort} onChange={(event) => setCommentSort(event.target.value)}>
+              <option value="favorite">Bình luận yêu thích nhất</option>
+              <option value="newest">Bình luận mới nhất</option>
+            </select>
+          </div>
+        </div>
         <form className="rating-form" onSubmit={saveRating}>
           <div className="star-picker"><span>Đánh giá:</span>{[1, 2, 3, 4, 5].map((value) => <button key={value} type="button" className={value <= ratingValue ? 'is-active' : ''} onClick={() => setRatingValue(value)}><Star size={24} fill={value <= ratingValue ? 'currentColor' : 'none'} /></button>)}</div>
           <textarea rows="3" value={review} onChange={(event) => setReview(event.target.value)} placeholder="Viết nhận xét về tài liệu..." />
@@ -877,8 +965,14 @@ function CommentItem({ comment, replies, currentUser, onReply, onEdit, onDelete,
         </div>
 
         <div className="comment-item__actions">
-          <button type="button" onClick={() => onHeart(comment.id)}>
-            <Heart size={14} /> Thích
+          <button
+            className={comment._likedByMe ? 'is-liked-v70-2' : ''}
+            type="button"
+            onClick={() => onHeart(comment.id)}
+          >
+            <Heart size={14} fill={comment._likedByMe ? 'currentColor' : 'none'} />
+            {comment._likedByMe ? 'Đã thích' : 'Thích'}
+            {Number(comment._heartCount || 0) > 0 && <b>{comment._heartCount}</b>}
           </button>
           <button type="button" onClick={() => onReply(comment)}>
             <Reply size={14} /> Trả lời

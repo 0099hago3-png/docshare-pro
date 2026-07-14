@@ -18,6 +18,7 @@ import '../v68-profile-avatar-left.css';
 import '../v69-auto-cover-ratio.css';
 import '../v70-premium-cart-email.css';
 import '../v70-1-smart-search-admin-profile.css';
+import '../v70-2-commerce-history-admin.css';
 
 export default function AppShell() {
   return (

@@ -164,6 +164,9 @@ export default function CartPanel({ open, onClose, onCountChange }) {
       toast(`Thanh toán thành công ${data.purchased_count || 0} tài liệu.`);
       await refreshProfile();
       window.dispatchEvent(new Event('docshare:wallet-refresh'));
+      window.dispatchEvent(new CustomEvent('docshare:purchases-refresh', {
+        detail: { documentIds: items.map((item) => item.document_id) },
+      }));
       window.dispatchEvent(new Event('docshare:cart-refresh'));
       await load();
     } catch (error) {

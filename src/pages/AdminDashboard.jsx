@@ -20,6 +20,7 @@ import {
   Mail,
   MessageCircle,
   RefreshCw,
+  Search,
   Repeat2,
   ShieldCheck,
   ShoppingCart,
@@ -48,6 +49,7 @@ import {
   toNumber,
 } from '../lib/analytics.js';
 import { formatDateTime, formatNumber, getProfileName, normalizeError } from '../lib/helpers.js';
+import { normalizeSearchText } from '../lib/searchEngine.js';
 import { supabase } from '../lib/supabase.js';
 import '../payment-admin-report.css';
 
@@ -205,6 +207,28 @@ function splitSubscriptions(subscriptions = []) {
   return { first, renewals };
 }
 
+function adminTextMatch(values, keyword) {
+  const query = normalizeSearchText(keyword);
+  if (!query) return true;
+  return normalizeSearchText(values.filter(Boolean).join(' ')).includes(query);
+}
+
+function AdminSearchBar({ value, onChange, placeholder, count }) {
+  return (
+    <section className="admin-management-toolbar-v70-2 botanical-card">
+      <label>
+        <Search size={18} />
+        <input
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+        />
+      </label>
+      <span><strong>{count}</strong> kết quả</span>
+    </section>
+  );
+}
+
 function QuickStatButton({ active, icon: Icon, label, value, helper, onClick, tone = 'green' }) {
   return (
     <button
@@ -264,6 +288,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [adminSearch, setAdminSearch] = useState({ users: '', documents: '', posts: '' });
 
   useEffect(() => {
     const requested = searchParams.get('tab');
@@ -893,6 +918,34 @@ export default function AdminDashboard() {
     URL.revokeObjectURL(url);
   }
 
+  const filteredProfiles = data.profiles.filter((item) => adminTextMatch([
+    item.full_name,
+    item.username,
+    item.email,
+    item.public_id,
+    item.role,
+    item.status,
+    item.school_name,
+  ], adminSearch.users));
+
+  const filteredDocuments = data.documents.filter((item) => adminTextMatch([
+    item.title,
+    getProfileName(item.profiles),
+    item.profiles?.username,
+    item.profiles?.email,
+    item.status,
+    item.categories?.name,
+  ], adminSearch.documents));
+
+  const filteredPosts = data.posts.filter((item) => adminTextMatch([
+    item.title,
+    item.content,
+    getProfileName(item.profiles),
+    item.profiles?.username,
+    item.profiles?.email,
+    item.status,
+  ], adminSearch.posts));
+
   if (loading) return <Loading label="Đang tổng hợp số liệu toàn website..." />;
 
   return (
@@ -1152,11 +1205,47 @@ export default function AdminDashboard() {
         </>
       )}
 
-      {tab === 'users' && <AdminTable headings={['Người dùng', 'ID', 'Vai trò', 'Trạng thái', 'Premium', 'Thao tác']}>{data.profiles.map((item) => <tr key={item.id}><td><strong><Link className="admin-profile-link-v70-1" to={`/profile/${item.id}`}>{getProfileName(item)}</Link></strong><small>{item.email}</small></td><td><code>{item.public_id}</code></td><td><select value={item.role} onChange={(event) => updateUser(item.id, { role: event.target.value })} disabled={busy}><option value="user">user</option><option value="teacher">teacher</option><option value="admin">admin</option></select></td><td><span className={`status status--${item.status}`}>{item.status}</span></td><td>{item.premium ? 'Có' : 'Không'}</td><td><button className="button button--small button--outline" type="button" onClick={() => updateUser(item.id, { status: item.status === 'active' ? 'locked' : 'active' })}>{item.status === 'active' ? 'Khóa' : 'Mở khóa'}</button></td></tr>)}</AdminTable>}
+      {tab === 'users' && (
+        <div className="admin-tab-content-v70-2">
+          <AdminSearchBar
+            value={adminSearch.users}
+            onChange={(value) => setAdminSearch((current) => ({ ...current, users: value }))}
+            placeholder="Tìm theo tên, username, email, ID, trường hoặc vai trò..."
+            count={filteredProfiles.length}
+          />
+          <AdminTable headings={['Người dùng', 'ID', 'Vai trò', 'Trạng thái', 'Premium', 'Thao tác']}>
+            {filteredProfiles.map((item) => <tr key={item.id}><td><strong><Link className="admin-profile-link-v70-1" to={`/profile/${item.id}`}>{getProfileName(item)}</Link></strong><small>{item.email}</small></td><td><code>{item.public_id}</code></td><td><select value={item.role} onChange={(event) => updateUser(item.id, { role: event.target.value })} disabled={busy}><option value="user">user</option><option value="teacher">teacher</option><option value="admin">admin</option></select></td><td><span className={`status status--${item.status}`}>{item.status}</span></td><td>{item.premium ? 'Có' : 'Không'}</td><td><button className="button button--small button--outline" type="button" onClick={() => updateUser(item.id, { status: item.status === 'active' ? 'locked' : 'active' })}>{item.status === 'active' ? 'Khóa' : 'Mở khóa'}</button></td></tr>)}
+          </AdminTable>
+        </div>
+      )}
 
-      {tab === 'documents' && <AdminTable headings={['Tài liệu', 'Tác giả', 'Giá', 'Trạng thái', 'Ngày đăng', 'Thao tác']}>{data.documents.map((item) => <tr key={item.id}><td><strong>{item.title}</strong></td><td><Link className="admin-profile-link-v70-1" to={`/profile/${item.author_id}`}>{getProfileName(item.profiles)}</Link></td><td>{item.price_credit} credit</td><td><span className={`status status--${item.status}`}>{item.status}</span></td><td>{formatDateTime(item.created_at)}</td><td><button className="button button--small button--danger-soft" type="button" onClick={() => setDeleteTarget({ type: 'document', id: item.id })}><Trash2 size={15} /> Xóa</button></td></tr>)}</AdminTable>}
+      {tab === 'documents' && (
+        <div className="admin-tab-content-v70-2">
+          <AdminSearchBar
+            value={adminSearch.documents}
+            onChange={(value) => setAdminSearch((current) => ({ ...current, documents: value }))}
+            placeholder="Tìm tên tài liệu, tác giả, email, danh mục hoặc trạng thái..."
+            count={filteredDocuments.length}
+          />
+          <AdminTable headings={['Tài liệu', 'Tác giả', 'Giá', 'Trạng thái', 'Ngày đăng', 'Thao tác']}>
+            {filteredDocuments.map((item) => <tr key={item.id}><td><strong><Link to={`/documents/${item.id}`}>{item.title}</Link></strong></td><td><Link className="admin-profile-link-v70-1" to={`/profile/${item.author_id}`}>{getProfileName(item.profiles)}</Link></td><td>{item.price_credit} credit</td><td><span className={`status status--${item.status}`}>{item.status}</span></td><td>{formatDateTime(item.created_at)}</td><td><button className="button button--small button--danger-soft" type="button" onClick={() => setDeleteTarget({ type: 'document', id: item.id })}><Trash2 size={15} /> Xóa</button></td></tr>)}
+          </AdminTable>
+        </div>
+      )}
 
-      {tab === 'posts' && <AdminTable headings={['Bài viết', 'Tác giả', 'Trạng thái', 'Ngày đăng', 'Thao tác']}>{data.posts.map((item) => <tr key={item.id}><td><strong>{item.title || item.content.slice(0, 60)}</strong></td><td><Link className="admin-profile-link-v70-1" to={`/profile/${item.author_id}`}>{getProfileName(item.profiles)}</Link></td><td><span className={`status status--${item.status}`}>{item.status}</span></td><td>{formatDateTime(item.created_at)}</td><td><button className="button button--small button--danger-soft" type="button" onClick={() => setDeleteTarget({ type: 'post', id: item.id })}><Trash2 size={15} /> Xóa</button></td></tr>)}</AdminTable>}
+      {tab === 'posts' && (
+        <div className="admin-tab-content-v70-2">
+          <AdminSearchBar
+            value={adminSearch.posts}
+            onChange={(value) => setAdminSearch((current) => ({ ...current, posts: value }))}
+            placeholder="Tìm nội dung bài viết, tiêu đề, tác giả, email hoặc trạng thái..."
+            count={filteredPosts.length}
+          />
+          <AdminTable headings={['Bài viết', 'Tác giả', 'Trạng thái', 'Ngày đăng', 'Thao tác']}>
+            {filteredPosts.map((item) => <tr key={item.id}><td><strong>{item.title || item.content.slice(0, 60)}</strong></td><td><Link className="admin-profile-link-v70-1" to={`/profile/${item.author_id}`}>{getProfileName(item.profiles)}</Link></td><td><span className={`status status--${item.status}`}>{item.status}</span></td><td>{formatDateTime(item.created_at)}</td><td><button className="button button--small button--danger-soft" type="button" onClick={() => setDeleteTarget({ type: 'post', id: item.id })}><Trash2 size={15} /> Xóa</button></td></tr>)}
+          </AdminTable>
+        </div>
+      )}
 
       {tab === 'payments' && (
         <AdminTable headings={['Người dùng', 'Loại', 'Số tiền', 'Email hóa đơn', 'Nội dung', 'Trạng thái', 'Ngày tạo', 'Thao tác']}>
@@ -1258,5 +1347,5 @@ export default function AdminDashboard() {
 }
 
 function AdminTable({ headings, children }) {
-  return <section className="table-card botanical-card"><div className="table-scroll"><table><thead><tr>{headings.map((item) => <th key={item}>{item}</th>)}</tr></thead><tbody>{children}</tbody></table></div></section>;
+  return <section className="table-card botanical-card admin-table-card-v70-2"><div className="table-scroll"><table><thead><tr>{headings.map((item) => <th key={item}>{item}</th>)}</tr></thead><tbody>{children}</tbody></table></div></section>;
 }
