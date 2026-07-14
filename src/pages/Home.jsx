@@ -3,7 +3,6 @@ import {
   ArrowRight,
   Clock3,
   Flame,
-  Search,
   Sparkles,
 } from 'lucide-react';
 import {
@@ -21,6 +20,7 @@ import BotanicalHero from '../components/BotanicalHero.jsx';
 import DocumentCard from '../components/DocumentCard.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import Loading from '../components/Loading.jsx';
+import StableSearch from '../components/StableSearch.jsx';
 import { useApp } from '../context/AppContext.jsx';
 import { normalizeError } from '../lib/helpers.js';
 import { supabase } from '../lib/supabase.js';
@@ -156,8 +156,6 @@ export default function Home() {
   const [documents, setDocuments] = useState([]);
   const [preferredCategoryIds, setPreferredCategoryIds] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [keyword, setKeyword] = useState('');
-  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const navigate = useNavigate();
 
@@ -332,52 +330,6 @@ export default function Home() {
     [documents],
   );
 
-  const suggestions = useMemo(() => {
-    const query = keyword.trim().toLocaleLowerCase('vi');
-
-    if (!query) return [];
-
-    return documents
-      .filter((item) => {
-        const searchable = [
-          item.title,
-          item.description,
-          item.categories?.name,
-          item.profiles?.full_name,
-          item.profiles?.username,
-        ]
-          .filter(Boolean)
-          .join(' ')
-          .toLocaleLowerCase('vi');
-
-        return searchable.includes(query);
-      })
-      .slice(0, 7);
-  }, [
-    documents,
-    keyword,
-  ]);
-
-  function search(event) {
-    event.preventDefault();
-
-    const query = keyword.trim();
-
-    setShowSuggestions(false);
-
-    navigate(
-      query
-        ? `/documents?search=${encodeURIComponent(query)}`
-        : '/documents',
-    );
-  }
-
-  function openSuggestion(item) {
-    setShowSuggestions(false);
-    setKeyword(item.title || '');
-
-    navigate(`/documents/${item.id}`);
-  }
 
   return (
     <div className="page home-page home-page-v75">
@@ -392,66 +344,25 @@ export default function Home() {
         )}
         description="Kho tài liệu chất lượng, cộng đồng học tập văn minh và hành trình phát triển tri thức của riêng bạn."
       >
-        <form
-          className="hero-search home-search-v75"
-          onSubmit={search}
-        >
-          <Search size={20} />
+        <StableSearch
+          buttonLabel="Tìm kiếm"
+          className="stable-search-v78--home"
+          onSubmit={(value, suggestion) => {
+            if (suggestion?.to) {
+              navigate(suggestion.to);
+              return;
+            }
 
-          <input
-            value={keyword}
-            onChange={(event) => {
-              setKeyword(event.target.value);
-              setShowSuggestions(true);
-            }}
-            onFocus={() => setShowSuggestions(true)}
-            placeholder="Tìm kiếm tài liệu, môn học, tác giả, trường học..."
-            autoComplete="off"
-          />
+            const searchValue = String(value || '').trim();
 
-          <button
-            className="button"
-            type="submit"
-          >
-            Tìm kiếm
-          </button>
-
-          {showSuggestions && keyword.trim() ? (
-            <div className="home-search-suggestions-v75">
-              {suggestions.length ? (
-                suggestions.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className="home-search-suggestion-v75"
-                    onMouseDown={(event) => event.preventDefault()}
-                    onClick={() => openSuggestion(item)}
-                  >
-                    <span className="home-search-suggestion-v75__icon">
-                      <Search size={14} />
-                    </span>
-
-                    <span className="home-search-suggestion-v75__text">
-                      <strong>{item.title}</strong>
-
-                      <small>
-                        {item.categories?.name || 'Tài liệu'}
-                        {' · '}
-                        {item.profiles?.full_name
-                          || item.profiles?.username
-                          || 'Tác giả'}
-                      </small>
-                    </span>
-                  </button>
-                ))
-              ) : (
-                <div className="home-search-suggestion-v75 home-search-suggestion-v75--empty">
-                  Không tìm thấy gợi ý phù hợp.
-                </div>
-              )}
-            </div>
-          ) : null}
-        </form>
+            navigate(
+              searchValue
+                ? `/documents?search=${encodeURIComponent(searchValue)}`
+                : '/documents',
+            );
+          }}
+          placeholder="Tìm kiếm tài liệu, môn học, tác giả, trường học..."
+        />
 
         <div className="hero-tags">
           <span>Tìm kiếm phổ biến:</span>

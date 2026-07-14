@@ -17,10 +17,8 @@ import '../v67-profile-images.css';
 import '../v68-profile-avatar-left.css';
 import '../v69-auto-cover-ratio.css';
 import '../v70-premium-cart-email.css';
-import '../v72-home-search-dropdown-fix.css';
 import '../v75-home-carousel-many-documents.css';
-import '../v76-search-history-card-fix.css';
-import '../v77-home-cards-larger.css';
+import '../v78-stable-search-home-history-gifts.css';
 
 export default function AppShell() {
   return (

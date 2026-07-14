@@ -32,7 +32,7 @@ import PremiumBadge, {
   isPremiumActive,
 } from './PremiumBadge.jsx';
 import SecurityModal from './SecurityModal.jsx';
-import { SmartSearchForm } from './SmartSearch.jsx';
+import StableSearch from './StableSearch.jsx';
 import TeacherBadge from './TeacherBadge.jsx';
 
 const links = [
@@ -67,7 +67,6 @@ export default function Navbar() {
 
   const { notifications } = useUnread();
 
-  const [keyword, setKeyword] = useState('');
   const [open, setOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [securityOpen, setSecurityOpen] = useState(false);
@@ -170,7 +169,8 @@ export default function Navbar() {
       return;
     }
 
-    const searchValue = value.trim();
+    const searchValue = String(value || '').trim();
+
     navigate(
       searchValue
         ? `/documents?search=${encodeURIComponent(searchValue)}`
@@ -198,14 +198,12 @@ export default function Navbar() {
         </span>
       </Link>
 
-      <SmartSearchForm
+      <StableSearch
         buttonLabel="Tìm"
-        className="navbar-search"
+        className="stable-search-v78--navbar"
         compact
-        onChange={setKeyword}
         onSubmit={submitSearch}
         placeholder="Tìm tài liệu, môn học, tác giả..."
-        value={keyword}
       />
 
       <nav className="navbar-links">

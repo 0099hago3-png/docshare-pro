@@ -22,6 +22,7 @@ export default function GiftVault() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [effectGift, setEffectGift] = useState(null);
+  const [historyFilter, setHistoryFilter] = useState('all');
 
   const load = useCallback(async () => {
     try {
@@ -114,6 +115,51 @@ export default function GiftVault() {
     });
   }, [currentUser.id, transactions]);
 
+  const receivedCollection = useMemo(() => {
+    const map = new Map();
+
+    transactions
+      .filter((item) => item.receiver_id === currentUser.id)
+      .forEach((item) => {
+        const key = item.gift_id || item.gifts?.name || item.id;
+        const current = map.get(key) || {
+          id: key,
+          icon: item.gifts?.icon || '🎁',
+          name: item.gifts?.name || 'Quà tặng',
+          count: 0,
+          credit: 0,
+          lastAt: item.created_at,
+        };
+
+        current.count += 1;
+        current.credit += Number(item.receiver_credit || 0);
+
+        if (new Date(item.created_at) > new Date(current.lastAt)) {
+          current.lastAt = item.created_at;
+        }
+
+        map.set(key, current);
+      });
+
+    return [...map.values()].sort((a, b) => (
+      b.count - a.count
+      || b.credit - a.credit
+      || new Date(b.lastAt) - new Date(a.lastAt)
+    ));
+  }, [currentUser.id, transactions]);
+
+  const filteredTransactions = useMemo(() => {
+    if (historyFilter === 'received') {
+      return transactions.filter((item) => item.receiver_id === currentUser.id);
+    }
+
+    if (historyFilter === 'sent') {
+      return transactions.filter((item) => item.sender_id === currentUser.id);
+    }
+
+    return transactions;
+  }, [currentUser.id, historyFilter, transactions]);
+
   async function send() {
     if (!receiver || !selected) {
       toast('Hãy chọn người nhận và món quà.', 'error');
@@ -196,6 +242,46 @@ export default function GiftVault() {
           </div>
         </article>
       </div>
+
+      <section className="gift-received-v78 botanical-card">
+        <div className="gift-received-v78__heading">
+          <div>
+            <span>QUÀ ĐÃ ĐƯỢC TẶNG</span>
+            <h2><Sparkles size={21} /> Bộ sưu tập quà bạn đã nhận</h2>
+            <p>Mỗi món quà được gom lại để bạn xem số lượng và tổng credit đã nhận.</p>
+          </div>
+
+          <strong>{formatNumber(summary.receivedCount)} lượt quà</strong>
+        </div>
+
+        {receivedCollection.length ? (
+          <div className="gift-received-v78__grid">
+            {receivedCollection.map((item) => {
+              const tier = getGiftTier(item.credit);
+
+              return (
+                <article
+                  key={item.id}
+                  className={`gift-received-v78__item gift-received-v78__item--${tier.key}`}
+                >
+                  <span className="gift-received-v78__icon">{item.icon}</span>
+
+                  <div>
+                    <strong>{item.name}</strong>
+                    <small>Nhận {formatNumber(item.count)} lần</small>
+                    <b>+{formatNumber(item.credit)} credit</b>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <EmptyState
+            title="Bạn chưa nhận được quà"
+            description="Những món quà được tặng sẽ xuất hiện thành bộ sưu tập tại đây."
+          />
+        )}
+      </section>
 
       <section className="gift-tier-guide botanical-card">
         <div className="gift-tier-guide__heading">
@@ -314,9 +400,35 @@ export default function GiftVault() {
         <section className="gift-history botanical-card">
           <h2><Trophy size={23} /> Lịch sử quà tặng</h2>
 
-          {transactions.length ? (
+          <div className="gift-history-tabs-v78" role="tablist" aria-label="Lọc lịch sử quà">
+            <button
+              type="button"
+              className={historyFilter === 'all' ? 'is-active' : ''}
+              onClick={() => setHistoryFilter('all')}
+            >
+              Tất cả <span>{formatNumber(transactions.length)}</span>
+            </button>
+
+            <button
+              type="button"
+              className={historyFilter === 'received' ? 'is-active' : ''}
+              onClick={() => setHistoryFilter('received')}
+            >
+              Quà đã nhận <span>{formatNumber(summary.receivedCount)}</span>
+            </button>
+
+            <button
+              type="button"
+              className={historyFilter === 'sent' ? 'is-active' : ''}
+              onClick={() => setHistoryFilter('sent')}
+            >
+              Quà đã gửi <span>{formatNumber(summary.sentCount)}</span>
+            </button>
+          </div>
+
+          {filteredTransactions.length ? (
             <div className="gift-log-list">
-              {transactions.map((item) => {
+              {filteredTransactions.map((item) => {
                 const sent = item.sender_id === currentUser.id;
                 const person = sent ? item.receiver : item.sender;
                 const tier = getGiftTier(item.gifts || item.cost_credit);
