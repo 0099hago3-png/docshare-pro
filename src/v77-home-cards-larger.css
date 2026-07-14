@@ -1,0 +1,187 @@
+/*
+  DOCSHARE PRO V77
+  LÀM THẺ TÀI LIỆU TRANG CHỦ TO VÀ DỄ ĐỌC HƠN
+
+  Màn hình khoảng 1366px:
+  - Hiện khoảng 5 tài liệu đầu tiên.
+  - Vẫn có thanh kéo ngang.
+  - Ảnh bìa, chữ, icon, Premium và nút đều rộng hơn.
+*/
+
+.home-document-rail-v75 {
+  gap: 14px !important;
+  padding: 3px 3px 13px !important;
+}
+
+/* Kích thước thẻ chính */
+.home-document-item-v75,
+.home-document-item-v75 .document-card {
+  flex: 0 0 218px !important;
+  width: 218px !important;
+  min-width: 218px !important;
+  max-width: 218px !important;
+}
+
+.home-document-item-v75 .document-card {
+  border-radius: 16px !important;
+  box-shadow: 0 8px 22px rgba(34, 76, 51, .09) !important;
+}
+
+/* Ảnh bìa lớn hơn */
+.home-document-item-v75 .document-card__cover,
+.home-document-item-v75 .document-card [class*="cover"] {
+  height: 225px !important;
+  min-height: 225px !important;
+  max-height: 225px !important;
+  border-radius: 14px 14px 0 0 !important;
+}
+
+.home-document-item-v75 .document-card__cover img,
+.home-document-item-v75 .document-card [class*="cover"] img {
+  object-fit: cover !important;
+  object-position: center !important;
+}
+
+/* Phần nội dung rộng và thoáng hơn */
+.home-document-item-v75 .document-card__body,
+.home-document-item-v75 .document-card [class*="body"] {
+  padding: 13px 14px 14px !important;
+}
+
+/* Tiêu đề */
+.home-document-item-v75 .document-card h3,
+.home-document-item-v75 .document-card__title {
+  min-height: 43px !important;
+  max-height: 43px !important;
+  margin: 7px 0 7px !important;
+  font-size: 12.5px !important;
+  line-height: 1.42 !important;
+  -webkit-line-clamp: 2 !important;
+}
+
+/* Danh mục */
+.home-document-item-v75 .document-card__category,
+.home-document-item-v75 .document-card [class*="category"] {
+  font-size: 8.5px !important;
+}
+
+/* Tác giả và Premium */
+.home-document-item-v75 .document-card__author,
+.home-document-item-v75 .document-card [class*="author"] {
+  gap: 6px !important;
+  font-size: 9.5px !important;
+}
+
+.home-document-item-v75 .premium-badge,
+.home-document-item-v75 [class*="premium"] {
+  max-width: 96px !important;
+  font-size: 8px !important;
+}
+
+/* Thống kê */
+.home-document-item-v75 .document-card__stats,
+.home-document-item-v75 .document-card [class*="stats"] {
+  gap: 10px !important;
+  margin-top: 10px !important;
+  font-size: 9px !important;
+}
+
+.home-document-item-v75 .document-card__stats svg,
+.home-document-item-v75 .document-card [class*="stats"] svg {
+  width: 13px !important;
+  height: 13px !important;
+}
+
+/* Nhãn miễn phí / giá */
+.home-document-item-v75 .document-card__badge,
+.home-document-item-v75 .document-card [class*="badge"] {
+  top: 8px !important;
+  right: 8px !important;
+  min-height: 24px !important;
+  padding: 0 8px !important;
+  font-size: 8.5px !important;
+}
+
+/* Nút */
+.home-document-item-v75 .document-card__actions,
+.home-document-item-v75 .document-card [class*="actions"] {
+  gap: 7px !important;
+  margin-top: 11px !important;
+}
+
+.home-document-item-v75 .document-card__actions .button,
+.home-document-item-v75 .document-card [class*="actions"] .button,
+.home-document-item-v75 .document-card button {
+  min-height: 33px !important;
+  padding: 0 10px !important;
+  border-radius: 9px !important;
+  font-size: 9px !important;
+}
+
+/* Tiêu đề từng khu lớn hơn nhẹ */
+.home-carousel-heading-v75 h2 {
+  font-size: 21px !important;
+}
+
+.home-carousel-heading-v75 small {
+  font-size: 10px !important;
+}
+
+/* Màn hình lớn */
+@media screen and (min-width: 1500px) {
+  .home-document-item-v75,
+  .home-document-item-v75 .document-card {
+    flex-basis: 230px !important;
+    width: 230px !important;
+    min-width: 230px !important;
+    max-width: 230px !important;
+  }
+
+  .home-document-item-v75 .document-card__cover,
+  .home-document-item-v75 .document-card [class*="cover"] {
+    height: 238px !important;
+    min-height: 238px !important;
+    max-height: 238px !important;
+  }
+}
+
+/* Tablet */
+@media screen and (max-width: 980px) {
+  .home-document-item-v75,
+  .home-document-item-v75 .document-card {
+    flex-basis: 188px !important;
+    width: 188px !important;
+    min-width: 188px !important;
+    max-width: 188px !important;
+  }
+
+  .home-document-item-v75 .document-card__cover,
+  .home-document-item-v75 .document-card [class*="cover"] {
+    height: 194px !important;
+    min-height: 194px !important;
+    max-height: 194px !important;
+  }
+}
+
+/* Điện thoại */
+@media screen and (max-width: 680px) {
+  .home-document-item-v75,
+  .home-document-item-v75 .document-card {
+    flex-basis: 166px !important;
+    width: 166px !important;
+    min-width: 166px !important;
+    max-width: 166px !important;
+  }
+
+  .home-document-item-v75 .document-card__cover,
+  .home-document-item-v75 .document-card [class*="cover"] {
+    height: 170px !important;
+    min-height: 170px !important;
+    max-height: 170px !important;
+  }
+
+  .home-document-item-v75 .document-card h3,
+  .home-document-item-v75 .document-card__title {
+    font-size: 10.5px !important;
+  }
+}
