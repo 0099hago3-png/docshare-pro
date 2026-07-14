@@ -19,6 +19,7 @@ import '../v69-auto-cover-ratio.css';
 import '../v70-premium-cart-email.css';
 import '../v72-home-search-dropdown-fix.css';
 import '../v75-home-carousel-many-documents.css';
+import '../v76-search-history-card-fix.css';
 
 export default function AppShell() {
   return (
