@@ -3,7 +3,6 @@ import {
   ChevronDown,
   CreditCard,
   LogOut,
-  Search,
   ShoppingCart,
   ShieldCheck,
   Upload,
@@ -33,6 +32,7 @@ import PremiumBadge, {
   isPremiumActive,
 } from './PremiumBadge.jsx';
 import SecurityModal from './SecurityModal.jsx';
+import { SmartSearchForm } from './SmartSearch.jsx';
 import TeacherBadge from './TeacherBadge.jsx';
 
 const links = [
@@ -164,12 +164,16 @@ export default function Navbar() {
     return () => window.removeEventListener('docshare:cart-refresh', refresh);
   }, [loadCartCount]);
 
-  function search(event) {
-    event.preventDefault();
+  function submitSearch(value, suggestion) {
+    if (suggestion?.to) {
+      navigate(suggestion.to);
+      return;
+    }
 
+    const searchValue = value.trim();
     navigate(
-      keyword.trim()
-        ? `/documents?search=${encodeURIComponent(keyword.trim())}`
+      searchValue
+        ? `/documents?search=${encodeURIComponent(searchValue)}`
         : '/documents',
     );
   }
@@ -194,17 +198,15 @@ export default function Navbar() {
         </span>
       </Link>
 
-      <form className="navbar-search" onSubmit={search}>
-        <Search size={17} />
-
-        <input
-          value={keyword}
-          onChange={(event) => setKeyword(event.target.value)}
-          placeholder="Tìm tài liệu, môn học, tác giả..."
-        />
-
-        <button type="submit">Tìm</button>
-      </form>
+      <SmartSearchForm
+        buttonLabel="Tìm"
+        className="navbar-search"
+        compact
+        onChange={setKeyword}
+        onSubmit={submitSearch}
+        placeholder="Tìm tài liệu, môn học, tác giả..."
+        value={keyword}
+      />
 
       <nav className="navbar-links">
         {links.map(([to, label]) => (

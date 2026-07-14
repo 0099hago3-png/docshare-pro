@@ -1,10 +1,11 @@
-import { ArrowRight, BookHeart, BookOpen, GraduationCap, Search, ShieldCheck, Users } from 'lucide-react';
+import { ArrowRight, BookHeart, BookOpen, GraduationCap, ShieldCheck, Users } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import BotanicalHero from '../components/BotanicalHero.jsx';
 import DocumentCard from '../components/DocumentCard.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import Loading from '../components/Loading.jsx';
+import { SmartSearchForm } from '../components/SmartSearch.jsx';
 import { useApp } from '../context/AppContext.jsx';
 import { supabase } from '../lib/supabase.js';
 import { normalizeError } from '../lib/helpers.js';
@@ -47,15 +48,28 @@ export default function Home() {
   const loved = useMemo(() => [...documents].sort((a, b) => (b.document_stats?.like_count || 0) - (a.document_stats?.like_count || 0)).slice(0, 4), [documents]);
   const recommended = useMemo(() => documents.slice(4, 8), [documents]);
 
-  function search(event) {
-    event.preventDefault();
-    navigate(keyword.trim() ? `/documents?search=${encodeURIComponent(keyword.trim())}` : '/documents');
+  function submitSearch(value, suggestion) {
+    if (suggestion?.to) {
+      navigate(suggestion.to);
+      return;
+    }
+
+    const searchValue = value.trim();
+    navigate(searchValue ? `/documents?search=${encodeURIComponent(searchValue)}` : '/documents');
   }
 
   return (
     <div className="page home-page">
       <BotanicalHero eyebrow="DOCSHARE PRO" title={<>Thư viện học thuật hiện đại<br /><span>Chia sẻ & kết nối tri thức</span></>} description="Kho tài liệu chất lượng, cộng đồng học tập văn minh và hành trình phát triển tri thức của riêng bạn.">
-        <form className="hero-search" onSubmit={search}><Search size={20} /><input value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="Tìm kiếm tài liệu, môn học, tác giả, trường học..." /><button className="button" type="submit">Tìm kiếm</button></form>
+        <SmartSearchForm
+          buttonClassName="button"
+          buttonLabel="Tìm kiếm"
+          className="hero-search"
+          onChange={setKeyword}
+          onSubmit={submitSearch}
+          placeholder="Tìm kiếm tài liệu, môn học, tác giả, trường học..."
+          value={keyword}
+        />
         <div className="hero-tags"><span>Tìm kiếm phổ biến:</span>{['Giải tích', 'Cấu trúc dữ liệu', 'Marketing', 'Kinh tế vi mô', 'Luật dân sự', 'Trí tuệ nhân tạo'].map((item) => <button key={item} type="button" onClick={() => navigate(`/documents?search=${encodeURIComponent(item)}`)}>{item}</button>)}</div>
       </BotanicalHero>
 

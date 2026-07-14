@@ -33,7 +33,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import Loading from '../components/Loading.jsx';
@@ -327,9 +327,9 @@ export default function AdminDashboard() {
 
       const results = await Promise.all([
         supabase.from('profiles').select('*').order('created_at', { ascending: false }),
-        supabase.from('documents').select('id,title,status,price_credit,created_at,author_id,category_id,profiles:author_id(full_name,username,email),categories:category_id(name)').order('created_at', { ascending: false }),
-        supabase.from('posts').select('id,title,content,status,created_at,author_id,profiles:author_id(full_name,username,email)').order('created_at', { ascending: false }),
-        supabase.from('payment_requests').select('*,profiles:user_id(full_name,username,email,public_id),bank_accounts(*)').order('created_at', { ascending: false }),
+        supabase.from('documents').select('id,title,status,price_credit,created_at,author_id,category_id,profiles:author_id(id,full_name,username,email),categories:category_id(name)').order('created_at', { ascending: false }),
+        supabase.from('posts').select('id,title,content,status,created_at,author_id,profiles:author_id(id,full_name,username,email)').order('created_at', { ascending: false }),
+        supabase.from('payment_requests').select('*,profiles:user_id(id,full_name,username,email,public_id),bank_accounts(*)').order('created_at', { ascending: false }),
         supabase.from('gifts').select('*').order('sort_order'),
         supabase.from('admin_logs').select('*').order('created_at', { ascending: false }).limit(50),
         supabase.from('document_views').select('document_id,user_id,viewed_at'),
@@ -342,7 +342,7 @@ export default function AdminDashboard() {
         supabase.from('post_comments').select('id,post_id,user_id,created_at'),
         supabase.from('gift_transactions').select('id,gift_id,sender_id,receiver_id,cost_credit,receiver_credit,created_at'),
         supabase.from('premium_subscriptions').select('id,user_id,plan_code,starts_at,ends_at,status,created_at').order('created_at', { ascending: false }),
-        supabase.from('reports').select('*,reporter:reporter_id(full_name,username,email,public_id),reported_user:reported_user_id(full_name,username,email,public_id)').order('created_at', { ascending: false }),
+        supabase.from('reports').select('*,reporter:reporter_id(id,full_name,username,email,public_id),reported_user:reported_user_id(id,full_name,username,email,public_id)').order('created_at', { ascending: false }),
       ]);
 
       const firstError = results.find((item) => item.error)?.error;
@@ -1152,18 +1152,18 @@ export default function AdminDashboard() {
         </>
       )}
 
-      {tab === 'users' && <AdminTable headings={['Người dùng', 'ID', 'Vai trò', 'Trạng thái', 'Premium', 'Thao tác']}>{data.profiles.map((item) => <tr key={item.id}><td><strong>{getProfileName(item)}</strong><small>{item.email}</small></td><td><code>{item.public_id}</code></td><td><select value={item.role} onChange={(event) => updateUser(item.id, { role: event.target.value })} disabled={busy}><option value="user">user</option><option value="teacher">teacher</option><option value="admin">admin</option></select></td><td><span className={`status status--${item.status}`}>{item.status}</span></td><td>{item.premium ? 'Có' : 'Không'}</td><td><button className="button button--small button--outline" type="button" onClick={() => updateUser(item.id, { status: item.status === 'active' ? 'locked' : 'active' })}>{item.status === 'active' ? 'Khóa' : 'Mở khóa'}</button></td></tr>)}</AdminTable>}
+      {tab === 'users' && <AdminTable headings={['Người dùng', 'ID', 'Vai trò', 'Trạng thái', 'Premium', 'Thao tác']}>{data.profiles.map((item) => <tr key={item.id}><td><strong><Link className="admin-profile-link-v70-1" to={`/profile/${item.id}`}>{getProfileName(item)}</Link></strong><small>{item.email}</small></td><td><code>{item.public_id}</code></td><td><select value={item.role} onChange={(event) => updateUser(item.id, { role: event.target.value })} disabled={busy}><option value="user">user</option><option value="teacher">teacher</option><option value="admin">admin</option></select></td><td><span className={`status status--${item.status}`}>{item.status}</span></td><td>{item.premium ? 'Có' : 'Không'}</td><td><button className="button button--small button--outline" type="button" onClick={() => updateUser(item.id, { status: item.status === 'active' ? 'locked' : 'active' })}>{item.status === 'active' ? 'Khóa' : 'Mở khóa'}</button></td></tr>)}</AdminTable>}
 
-      {tab === 'documents' && <AdminTable headings={['Tài liệu', 'Tác giả', 'Giá', 'Trạng thái', 'Ngày đăng', 'Thao tác']}>{data.documents.map((item) => <tr key={item.id}><td><strong>{item.title}</strong></td><td>{getProfileName(item.profiles)}</td><td>{item.price_credit} credit</td><td><span className={`status status--${item.status}`}>{item.status}</span></td><td>{formatDateTime(item.created_at)}</td><td><button className="button button--small button--danger-soft" type="button" onClick={() => setDeleteTarget({ type: 'document', id: item.id })}><Trash2 size={15} /> Xóa</button></td></tr>)}</AdminTable>}
+      {tab === 'documents' && <AdminTable headings={['Tài liệu', 'Tác giả', 'Giá', 'Trạng thái', 'Ngày đăng', 'Thao tác']}>{data.documents.map((item) => <tr key={item.id}><td><strong>{item.title}</strong></td><td><Link className="admin-profile-link-v70-1" to={`/profile/${item.author_id}`}>{getProfileName(item.profiles)}</Link></td><td>{item.price_credit} credit</td><td><span className={`status status--${item.status}`}>{item.status}</span></td><td>{formatDateTime(item.created_at)}</td><td><button className="button button--small button--danger-soft" type="button" onClick={() => setDeleteTarget({ type: 'document', id: item.id })}><Trash2 size={15} /> Xóa</button></td></tr>)}</AdminTable>}
 
-      {tab === 'posts' && <AdminTable headings={['Bài viết', 'Tác giả', 'Trạng thái', 'Ngày đăng', 'Thao tác']}>{data.posts.map((item) => <tr key={item.id}><td><strong>{item.title || item.content.slice(0, 60)}</strong></td><td>{getProfileName(item.profiles)}</td><td><span className={`status status--${item.status}`}>{item.status}</span></td><td>{formatDateTime(item.created_at)}</td><td><button className="button button--small button--danger-soft" type="button" onClick={() => setDeleteTarget({ type: 'post', id: item.id })}><Trash2 size={15} /> Xóa</button></td></tr>)}</AdminTable>}
+      {tab === 'posts' && <AdminTable headings={['Bài viết', 'Tác giả', 'Trạng thái', 'Ngày đăng', 'Thao tác']}>{data.posts.map((item) => <tr key={item.id}><td><strong>{item.title || item.content.slice(0, 60)}</strong></td><td><Link className="admin-profile-link-v70-1" to={`/profile/${item.author_id}`}>{getProfileName(item.profiles)}</Link></td><td><span className={`status status--${item.status}`}>{item.status}</span></td><td>{formatDateTime(item.created_at)}</td><td><button className="button button--small button--danger-soft" type="button" onClick={() => setDeleteTarget({ type: 'post', id: item.id })}><Trash2 size={15} /> Xóa</button></td></tr>)}</AdminTable>}
 
       {tab === 'payments' && (
         <AdminTable headings={['Người dùng', 'Loại', 'Số tiền', 'Email hóa đơn', 'Nội dung', 'Trạng thái', 'Ngày tạo', 'Thao tác']}>
           {data.requests.map((item) => (
             <tr id={`payment-request-${item.id}`} key={item.id}>
               <td>
-                <strong>{getProfileName(item.profiles)}</strong>
+                <strong><Link className="admin-profile-link-v70-1" to={`/profile/${item.user_id}`}>{getProfileName(item.profiles)}</Link></strong>
                 <small>{item.profiles?.public_id}</small>
               </td>
               <td>
@@ -1238,7 +1238,7 @@ export default function AdminDashboard() {
 
             return (
               <tr id={`report-${item.id}`} key={item.id}>
-                <td><strong>{getProfileName(item.reporter)}</strong><small>{item.reporter?.public_id || item.reporter?.email}</small></td>
+                <td><strong><Link className="admin-profile-link-v70-1" to={`/profile/${item.reporter_id}`}>{getProfileName(item.reporter)}</Link></strong><small>{item.reporter?.public_id || item.reporter?.email}</small></td>
                 <td><div className="admin-report-target"><strong>{targetLabel}</strong><small>{item.target_type} · {item.target_id}</small></div></td>
                 <td><div className="admin-report-reason"><strong>{item.reason}</strong>{item.detail && <small>{item.detail}</small>}</div></td>
                 <td><span className={`status status--${item.status}`}>{item.status === 'pending' ? 'Chờ xử lý' : item.status === 'resolved' ? 'Đã xử lý' : 'Đã từ chối'}</span></td>
