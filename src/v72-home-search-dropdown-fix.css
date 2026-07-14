@@ -1,0 +1,166 @@
+/*
+  DOCSHARE PRO V72
+  SỬA DANH SÁCH GỢI Ý TÌM KIẾM TRANG CHỦ BỊ CẮT
+
+  Nguyên nhân:
+  - Khung hero đang overflow: hidden.
+  - Khu tài liệu phía dưới đè lên danh sách gợi ý.
+
+  Kết quả:
+  - Danh sách gợi ý nổi đầy đủ phía trên khu tài liệu.
+  - Có thanh cuộn riêng khi có nhiều kết quả.
+  - Không làm thay đổi kích thước hero hoặc thẻ tài liệu.
+*/
+
+/* =========================================================
+   1. CHO PHÉP GỢI Ý TRÀN RA NGOÀI KHUNG HERO
+   ========================================================= */
+
+.home-page--v71,
+.home-page--v71 .botanical-hero,
+.home-page--v71 .botanical-hero__inner,
+.home-page--v71 .botanical-hero__content,
+.home-page--v71 .botanical-hero__body,
+.home-page--v71 .hero-content,
+.home-page--v71 .hero-main {
+  overflow: visible !important;
+}
+
+.home-page--v71 .botanical-hero {
+  position: relative !important;
+  z-index: 50 !important;
+  isolation: visible !important;
+}
+
+/* Các phần tài liệu phía dưới nằm thấp hơn dropdown */
+.home-page--v71 .home-sections-v71,
+.home-page--v71 .home-section,
+.home-page--v71 .impact-strip {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* =========================================================
+   2. ĐƯA THANH TÌM KIẾM VÀ DROPDOWN LÊN TRÊN
+   ========================================================= */
+
+.home-page--v71 .hero-search {
+  position: relative !important;
+  z-index: 1000 !important;
+  overflow: visible !important;
+  isolation: isolate !important;
+}
+
+.home-page--v71 .hero-search > * {
+  position: relative;
+}
+
+.home-page--v71 .hero-search > div,
+.home-page--v71 .hero-search .search-box,
+.home-page--v71 .hero-search .search-wrapper,
+.home-page--v71 .hero-search .search-input-wrap,
+.home-page--v71 .hero-search .search-field {
+  overflow: visible !important;
+}
+
+/* Hỗ trợ các tên class dropdown đang dùng trong những phiên bản trước */
+.home-page--v71 .hero-search .search-suggestions,
+.home-page--v71 .hero-search .search-suggestion-list,
+.home-page--v71 .hero-search .search-results,
+.home-page--v71 .hero-search .search-dropdown,
+.home-page--v71 .hero-search .suggestions-dropdown,
+.home-page--v71 .hero-search .global-search-results,
+.home-page--v71 .hero-search [role="listbox"],
+.home-page--v71 .hero-search [class*="suggestion"],
+.home-page--v71 .hero-search [class*="search-result"],
+.home-page--v71 .hero-search [class*="search-dropdown"] {
+  position: absolute !important;
+  top: calc(100% + 5px) !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 99999 !important;
+
+  width: 100% !important;
+  max-width: 100% !important;
+  max-height: 300px !important;
+
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+
+  border: 1px solid #d7e3d8 !important;
+  border-radius: 14px !important;
+  background: #fffef9 !important;
+  box-shadow:
+    0 18px 42px rgba(24, 69, 45, .18),
+    0 4px 12px rgba(24, 69, 45, .08) !important;
+}
+
+/* Nếu dropdown là phần tử kế ngay sau ô nhập */
+.home-page--v71 .hero-search input + div,
+.home-page--v71 .hero-search input + ul {
+  z-index: 99999 !important;
+}
+
+/* Item trong danh sách luôn hiện đầy đủ */
+.home-page--v71 .hero-search .search-suggestions > *,
+.home-page--v71 .hero-search .search-results > *,
+.home-page--v71 .hero-search .search-dropdown > *,
+.home-page--v71 .hero-search [role="option"] {
+  position: relative !important;
+  z-index: 1 !important;
+  min-height: 42px;
+}
+
+/* Thanh cuộn nhỏ, không chiếm nhiều chỗ */
+.home-page--v71 .hero-search [class*="suggestion"]::-webkit-scrollbar,
+.home-page--v71 .hero-search [class*="search-result"]::-webkit-scrollbar,
+.home-page--v71 .hero-search [class*="search-dropdown"]::-webkit-scrollbar,
+.home-page--v71 .hero-search [role="listbox"]::-webkit-scrollbar {
+  width: 7px;
+}
+
+.home-page--v71 .hero-search [class*="suggestion"]::-webkit-scrollbar-thumb,
+.home-page--v71 .hero-search [class*="search-result"]::-webkit-scrollbar-thumb,
+.home-page--v71 .hero-search [class*="search-dropdown"]::-webkit-scrollbar-thumb,
+.home-page--v71 .hero-search [role="listbox"]::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: #9dbda7;
+  background-clip: padding-box;
+}
+
+/* =========================================================
+   3. GIỮ LÁ TRANG TRÍ KHÔNG CHE DROPDOWN
+   ========================================================= */
+
+.home-page--v71 .botanical-hero__leaf,
+.home-page--v71 .hero-leaf,
+.home-page--v71 [class*="leaf"] {
+  pointer-events: none !important;
+}
+
+.home-page--v71 .hero-search,
+.home-page--v71 .hero-search * {
+  pointer-events: auto;
+}
+
+/* =========================================================
+   4. RESPONSIVE
+   ========================================================= */
+
+@media screen and (max-width: 760px) {
+  .home-page--v71 .hero-search .search-suggestions,
+  .home-page--v71 .hero-search .search-suggestion-list,
+  .home-page--v71 .hero-search .search-results,
+  .home-page--v71 .hero-search .search-dropdown,
+  .home-page--v71 .hero-search .suggestions-dropdown,
+  .home-page--v71 .hero-search .global-search-results,
+  .home-page--v71 .hero-search [role="listbox"],
+  .home-page--v71 .hero-search [class*="suggestion"],
+  .home-page--v71 .hero-search [class*="search-result"],
+  .home-page--v71 .hero-search [class*="search-dropdown"] {
+    max-height: 250px !important;
+    border-radius: 12px !important;
+  }
+}

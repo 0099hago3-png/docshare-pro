@@ -17,9 +17,8 @@ import '../v67-profile-images.css';
 import '../v68-profile-avatar-left.css';
 import '../v69-auto-cover-ratio.css';
 import '../v70-premium-cart-email.css';
-import '../v70-1-smart-search-admin-profile.css';
-import '../v70-2-commerce-history-admin.css';
-import '../v70-3-home-compact-latest-paid-demo.css';
+import '../v71-home-compact-sections.css';
+import '../v72-home-search-dropdown-fix.css';
 
 export default function AppShell() {
   return (
