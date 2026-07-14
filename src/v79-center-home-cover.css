@@ -1,0 +1,49 @@
+/*
+  DOCSHARE PRO V79
+  CĂN ẢNH BÌA TÀI LIỆU TRANG CHỦ VÀO GIỮA
+*/
+
+.home-document-item-v75 .document-card__cover,
+.home-document-item-v75 .document-card [class*="cover"] {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  overflow: hidden !important;
+  background:
+    linear-gradient(135deg, #f7f7ef, #edf5ea) !important;
+}
+
+.home-document-item-v75 .document-card__cover picture,
+.home-document-item-v75 .document-card [class*="cover"] picture {
+  width: 100% !important;
+  height: 100% !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.home-document-item-v75 .document-card__cover img,
+.home-document-item-v75 .document-card [class*="cover"] img,
+.home-document-item-v75 .document-card__cover picture img,
+.home-document-item-v75 .document-card [class*="cover"] picture img {
+  width: 100% !important;
+  height: 100% !important;
+
+  display: block !important;
+
+  object-fit: cover !important;
+  object-position: 50% 50% !important;
+
+  margin: 0 auto !important;
+  transform: none !important;
+}
+
+/* Ảnh thay thế hoặc artwork cũng nằm giữa */
+.home-document-item-v75 .document-card__cover > svg,
+.home-document-item-v75 .document-card__cover > div,
+.home-document-item-v75 .document-card [class*="cover"] > svg,
+.home-document-item-v75 .document-card [class*="cover"] > div {
+  margin: auto !important;
+}
