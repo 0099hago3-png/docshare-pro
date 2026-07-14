@@ -1,4 +1,4 @@
-import { Bookmark, CheckCircle2, Eye, Heart, Star } from 'lucide-react';
+import { Bookmark, Eye, Heart, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatNumber, getProfileName, publicAssetUrl } from '../lib/helpers.js';
 import CartButton from './CartButton.jsx';
@@ -14,19 +14,24 @@ export default function DocumentCard({ document, onBookmark }) {
   const category = document?.categories?.name || 'Học thuật';
   const stats = document?.document_stats || document?.stats || {};
   const frame = document?.cover_frame || 'none';
-  const purchased = Boolean(document?.is_purchased);
 
   return (
-    <article className={`document-card botanical-card document-card--frame-${frame}${purchased ? ' is-purchased-v70-2' : ''}`}>
+    <article className={`document-card botanical-card document-card--frame-${frame}`}>
       <Link className="document-card__cover" to={`/documents/${document.id}`}>
-        <span className="document-card__premium-frame-v70" aria-hidden="true" />
-        <img src={cover} alt={document.title} />
+        <span
+          className="document-card__cover-backdrop-v80"
+          style={{ backgroundImage: `url(${JSON.stringify(cover)})` }}
+          aria-hidden="true"
+        />
 
-        {purchased && (
-          <span className="document-card__purchased-v70-2">
-            <CheckCircle2 size={15} /> Đã mua
-          </span>
-        )}
+        <span className="document-card__premium-frame-v70" aria-hidden="true" />
+
+        <img
+          className="document-card__cover-image-v80"
+          src={cover}
+          alt={document.title}
+          loading="lazy"
+        />
 
         <span className="document-card__badge">
           {document.price_credit > 0
@@ -38,18 +43,27 @@ export default function DocumentCard({ document, onBookmark }) {
       <div className="document-card__body">
         <span className="document-card__category">{category}</span>
 
-        <Link to={`/documents/${document.id}`}>
+        <Link
+          className="document-card__title-link-v80"
+          to={`/documents/${document.id}`}
+          title={document.title}
+        >
           <h3>{document.title}</h3>
         </Link>
 
         <Link
-          className="document-card__author document-card__author-link-v70"
+          className="document-card__author document-card__author-link-v70 document-card__author-link-v80"
           to={`/profile/${document.author_id}`}
           title={`Xem hồ sơ ${author}`}
         >
-          <span>{author}</span>
-          <PremiumBadge profile={authorProfile} compact />
-          <TeacherBadge profile={authorProfile} compact />
+          <span className="document-card__author-name-v80">
+            {author}
+          </span>
+
+          <span className="document-card__author-badges-v80">
+            <PremiumBadge profile={authorProfile} compact />
+            <TeacherBadge profile={authorProfile} compact />
+          </span>
         </Link>
 
         <div className="document-card__stats">
@@ -63,7 +77,7 @@ export default function DocumentCard({ document, onBookmark }) {
             className="button button--small button--outline"
             to={`/documents/${document.id}`}
           >
-            {purchased ? 'Mở tài liệu' : 'Xem chi tiết'}
+            Xem chi tiết
           </Link>
 
           <CartButton document={document} compact />

@@ -20,6 +20,7 @@ import '../v70-premium-cart-email.css';
 import '../v75-home-carousel-many-documents.css';
 import '../v78-stable-search-home-history-gifts.css';
 import '../v79-center-home-cover.css';
+import '../v80-card-cover-title-premium-fix.css';
 
 export default function AppShell() {
   return (
