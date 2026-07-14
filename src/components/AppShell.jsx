@@ -18,7 +18,7 @@ import '../v68-profile-avatar-left.css';
 import '../v69-auto-cover-ratio.css';
 import '../v70-premium-cart-email.css';
 import '../v72-home-search-dropdown-fix.css';
-import '../v74-compact-home-hover-sidebar.css';
+import '../v75-home-carousel-many-documents.css';
 
 export default function AppShell() {
   return (

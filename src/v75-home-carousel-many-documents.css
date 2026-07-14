@@ -1,0 +1,452 @@
+/*
+  DOCSHARE PRO V75
+
+  MỤC TIÊU:
+  - Khôi phục đúng kiểu mỗi phần là một dải tài liệu ngang.
+  - Có nhiều tài liệu trong mỗi phần.
+  - Có nút trái/phải và thanh kéo ngang.
+  - Thẻ nhỏ, gọn, không phóng to.
+  - Không dùng các selector rộng của V74 nên không làm loạn bố cục.
+*/
+
+/* =========================================================
+   1. KHUNG CHUNG TRANG CHỦ
+   ========================================================= */
+
+.home-page-v75 {
+  min-width: 0;
+}
+
+.home-carousel-stack-v75 {
+  display: grid;
+  gap: 22px;
+  margin-top: 18px;
+}
+
+.home-carousel-section-v75 {
+  min-width: 0;
+  margin: 0;
+}
+
+.home-carousel-heading-v75 {
+  min-height: 44px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 9px;
+}
+
+.home-carousel-heading-v75__title {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.home-carousel-heading-v75__icon {
+  width: 31px;
+  height: 31px;
+  flex: 0 0 31px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #d7e5d8;
+  border-radius: 10px;
+  background: #edf6ed;
+  color: #18734d;
+}
+
+.home-carousel-section-v75--hot .home-carousel-heading-v75__icon {
+  border-color: #f2d6ba;
+  background: #fff3e6;
+  color: #db6b22;
+}
+
+.home-carousel-section-v75--recommended .home-carousel-heading-v75__icon {
+  border-color: #dfd3ed;
+  background: #f6effd;
+  color: #7450b3;
+}
+
+.home-carousel-section-v75--new .home-carousel-heading-v75__icon {
+  border-color: #cfe2ec;
+  background: #eef7fb;
+  color: #287a9e;
+}
+
+.home-carousel-heading-v75 h2 {
+  margin: 0;
+  color: #123f2c;
+  font-size: 19px;
+  line-height: 1.05;
+}
+
+.home-carousel-heading-v75 small {
+  display: block;
+  margin-top: 4px;
+  color: #75857c;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.home-carousel-heading-v75__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.home-carousel-heading-v75__actions > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 5px;
+  color: #1b714d;
+  font-size: 9px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.home-carousel-arrow-v75 {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #cdded0;
+  border-radius: 9px;
+  background: #fffef9;
+  color: #176b49;
+  cursor: pointer;
+  transition:
+    background .18s ease,
+    transform .18s ease,
+    box-shadow .18s ease;
+}
+
+.home-carousel-arrow-v75:hover {
+  background: #e9f4e9;
+  transform: translateY(-1px);
+  box-shadow: 0 5px 12px rgba(29, 91, 59, .10);
+}
+
+/* =========================================================
+   2. DẢI TÀI LIỆU NGANG
+   ========================================================= */
+
+.home-document-rail-v75 {
+  display: flex;
+  align-items: stretch;
+  gap: 11px;
+
+  width: 100%;
+  min-width: 0;
+
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  padding: 2px 2px 11px;
+
+  scroll-behavior: smooth;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+  scrollbar-color: #8eb09a #eef4ec;
+}
+
+.home-document-rail-v75::-webkit-scrollbar {
+  height: 7px;
+}
+
+.home-document-rail-v75::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: #eef4ec;
+}
+
+.home-document-rail-v75::-webkit-scrollbar-thumb {
+  border: 1px solid #eef4ec;
+  border-radius: 999px;
+  background: #8eb09a;
+}
+
+.home-document-rail-v75::-webkit-scrollbar-thumb:hover {
+  background: #5f9271;
+}
+
+.home-document-item-v75 {
+  flex: 0 0 154px;
+  width: 154px;
+  min-width: 154px;
+  max-width: 154px;
+  scroll-snap-align: start;
+}
+
+/* =========================================================
+   3. THẺ TÀI LIỆU NHỎ, KHÔNG PHÓNG TO
+   ========================================================= */
+
+.home-document-item-v75 .document-card {
+  width: 154px !important;
+  min-width: 154px !important;
+  max-width: 154px !important;
+  height: 100%;
+
+  overflow: hidden;
+  border-radius: 13px !important;
+  box-shadow: 0 6px 17px rgba(34, 76, 51, .07) !important;
+}
+
+.home-document-item-v75 .document-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 10px 22px rgba(34, 76, 51, .11) !important;
+}
+
+.home-document-item-v75 .document-card__cover,
+.home-document-item-v75 .document-card [class*="cover"] {
+  width: 100% !important;
+  height: 152px !important;
+  min-height: 152px !important;
+  max-height: 152px !important;
+  aspect-ratio: auto !important;
+
+  overflow: hidden !important;
+  border-radius: 11px 11px 0 0 !important;
+}
+
+.home-document-item-v75 .document-card__cover img,
+.home-document-item-v75 .document-card [class*="cover"] img {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100% !important;
+
+  display: block !important;
+  object-fit: cover !important;
+  object-position: center !important;
+}
+
+.home-document-item-v75 .document-card__body,
+.home-document-item-v75 .document-card [class*="body"] {
+  padding: 8px 9px 9px !important;
+}
+
+.home-document-item-v75 .document-card h3,
+.home-document-item-v75 .document-card__title {
+  display: -webkit-box !important;
+  min-height: 30px !important;
+  max-height: 30px !important;
+
+  margin: 4px 0 5px !important;
+  overflow: hidden !important;
+
+  font-size: 9.5px !important;
+  line-height: 1.45 !important;
+
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.home-document-item-v75 .document-card__category,
+.home-document-item-v75 .document-card [class*="category"] {
+  font-size: 7px !important;
+}
+
+.home-document-item-v75 .document-card__author,
+.home-document-item-v75 .document-card [class*="author"] {
+  gap: 3px !important;
+  min-width: 0 !important;
+  font-size: 7.5px !important;
+}
+
+.home-document-item-v75 .document-card__author > span,
+.home-document-item-v75 .document-card [class*="author"] > span {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.home-document-item-v75 .document-card__stats,
+.home-document-item-v75 .document-card [class*="stats"] {
+  gap: 6px !important;
+  margin-top: 6px !important;
+  font-size: 7px !important;
+}
+
+.home-document-item-v75 .document-card__stats svg,
+.home-document-item-v75 .document-card [class*="stats"] svg {
+  width: 9px !important;
+  height: 9px !important;
+}
+
+.home-document-item-v75 .document-card__badge,
+.home-document-item-v75 .document-card [class*="badge"] {
+  top: 6px !important;
+  right: 6px !important;
+  min-height: 19px !important;
+  padding: 0 5px !important;
+  font-size: 7px !important;
+}
+
+.home-document-item-v75 .document-card__actions,
+.home-document-item-v75 .document-card [class*="actions"] {
+  gap: 4px !important;
+  margin-top: 6px !important;
+}
+
+.home-document-item-v75 .document-card__actions .button,
+.home-document-item-v75 .document-card [class*="actions"] .button,
+.home-document-item-v75 .document-card button {
+  min-height: 25px !important;
+  padding: 0 6px !important;
+  border-radius: 7px !important;
+  font-size: 7px !important;
+}
+
+/* =========================================================
+   4. TÌM KIẾM KHÔNG BỊ CẮT
+   ========================================================= */
+
+.home-search-v75 {
+  position: relative !important;
+  z-index: 1000 !important;
+  overflow: visible !important;
+}
+
+.home-search-suggestions-v75 {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 99999;
+
+  max-height: 285px;
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  padding: 6px;
+
+  border: 1px solid #d6e3d8;
+  border-radius: 13px;
+  background: #fffef9;
+  box-shadow:
+    0 18px 42px rgba(26, 71, 47, .18),
+    0 4px 12px rgba(26, 71, 47, .08);
+}
+
+.home-search-suggestion-v75 {
+  width: 100%;
+  min-height: 45px;
+
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  padding: 7px 9px;
+
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #183f2e;
+  text-align: left;
+  cursor: pointer;
+}
+
+.home-search-suggestion-v75:hover {
+  background: #eef7ec;
+}
+
+.home-search-suggestion-v75__icon {
+  width: 29px;
+  height: 29px;
+  flex: 0 0 29px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: #e5f2e5;
+  color: #19734d;
+}
+
+.home-search-suggestion-v75__text {
+  min-width: 0;
+}
+
+.home-search-suggestion-v75__text strong,
+.home-search-suggestion-v75__text small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-search-suggestion-v75__text strong {
+  font-size: 10px;
+}
+
+.home-search-suggestion-v75__text small {
+  margin-top: 3px;
+  color: #7b887f;
+  font-size: 8px;
+}
+
+.home-search-suggestion-v75--empty {
+  justify-content: center;
+  color: #7b887f;
+  font-size: 9px;
+}
+
+/* =========================================================
+   5. RESPONSIVE
+   ========================================================= */
+
+@media screen and (min-width: 1500px) {
+  .home-document-item-v75,
+  .home-document-item-v75 .document-card {
+    flex-basis: 160px !important;
+    width: 160px !important;
+    min-width: 160px !important;
+    max-width: 160px !important;
+  }
+}
+
+@media screen and (max-width: 900px) {
+  .home-document-item-v75,
+  .home-document-item-v75 .document-card {
+    flex-basis: 145px !important;
+    width: 145px !important;
+    min-width: 145px !important;
+    max-width: 145px !important;
+  }
+
+  .home-document-item-v75 .document-card__cover,
+  .home-document-item-v75 .document-card [class*="cover"] {
+    height: 144px !important;
+    min-height: 144px !important;
+    max-height: 144px !important;
+  }
+}
+
+@media screen and (max-width: 680px) {
+  .home-carousel-heading-v75 {
+    align-items: center;
+  }
+
+  .home-carousel-heading-v75 small {
+    display: none;
+  }
+
+  .home-carousel-heading-v75__actions > a {
+    display: none;
+  }
+
+  .home-document-item-v75,
+  .home-document-item-v75 .document-card {
+    flex-basis: 138px !important;
+    width: 138px !important;
+    min-width: 138px !important;
+    max-width: 138px !important;
+  }
+
+  .home-document-item-v75 .document-card__cover,
+  .home-document-item-v75 .document-card [class*="cover"] {
+    height: 138px !important;
+    min-height: 138px !important;
+    max-height: 138px !important;
+  }
+}

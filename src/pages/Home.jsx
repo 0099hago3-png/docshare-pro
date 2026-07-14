@@ -1,16 +1,15 @@
 import {
+  ArrowLeft,
   ArrowRight,
   Clock3,
   Flame,
-  GraduationCap,
   Search,
-  ShieldCheck,
   Sparkles,
-  Users,
 } from 'lucide-react';
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import {
@@ -26,8 +25,10 @@ import { useApp } from '../context/AppContext.jsx';
 import { normalizeError } from '../lib/helpers.js';
 import { supabase } from '../lib/supabase.js';
 
+const SECTION_LIMIT = 14;
+
 function mergeStats(documents, stats) {
-  const map = new Map(
+  const statsMap = new Map(
     (stats || []).map((item) => [
       item.document_id,
       item,
@@ -36,7 +37,7 @@ function mergeStats(documents, stats) {
 
   return (documents || []).map((item) => ({
     ...item,
-    document_stats: map.get(item.id) || {},
+    document_stats: statsMap.get(item.id) || {},
   }));
 }
 
@@ -52,7 +53,7 @@ function hotScore(item) {
   );
 }
 
-function CompactDocumentSection({
+function HomeCarouselSection({
   tone,
   icon: Icon,
   title,
@@ -62,18 +63,32 @@ function CompactDocumentSection({
   emptyTitle,
   emptyDescription,
 }) {
+  const railRef = useRef(null);
+
+  function scroll(direction) {
+    const rail = railRef.current;
+
+    if (!rail) return;
+
+    const distance = Math.max(
+      340,
+      Math.round(rail.clientWidth * 0.78),
+    );
+
+    rail.scrollBy({
+      left: direction * distance,
+      behavior: 'smooth',
+    });
+  }
+
   return (
     <section
-      className={[
-        'home-section',
-        'home-section--compact-v71',
-        `home-section--${tone}-v71`,
-      ].join(' ')}
+      className={`home-carousel-section-v75 home-carousel-section-v75--${tone}`}
     >
-      <div className="section-heading section-heading--compact-v71">
-        <div className="section-heading__main-v71">
-          <span className="section-heading__icon-v71">
-            <Icon size={19} />
+      <div className="home-carousel-heading-v75">
+        <div className="home-carousel-heading-v75__title">
+          <span className="home-carousel-heading-v75__icon">
+            <Icon size={17} />
           </span>
 
           <span>
@@ -82,19 +97,44 @@ function CompactDocumentSection({
           </span>
         </div>
 
-        <Link to="/documents">
-          {linkLabel}
-          <ArrowRight size={15} />
-        </Link>
+        <div className="home-carousel-heading-v75__actions">
+          <button
+            type="button"
+            className="home-carousel-arrow-v75"
+            aria-label={`Xem tài liệu ${title} phía trước`}
+            onClick={() => scroll(-1)}
+          >
+            <ArrowLeft size={15} />
+          </button>
+
+          <button
+            type="button"
+            className="home-carousel-arrow-v75"
+            aria-label={`Xem thêm tài liệu ${title}`}
+            onClick={() => scroll(1)}
+          >
+            <ArrowRight size={15} />
+          </button>
+
+          <Link to="/documents">
+            {linkLabel}
+            <ArrowRight size={14} />
+          </Link>
+        </div>
       </div>
 
       {documents.length ? (
-        <div className="document-grid home-document-grid-v71">
+        <div
+          ref={railRef}
+          className="home-document-rail-v75"
+        >
           {documents.map((item) => (
-            <DocumentCard
+            <div
               key={item.id}
-              document={item}
-            />
+              className="home-document-item-v75"
+            >
+              <DocumentCard document={item} />
+            </div>
           ))}
         </div>
       ) : (
@@ -117,6 +157,7 @@ export default function Home() {
   const [preferredCategoryIds, setPreferredCategoryIds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [keyword, setKeyword] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const navigate = useNavigate();
 
@@ -155,7 +196,7 @@ export default function Home() {
             .order('created_at', {
               ascending: false,
             })
-            .limit(24),
+            .limit(60),
 
           supabase
             .from('document_stats')
@@ -177,7 +218,7 @@ export default function Home() {
               .order('created_at', {
                 ascending: false,
               })
-              .limit(30),
+              .limit(40),
           );
         }
 
@@ -191,13 +232,17 @@ export default function Home() {
           throw documentsResult.error;
         }
 
+        if (statsResult.error) {
+          throw statsResult.error;
+        }
+
         const normalized = (
           documentsResult.data || []
         ).map((item) => ({
           ...item,
           cover_path: item.document_files?.find(
             (file) => file.file_kind === 'cover',
-          )?.storage_path || null,
+          )?.storage_path || item.cover_path || null,
         }));
 
         const merged = mergeStats(
@@ -236,22 +281,21 @@ export default function Home() {
     return () => {
       mounted = false;
     };
-  }, [currentUser?.id, toast]);
+  }, [
+    currentUser?.id,
+    toast,
+  ]);
 
   const hottest = useMemo(
     () => (
       [...documents]
         .sort((a, b) => hotScore(b) - hotScore(a))
-        .slice(0, 4)
+        .slice(0, SECTION_LIMIT)
     ),
     [documents],
   );
 
   const recommended = useMemo(() => {
-    const hotIds = new Set(
-      hottest.map((item) => item.id),
-    );
-
     const sorted = [...documents].sort((a, b) => {
       const aPreferred = preferredCategoryIds.includes(
         a.category_id,
@@ -268,18 +312,9 @@ export default function Home() {
       return hotScore(b) - hotScore(a);
     });
 
-    const uniqueFirst = sorted.filter(
-      (item) => !hotIds.has(item.id),
-    );
-
-    return (
-      uniqueFirst.length >= 4
-        ? uniqueFirst
-        : sorted
-    ).slice(0, 4);
+    return sorted.slice(0, SECTION_LIMIT);
   }, [
     documents,
-    hottest,
     preferredCategoryIds,
   ]);
 
@@ -292,23 +327,60 @@ export default function Home() {
             - new Date(a.created_at).getTime()
           ),
         )
-        .slice(0, 4)
+        .slice(0, SECTION_LIMIT)
     ),
     [documents],
   );
 
+  const suggestions = useMemo(() => {
+    const query = keyword.trim().toLocaleLowerCase('vi');
+
+    if (!query) return [];
+
+    return documents
+      .filter((item) => {
+        const searchable = [
+          item.title,
+          item.description,
+          item.categories?.name,
+          item.profiles?.full_name,
+          item.profiles?.username,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLocaleLowerCase('vi');
+
+        return searchable.includes(query);
+      })
+      .slice(0, 7);
+  }, [
+    documents,
+    keyword,
+  ]);
+
   function search(event) {
     event.preventDefault();
 
+    const query = keyword.trim();
+
+    setShowSuggestions(false);
+
     navigate(
-      keyword.trim()
-        ? `/documents?search=${encodeURIComponent(keyword.trim())}`
+      query
+        ? `/documents?search=${encodeURIComponent(query)}`
         : '/documents',
     );
   }
 
+  function openSuggestion(item) {
+    setShowSuggestions(false);
+    setKeyword(item.title || '');
+
+    navigate(`/documents/${item.id}`);
+  }
+
   return (
-    <div className="page home-page home-page--v71">
+    <div className="page home-page home-page-v75">
       <BotanicalHero
         eyebrow="DOCSHARE PRO"
         title={(
@@ -321,15 +393,20 @@ export default function Home() {
         description="Kho tài liệu chất lượng, cộng đồng học tập văn minh và hành trình phát triển tri thức của riêng bạn."
       >
         <form
-          className="hero-search"
+          className="hero-search home-search-v75"
           onSubmit={search}
         >
           <Search size={20} />
 
           <input
             value={keyword}
-            onChange={(event) => setKeyword(event.target.value)}
+            onChange={(event) => {
+              setKeyword(event.target.value);
+              setShowSuggestions(true);
+            }}
+            onFocus={() => setShowSuggestions(true)}
             placeholder="Tìm kiếm tài liệu, môn học, tác giả, trường học..."
+            autoComplete="off"
           />
 
           <button
@@ -338,6 +415,42 @@ export default function Home() {
           >
             Tìm kiếm
           </button>
+
+          {showSuggestions && keyword.trim() ? (
+            <div className="home-search-suggestions-v75">
+              {suggestions.length ? (
+                suggestions.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className="home-search-suggestion-v75"
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => openSuggestion(item)}
+                  >
+                    <span className="home-search-suggestion-v75__icon">
+                      <Search size={14} />
+                    </span>
+
+                    <span className="home-search-suggestion-v75__text">
+                      <strong>{item.title}</strong>
+
+                      <small>
+                        {item.categories?.name || 'Tài liệu'}
+                        {' · '}
+                        {item.profiles?.full_name
+                          || item.profiles?.username
+                          || 'Tác giả'}
+                      </small>
+                    </span>
+                  </button>
+                ))
+              ) : (
+                <div className="home-search-suggestion-v75 home-search-suggestion-v75--empty">
+                  Không tìm thấy gợi ý phù hợp.
+                </div>
+              )}
+            </div>
+          ) : null}
         </form>
 
         <div className="hero-tags">
@@ -367,8 +480,8 @@ export default function Home() {
       {loading ? (
         <Loading />
       ) : (
-        <div className="home-sections-v71">
-          <CompactDocumentSection
+        <div className="home-carousel-stack-v75">
+          <HomeCarouselSection
             tone="hot"
             icon={Flame}
             title="Hot nhất"
@@ -379,18 +492,18 @@ export default function Home() {
             emptyDescription="Các tài liệu có nhiều lượt xem và tương tác sẽ xuất hiện tại đây."
           />
 
-          <CompactDocumentSection
+          <HomeCarouselSection
             tone="recommended"
             icon={Sparkles}
             title="Phù hợp với bạn"
-            description="Gợi ý dựa trên ngành học và hoạt động gần đây."
+            description="Gợi ý dựa trên danh mục và hoạt động gần đây."
             linkLabel="Khám phá thêm"
             documents={recommended}
             emptyTitle="Chưa có gợi ý phù hợp"
             emptyDescription="Hãy xem, thích hoặc lưu tài liệu để hệ thống hiểu sở thích của bạn."
           />
 
-          <CompactDocumentSection
+          <HomeCarouselSection
             tone="new"
             icon={Clock3}
             title="Mới nhất"
@@ -402,32 +515,6 @@ export default function Home() {
           />
         </div>
       )}
-
-      <section className="impact-strip botanical-card impact-strip--compact-v71">
-        <div>
-          <span><Clock3 /></span>
-          <strong>{documents.length}+</strong>
-          <small>Tài liệu đang hiển thị</small>
-        </div>
-
-        <div>
-          <span><Users /></span>
-          <strong>Cộng đồng</strong>
-          <small>Học tập văn minh</small>
-        </div>
-
-        <div>
-          <span><GraduationCap /></span>
-          <strong>Đa ngành</strong>
-          <small>Kết nối tri thức</small>
-        </div>
-
-        <div>
-          <span><ShieldCheck /></span>
-          <strong>Minh bạch</strong>
-          <small>Dữ liệu được bảo vệ</small>
-        </div>
-      </section>
     </div>
   );
 }
