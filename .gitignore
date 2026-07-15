@@ -1,8 +1,23 @@
+# Thư viện
 node_modules
+
+# File build
 dist
+
+# Biến môi trường bí mật
 .env
 .env.local
 .env.*.local
+backend/.env
+
+# File của Vercel
+.vercel
+
+# File hệ thống
 .DS_Store
+
+# File log
 *.log
+
+# Cài đặt riêng của VS Code
 .vscode
